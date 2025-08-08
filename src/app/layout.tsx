@@ -64,7 +64,7 @@ export default function RootLayout({
           <meta name="msapplication-TileColor" content="#ef4444" />
           <meta name="msapplication-TileImage" content="/ms-touch-icon-144x144.png" />
       </head>
-      <body className="flex flex-col h-full">
+      <body className="flex flex-col h-full bg-background text-foreground">
         <Providers>
           {children}
           <Toaster />
