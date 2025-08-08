@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -9,17 +10,9 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundInput, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
 import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, type User } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
-
-// Definición de tipo para el usuario autenticado
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string | null;
-}
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -44,7 +37,7 @@ export default function PlaySoloPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
   const { toast } = useToast();
-  const { user } = useAuth() as { user: AuthUser | null; isLoading: boolean };
+  const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
@@ -101,8 +94,8 @@ export default function PlaySoloPage() {
 
         if(user){
             await rankingManager.saveGameResult({
-                playerId: user.uid, // Ahora TypeScript reconoce uid
-                playerName: user.name || 'Jugador',
+                playerId: user.id, // Corregido: user.id en lugar de user.uid
+                playerName: user.playerName || 'Jugador',
                 photoURL: user.photoURL || null,
                 score: playerRoundScore,
                 categories: playerResponses,
