@@ -14,6 +14,7 @@ import type { PlayerScore } from "@/components/game/types";
 export interface User extends Omit<PlayerScore, 'id'> {
   uid: string; // The primary ID from Firebase Auth
   name: string | null; // The primary name from Firebase Auth's displayName
+  playerName: string;
 }
 
 interface AuthContextType {
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             ...playerData, // Spread all properties from PlayerScore
             uid: firebaseUser.uid, // Ensure uid is the one from auth
             name: firebaseUser.displayName, // Ensure name is the one from auth
+            playerName: playerData.playerName || 'Jugador', // Add playerName
           };
 
           setUser(appUser);
