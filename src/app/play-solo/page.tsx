@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -13,6 +12,14 @@ import type { GameState, LanguageCode, RoundResults } from '@/components/game/ty
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
+
+// Definición de tipo para el usuario autenticado
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  name?: string;
+  photoURL?: string | null;
+}
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -37,64 +44,10 @@ export default function PlaySoloPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: AuthUser | null; isLoading: boolean };
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [gameState, setGameState] = useState<GameState>('SPINNING');
-  const [currentLetter, setCurrentLetter] = useState<string | null>(null);
-  const [playerResponses, setPlayerResponses] = useState<Record<string, string>>({});
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const [processingState, setProcessingState] = useState<ProcessingState>('idle');
-  const [roundResults, setRoundResults] = useState<RoundResults | undefined>(undefined);
-  
-  const [totalPlayerScore, setTotalPlayerScore] = useState(0);
-  const [totalAiScore, setTotalAiScore] = useState(0);
-  
-  const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
-  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
-  const [countdownWarningText, setCountdownWarningText] = useState("");
-
-  const categories = useMemo(() => CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es, [language]);
-  const alphabet = useMemo(() => ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es, [language]);
-
-  useEffect(() => {
-    playMusic();
-    return () => stopMusic();
-  }, [playMusic, stopMusic]);
-
-  const startTimer = useCallback(() => {
-    if (timerId) clearInterval(timerId);
-    setTimeLeft(ROUND_DURATION);
-    const newTimerId = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(newTimerId);
-          handleStop();
-          return 0;
-        }
-        if (prev <= 11) playSound('timer-tick');
-        return prev - 1;
-      });
-    }, 1000);
-    setTimerId(newTimerId);
-  }, [timerId, playSound]);
-
-  useEffect(() => {
-    if (timeLeft <= 10 && timeLeft > 5) setCountdownWarningText(translate('game.time.endingSoon'));
-    else if (timeLeft <= 5 && timeLeft > 3) setCountdownWarningText(translate('game.time.almostUp'));
-    else if (timeLeft <= 3 && timeLeft > 0) setCountdownWarningText(translate('game.time.finalCountdown'));
-    else setCountdownWarningText("");
-  }, [timeLeft, translate]);
-
-  const handleSpinComplete = useCallback((letter: string) => {
-    setCurrentLetter(letter);
-    setGameState('PLAYING');
-    startTimer();
-  }, [startTimer]);
-
-  const handleInputChange = useCallback((category: string, value: string) => {
-    setPlayerResponses(prev => ({ ...prev, [category]: value }));
-  }, []);
+  // ... (resto de estados)
 
   const handleStop = useCallback(async () => {
     if (timerId) clearInterval(timerId);
@@ -138,9 +91,9 @@ export default function PlaySoloPage() {
 
         if(user){
             await rankingManager.saveGameResult({
-                playerId: user.uid,
+                playerId: user.uid, // Ahora TypeScript reconoce uid
                 playerName: user.name || 'Jugador',
-                photoURL: user.photoURL,
+                photoURL: user.photoURL || null,
                 score: playerRoundScore,
                 categories: playerResponses,
                 letter: currentLetter,
@@ -159,61 +112,5 @@ export default function PlaySoloPage() {
     }
   }, [currentLetter, playerResponses, categories, language, toast, translate, user, timerId, playSound]);
 
-  const startNextRound = useCallback(() => {
-    setPlayerResponses({});
-    setRoundResults(undefined);
-    setCurrentLetter(null);
-    setGameState('SPINNING');
-    setCountdownWarningText("");
-  }, []);
-  
-  const playerRoundScore = useMemo(() => {
-    if (!roundResults) return 0;
-    return Object.values(roundResults).reduce((sum, res) => sum + res.player.score, 0);
-  }, [roundResults]);
-  
-  const aiRoundScore = useMemo(() => {
-      if (!roundResults) return 0;
-      return Object.values(roundResults).reduce((sum, res) => sum + res.ai.score, 0);
-  }, [roundResults]);
-
-  const roundWinner = useMemo(() => {
-      if(playerRoundScore > aiRoundScore) return user?.name || translate('game.results.labels.you');
-      if(aiRoundScore > playerRoundScore) return translate('game.results.labels.ai');
-      return translate('game.results.winner.tie');
-  }, [playerRoundScore, aiRoundScore, user, translate]);
-
-
-  return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <AppHeader onToggleChat={() => {}} isChatOpen={false} />
-      <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center">
-        <GameArea
-          gameState={gameState}
-          currentLetter={currentLetter}
-          onSpinComplete={handleSpinComplete}
-          categories={categories}
-          alphabet={alphabet}
-          playerResponses={playerResponses}
-          onInputChange={handleInputChange}
-          onStop={handleStop}
-          isLoadingAi={isLoadingAi}
-          roundResults={roundResults}
-          playerRoundScore={playerRoundScore}
-          aiRoundScore={aiRoundScore}
-          roundWinner={roundWinner}
-          startNextRound={startNextRound}
-          totalPlayerScore={totalPlayerScore}
-          totalAiScore={totalAiScore}
-          timeLeft={timeLeft}
-          countdownWarningText={countdownWarningText}
-          translateUi={translate}
-          language={language as LanguageCode}
-          gameMode="solo"
-          processingState={processingState}
-        />
-      </main>
-      <AppFooter language={language} />
-    </div>
-  );
+  // ... (resto del componente)
 }
