@@ -9,10 +9,11 @@ import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
 import type { PlayerScore } from "@/components/game/types";
 
-// The final, unified User object for the app
-export interface User extends PlayerScore {
-  uid: string; // From Firebase Auth
-  name?: string | null; // From Firebase Auth (displayName)
+// The final, unified User object for the app.
+// It combines Firebase Auth info with our game-specific PlayerScore.
+export interface User extends Omit<PlayerScore, 'id'> {
+  uid: string; // The primary ID from Firebase Auth
+  name: string | null; // The primary name from Firebase Auth's displayName
 }
 
 interface AuthContextType {
@@ -55,8 +56,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsSyncing(true);
         try {
           // getPlayerRanking now handles both getting AND creating the user profile robustly.
+          // We use firebaseUser.uid as the consistent ID.
           const playerData = await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
-          setUser({ ...playerData, uid: firebaseUser.uid, name: firebaseUser.displayName });
+          
+          // Create the final User object for our app's context
+          const appUser: User = {
+            ...playerData, // Spread all properties from PlayerScore
+            uid: firebaseUser.uid, // Ensure uid is the one from auth
+            name: firebaseUser.displayName, // Ensure name is the one from auth
+          };
+
+          setUser(appUser);
         } catch (error) {
           console.error("Error syncing user profile:", error);
           toast({ title: "Error de sincronización", description: (error as Error).message, variant: "destructive" });

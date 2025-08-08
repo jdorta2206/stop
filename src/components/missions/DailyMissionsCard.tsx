@@ -19,7 +19,7 @@ export function DailyMissionsCard() {
     const fetchMissions = async () => {
         if (user) {
             setIsLoading(true);
-            const playerData = await rankingManager.getPlayerRanking(user.id);
+            const playerData = await rankingManager.getPlayerRanking(user.uid);
             setMissions(playerData?.dailyMissions || []);
             setIsLoading(false);
         }
@@ -32,7 +32,7 @@ export function DailyMissionsCard() {
     const handleClaim = async (missionId: string) => {
         if (!user) return;
         try {
-            await rankingManager.claimMissionReward(user.id, missionId);
+            await rankingManager.claimMissionReward(user.uid, missionId);
             toast({ title: "¡Recompensa Reclamada!", description: "Has recibido tus monedas." });
             fetchMissions(); // Refresh missions state
         } catch (error) {

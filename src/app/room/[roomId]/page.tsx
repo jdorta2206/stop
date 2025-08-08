@@ -9,7 +9,7 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, type User as AuthUser } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import type { ChatMessage } from '@/components/chat/chat-message-item';
 import { ChatPanel } from '@/components/chat/chat-panel';
@@ -32,11 +32,7 @@ import { GameArea } from '@/components/game/components/game-area';
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
 };
 
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string | null;
+interface RoomPageAuthUser extends AuthUser {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta o Verdura", "Marca"],
   en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit or Vegetable", "Brand"],
   fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit ou Légume", "Marque"],
@@ -63,7 +59,7 @@ export default function RoomPage() {
   const router = useRouter();
   const { language, translate: translateUi } = useLanguage();
   const { toast } = useToast();
-  const { user, isLoading: isAuthLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
+  const { user, isLoading: isAuthLoading } = useAuth();
   
   const [room, setRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);

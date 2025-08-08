@@ -11,14 +11,7 @@ import type { Language } from '@/contexts/language-context';
 import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 import { createRoom, getRoom } from '@/lib/room-service';
-import { useAuth } from '@/hooks/use-auth';
-
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string | null;
-}
+import { useAuth, type User } from '@/hooks/use-auth';
 
 interface RoomManagerProps {
   language: Language;
@@ -42,13 +35,13 @@ export default function RoomManager({ language }: RoomManagerProps) {
   }, [createdRoomId, router]);
   
   const handleCreateRoom = async () => {
-    if (!user || !user.playerName) {
+    if (!user || !user.name) {
         toast({ title: "Acción requerida", description: "Debes iniciar sesión y tener un nombre de usuario para crear una sala.", variant: "destructive"});
         return;
     }
     setIsActionLoading(true);
     try {
-      const newRoom = await createRoom(user.id, user.playerName);
+      const newRoom = await createRoom(user.uid, user.name);
       toast({
         title: translate('rooms.create.title'),
         description: translate('rooms.create.description', { roomId: newRoom.id }),

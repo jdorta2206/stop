@@ -17,7 +17,7 @@ import {
 } from "firebase/firestore";
 
 export interface Friend {
-    id: string;
+    id: string; // This is the UID of the friend
     name: string;
     avatar?: string | null;
     addedAt: Timestamp;
@@ -51,11 +51,11 @@ export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
 };
 
 // Function to add a friend
-export const addFriend = async (userId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
-    if (userId === friendId) {
+export const addFriend = async (currentUserId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
+    if (currentUserId === friendId) {
         throw new Error("You cannot add yourself as a friend.");
     }
-    const friendDocRef = doc(db, `rankings/${userId}/friends`, friendId);
+    const friendDocRef = doc(db, `rankings/${currentUserId}/friends`, friendId);
     const friendDoc = await getDoc(friendDocRef);
 
     if (friendDoc.exists()) {

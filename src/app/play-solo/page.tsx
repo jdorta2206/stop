@@ -94,8 +94,8 @@ export default function PlaySoloPage() {
 
         if(user){
             await rankingManager.saveGameResult({
-                playerId: user.id, // Corregido: user.id en lugar de user.uid
-                playerName: user.playerName || 'Jugador',
+                playerId: user.uid,
+                playerName: user.name || 'Jugador',
                 photoURL: user.photoURL || null,
                 score: playerRoundScore,
                 categories: playerResponses,

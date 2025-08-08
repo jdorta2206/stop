@@ -79,8 +79,8 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
                       <span className="font-bold text-sm">{user.coins?.toLocaleString() ?? 0}</span>
                     </div>
                     <PushNotifications 
-                      userId={user.id}
-                      username={user.playerName || "Usuario"}
+                      userId={user.uid}
+                      username={user.name || "Usuario"}
                       onJoinRoom={(roomId) => router.push(`/room/${roomId}`)}
                       onOpenChat={onToggleChat}
                     />

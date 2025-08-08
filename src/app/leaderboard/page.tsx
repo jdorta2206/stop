@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, type User } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -28,7 +28,7 @@ interface AuthUser {
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const { user, isLoading: isAuthLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);

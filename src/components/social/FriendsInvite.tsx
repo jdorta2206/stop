@@ -36,7 +36,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
     try {
       const results = await searchUsers(searchQuery);
       // Filter out the current user from search results
-      const filteredResults = results.filter(p => p.id !== user?.id);
+      const filteredResults = results.filter(p => p.id !== user?.uid);
       setSearchResults(filteredResults);
     } catch (error) {
       toast({ title: "Error", description: "No se pudo realizar la búsqueda.", variant: "destructive"});
@@ -51,7 +51,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
        return;
     }
     try {
-      await addFriend(user.id, friend.id, friend.name, friend.avatar);
+      await addFriend(user.uid, friend.id, friend.name, friend.avatar);
       toast({ title: "¡Éxito!", description: `${friend.name} ha sido añadido a tus amigos.` });
       setInvitedFriends(prev => new Set(prev).add(friend.id));
       onFriendAdded(); // Callback to refresh the friends list on the parent component
