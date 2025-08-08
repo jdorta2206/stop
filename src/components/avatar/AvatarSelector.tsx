@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -44,18 +45,21 @@ export default function AvatarSelector({
   };
   
   useEffect(() => {
-    const savedAvatar = localStorage.getItem('user-avatar');
-    const savedSeed = localStorage.getItem('avatar-seed') || username;
-    const savedStyle = localStorage.getItem('avatar-style') || 'pixel-art';
-    
-    if (savedAvatar) {
-      setSelectedAvatar(savedAvatar);
-    } else {
-      generateAvatar(savedStyle, savedSeed);
+    // Ensure this code runs only on the client
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem('user-avatar');
+      const savedSeed = localStorage.getItem('avatar-seed') || username;
+      const savedStyle = localStorage.getItem('avatar-style') || 'pixel-art';
+      
+      if (savedAvatar) {
+        setSelectedAvatar(savedAvatar);
+      } else {
+        generateAvatar(savedStyle, savedSeed);
+      }
+      
+      setSelectedStyle(savedStyle);
+      setSeed(savedSeed);
     }
-    
-    setSelectedStyle(savedStyle);
-    setSeed(savedSeed);
   }, [username]);
   
   const generateAvatar = (style = selectedStyle, seedValue = seed || username) => {
@@ -66,9 +70,11 @@ export default function AvatarSelector({
     setSelectedAvatar(url);
     setSeed(apiSeed);
     
-    localStorage.setItem('user-avatar', url);
-    localStorage.setItem('avatar-seed', apiSeed);
-    localStorage.setItem('avatar-style', style);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user-avatar', url);
+      localStorage.setItem('avatar-seed', apiSeed);
+      localStorage.setItem('avatar-style', style);
+    }
     
     if (onAvatarChange) {
       onAvatarChange(url);
