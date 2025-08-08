@@ -56,7 +56,7 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
               {(['es', 'en', 'fr', 'pt'] as const).map(langCode => (
                 <Button
                   key={langCode}
-                  variant={language === langCode ? 'primary' : 'ghost'}
+                  variant={language === langCode ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => handleLanguageChange(langCode)}
                   className="rounded-full !px-3 !py-1 text-xs"
