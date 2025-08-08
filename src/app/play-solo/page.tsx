@@ -47,7 +47,17 @@ export default function PlaySoloPage() {
   const { user } = useAuth() as { user: AuthUser | null; isLoading: boolean };
   const { playSound, stopMusic, playMusic } = useSound();
 
-  // ... (resto de estados)
+  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [processingState, setProcessingState] = useState<ProcessingState>('idle');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
+  const [currentLetter, setCurrentLetter] = useState<string | null>(null);
+  const [totalPlayerScore, setTotalPlayerScore] = useState<number>(0);
+  const [totalAiScore, setTotalAiScore] = useState<number>(0);
+  const [gameState, setGameState] = useState<GameState>('PLAYING');
+ const [roundResults, setRoundResults] = useState<EvaluateRoundOutput['results'] | null>(null);
+ // ... (resto de estados)
 
   const handleStop = useCallback(async () => {
     if (timerId) clearInterval(timerId);

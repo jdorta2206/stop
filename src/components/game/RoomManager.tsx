@@ -13,6 +13,13 @@ import { Loader2 } from 'lucide-react';
 import { createRoom, getRoom } from '@/lib/room-service';
 import { useAuth } from '@/hooks/use-auth';
 
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  name?: string;
+  photoURL?: string | null;
+}
+
 interface RoomManagerProps {
   language: Language;
 }
@@ -21,7 +28,7 @@ export default function RoomManager({ language }: RoomManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { user, isLoading: isAuthLoading } = useAuth(); // Usamos el estado de carga de la autenticación
-  const { translate } = useLanguage(); 
+  const { translate } = useLanguage() as { translate: (key: string, params?: { [key: string]: string | number }) => string };
   
   const [activeTab, setActiveTab] = useState('create');
   const [joinRoomId, setJoinRoomId] = useState('');
@@ -35,13 +42,13 @@ export default function RoomManager({ language }: RoomManagerProps) {
   }, [createdRoomId, router]);
   
   const handleCreateRoom = async () => {
-    if (!user) {
-        toast({ title: "Acción requerida", description: "Debes iniciar sesión para crear una sala.", variant: "destructive"});
+    if (!user || !user.name) {
+        toast({ title: "Acción requerida", description: "Debes iniciar sesión y tener un nombre de usuario para crear una sala.", variant: "destructive"});
         return;
     }
     setIsActionLoading(true);
     try {
-      const newRoom = await createRoom(user.uid, user.name || 'Anfitrión');
+      const newRoom = await createRoom(user.uid, user.name);
       toast({
         title: translate('rooms.create.title'),
         description: translate('rooms.create.description', { roomId: newRoom.id }),

@@ -30,6 +30,13 @@ import {
 import { GameArea } from '@/components/game/components/game-area';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
+};
+
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  name?: string;
+  photoURL?: string | null;
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta o Verdura", "Marca"],
   en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit or Vegetable", "Brand"],
   fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit ou Légume", "Marque"],
@@ -56,7 +63,7 @@ export default function RoomPage() {
   const router = useRouter();
   const { language, translate: translateUi } = useLanguage();
   const { toast } = useToast();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
   
   const [room, setRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -7,8 +7,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
 
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  name?: string;
+  photoURL?: string | null;
+}
+
 export function UserAccount() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as { user: AuthUser | null; logout: () => Promise<void> };
 
   if (!user) return null;
 

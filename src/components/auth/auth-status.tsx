@@ -9,10 +9,17 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { LogIn, LogOut, UserCircle, Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 
-export function AuthStatus() {
-  const { user, isLoading, logout } = useAuth();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  name?: string;
+  photoURL?: string | null;
+}
 
+export function AuthStatus() {
+  const { user, isLoading, logout } = useAuth() as { user: AuthUser | null; isLoading: boolean; logout: () => Promise<void> };
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
   if (isLoading) {
     return (
       <Button variant="ghost" size="icon" disabled className="rounded-full">
