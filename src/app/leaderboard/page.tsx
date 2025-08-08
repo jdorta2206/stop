@@ -98,7 +98,10 @@ export default function LeaderboardPage() {
   };
 
   const handleChallenge = (player: PlayerScore) => {
-    router.push(`/challenge-setup/${player.id}?name=${encodeURIComponent(player.playerName)}`);
+    toast({
+      title: translate('social.challenge.comingSoon.title'),
+      description: translate('social.challenge.comingSoon.description', { name: player.playerName }),
+    });
   };
 
   if (isAuthLoading) {
