@@ -11,7 +11,7 @@ import type { PlayerScore } from "@/components/game/types";
 
 // The final, unified User object for the app.
 // It combines Firebase Auth info with our game-specific PlayerScore.
-export interface User extends Omit<PlayerScore, 'id'> {
+export interface User extends Omit<PlayerScore, 'id' | 'playerName' | 'photoURL'> {
   uid: string;
   name: string | null;
   photoURL?: string | null;
