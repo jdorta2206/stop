@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,6 +8,13 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
+
+// Definición de tipo para el usuario
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  // Agrega otras propiedades que uses
+}
 
 // Mock data for admin panel
 const MOCK_USERS = [
@@ -26,17 +32,16 @@ const MOCK_STATS = {
 
 export default function AdminPage() {
     const { language, translate } = useLanguage();
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, isLoading: authLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    // This would in a real app check against a 'roles' collection in Firestore
     useEffect(() => {
         if (!authLoading) {
-            if ((user as { email?: string })?.email === 'jdorta2206@gmail.com') {
+            if (user?.email === 'jdorta2206@gmail.com') {
                 setIsAdmin(true);
-              }  
-                        setIsLoading(false);
+            }
+            setIsLoading(false);
         }
     }, [user, authLoading]);
 

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -19,10 +18,17 @@ import { GameHistoryCard } from '@/components/game/components/game-history-card'
 import { AchievementsCard } from '@/components/game/components/achievements-card';
 import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
 
+// Definición de tipo para el usuario autenticado
+interface AuthUser {
+  uid: string;
+  email: string | null;
+  // Agrega aquí otras propiedades que necesites
+}
+
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
   const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
@@ -52,7 +58,11 @@ export default function LeaderboardPage() {
         setFriendsLeaderboard(validFriendScores);
       }
     } catch (error) {
-      toast({ title: "Error", description: "No se pudieron cargar los datos del ranking.", variant: "destructive" });
+      toast({ 
+        title: translate('error'), 
+        description: translate('leaderboards.loadError'), 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -64,15 +74,25 @@ export default function LeaderboardPage() {
 
   const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
-      toast({ title: "Acción requerida", description: "Debes iniciar sesión para añadir amigos." });
+      toast({ 
+        title: translate('actionRequired'), 
+        description: translate('leaderboards.loginRequired') 
+      });
       return;
     }
     try {
       await addFriend(user.uid, player.id, player.playerName, player.photoURL);
-      toast({ title: "¡Éxito!", description: `${player.playerName} ha sido añadido a tus amigos.` });
+      toast({ 
+        title: translate('success'), 
+        description: translate('leaderboards.friendAdded', { name: player.playerName }) 
+      });
       fetchData(); // Refresh friends list
     } catch (error) {
-      toast({ title: "Error", description: (error as Error).message, variant: "destructive" });
+      toast({ 
+        title: translate('error'), 
+        description: (error as Error).message, 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -81,7 +101,11 @@ export default function LeaderboardPage() {
   };
 
   if (isAuthLoading) {
-    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-16 w-16 animate-spin" /></div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-16 w-16 animate-spin" />
+      </div>
+    );
   }
   
   return (
@@ -89,11 +113,11 @@ export default function LeaderboardPage() {
       <AppHeader onToggleChat={() => {}} isChatOpen={false} />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
-            <Button onClick={fetchData} disabled={isLoading} variant="outline">
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Cargando...' : 'Actualizar'}
-            </Button>
+          <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
+          <Button onClick={fetchData} disabled={isLoading} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? translate('loading') : translate('refresh')}
+          </Button>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -130,7 +154,9 @@ export default function LeaderboardPage() {
             {!user && !isLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
-                <Button onClick={() => router.push('/')}>{translate('leaderboards.loginButton')}</Button>
+                <Button onClick={() => router.push('/')}>
+                  {translate('leaderboards.loginButton')}
+                </Button>
               </div>
             )}
           </div>
