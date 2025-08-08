@@ -48,7 +48,7 @@ export default function RoomManager({ language }: RoomManagerProps) {
     }
     setIsActionLoading(true);
     try {
-      const newRoom = await createRoom(user.uid, user.playerName);
+      const newRoom = await createRoom(user.id, user.playerName);
       toast({
         title: translate('rooms.create.title'),
         description: translate('rooms.create.description', { roomId: newRoom.id }),
