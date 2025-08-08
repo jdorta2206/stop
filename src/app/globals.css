@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 350 85% 55%; /* Rojo Principal como fondo */
+    --foreground: 0 0% 100%; /* Texto blanco */
+    
+    --card: 350 85% 48%; /* Un tono de rojo ligeramente más oscuro para las tarjetas */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 350 85% 45%;
+    --popover-foreground: 0 0% 100%;
+    
+    --primary: 0 0% 100%; /* Blanco para elementos primarios como títulos y botones */
+    --primary-foreground: 350 85% 55%; /* Rojo para texto sobre primario */
+    
+    --secondary: 45 90% 55%; /* Amarillo/Dorado para acentos */
+    --secondary-foreground: 350 85% 15%; /* Texto oscuro para acentos */
+    
+    --muted: 350 85% 30%;
+    --muted-foreground: 0 0% 80%;
+    
+    --accent: 210 40% 96.1%; /* Un azul claro para acentos como el ranking */
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 350 85% 40%;
+    --input: 350 85% 30%;
+    --ring: 45 90% 55%;
+    
+    --radius: 0.8rem;
+  }
+
+  .dark {
+    --background: 350 85% 15%; /* Fondo rojo muy oscuro */
+    --foreground: 0 0% 100%; /* Texto blanco */
+
+    --card: 350 85% 20%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 350 85% 10%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 350 85% 55%;
+
+    --secondary: 45 90% 55%;
+    --secondary-foreground: 350 85% 15%;
+
+    --muted: 350 85% 25%;
+    --muted-foreground: 0 0% 70%;
+    
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 350 85% 25%;
+    --input: 350 85% 25%;
+    --ring: 45 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.processing-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: white;
+}
+
+.processing-message {
+  background: #1e293b;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 500px;
+  text-align: center;
+}
+
+.status-steps {
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.step {
+  margin: 0.75rem 0;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.step.active {
+  opacity: 1;
+  font-weight: bold;
+  transform: scale(1.02);
+}
+
+.step span {
+  font-size: 1.5rem;
+}

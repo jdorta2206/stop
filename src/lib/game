@@ -1,0 +1,65 @@
+import { db } from './firebase';
+import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
+
+interface GameRoom {
+  id: string;
+  players: string[];
+  gameState: 'waiting' | 'playing' | 'finished';
+  currentLetter?: string;
+  categories: string[];
+  scores: Record<string, number>;
+  createdAt: Date;
+}
+
+export async function createGameRoom(roomId: string, userId: string, categories: string[]) {
+  const roomRef = doc(db, 'gameRooms', roomId);
+  
+  await setDoc(roomRef, {
+    players: [userId],
+    gameState: 'waiting',
+    categories,
+    scores: { [userId]: 0 },
+    createdAt: new Date()
+  });
+
+  return roomId;
+}
+
+export async function joinGameRoom(roomId: string, userId: string) {
+  const roomRef = doc(db, 'gameRooms', roomId);
+  const roomSnap = await getDoc(roomRef);
+
+  if (!roomSnap.exists()) {
+    throw new Error('Room does not exist');
+  }
+
+  const roomData = roomSnap.data();
+  if (roomData.players.includes(userId)) {
+    return; // Ya está en la sala
+  }
+
+  await updateDoc(roomRef, {
+    players: [...roomData.players, userId],
+    scores: { ...roomData.scores, [userId]: 0 }
+  });
+}
+
+export async function startGameRound(roomId: string, letter: string) {
+  const roomRef = doc(db, 'gameRooms', roomId);
+  await updateDoc(roomRef, {
+    gameState: 'playing',
+    currentLetter: letter,
+    responses: {}
+  });
+}
+
+export async function submitPlayerResponse(
+  roomId: string,
+  userId: string,
+  responses: Record<string, string>
+) {
+  const roomRef = doc(db, 'gameRooms', roomId);
+  await updateDoc(roomRef, {
+    [`responses.${userId}`]: responses
+  });
+}

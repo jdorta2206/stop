@@ -1,0 +1,37 @@
+import { useEffect, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+export function useGameRoom(roomId: string | null) {
+  const [roomData, setRoomData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!roomId) {
+      setLoading(false);
+      return;
+    }
+
+    const roomRef = doc(db, 'gameRooms', roomId);
+    const unsubscribe = onSnapshot(
+      roomRef,
+      (doc) => {
+        if (doc.exists()) {
+          setRoomData({ id: doc.id, ...doc.data() });
+        } else {
+          setError(new Error('Room not found'));
+        }
+        setLoading(false);
+      },
+      (err) => {
+        setError(err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [roomId]);
+
+  return { roomData, loading, error };
+}

@@ -1,0 +1,17 @@
+export interface Player {
+  id: string;
+  name: string;
+  score?: number;
+  avatar?: string;
+  // Agrega otras propiedades que necesites
+}
+
+export interface GlobalLeaderboardCardProps {
+  leaderboardData: Player[];
+  currentUserId: string;
+  onAddFriend?: (player: Player) => void;
+  onChallenge?: (player: Player) => void;
+  translateUi: (key: string) => string;
+  className?: string;
+  language?: string;
+}

@@ -1,0 +1,7 @@
+// firebase/types.ts
+import { User } from 'firebase/auth';
+import { DocumentData } from 'firebase/firestore';
+
+export type FirebaseUser = User;
+export type FirebaseDocument = DocumentData;
+// Añade otras definiciones de tipos según necesites
