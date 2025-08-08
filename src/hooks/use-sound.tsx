@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, t
 
 type SoundEffect = 'click' | 'spin-start' | 'spin-end' | 'round-win' | 'round-lose' | 'timer-tick';
 
+// Aunque las rutas están aquí, no se usarán, pero se mantienen por si se añaden los archivos en el futuro.
 const SOUND_PATHS: Record<SoundEffect, string> = {
   click: '/sounds/button-click.mp3',
   'spin-start': '/sounds/spin-start.mp3',
@@ -27,79 +28,27 @@ interface SoundContextType {
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
 export function SoundProvider({ children }: { children: ReactNode }) {
-  const [isMuted, setIsMuted] = useState(true); // Muted by default
-  const [audioInstances, setAudioInstances] = useState<Record<string, HTMLAudioElement>>({});
-  const [musicInstance, setMusicInstance] = useState<HTMLAudioElement | null>(null);
+  // El estado ahora es permanentemente silenciado para evitar errores.
+  const [isMuted, setIsMuted] = useState(true);
 
-  // Preload sounds
-  useEffect(() => {
-    const instances: Record<string, HTMLAudioElement> = {};
-    Object.entries(SOUND_PATHS).forEach(([key, path]) => {
-      const audio = new Audio(path);
-      audio.volume = 0.5; // Lower volume for effects
-      audio.load();
-      audio.addEventListener('error', () => {
-        console.warn(`Could not load sound: ${path}`);
-      });
-      instances[key] = audio;
-    });
-    setAudioInstances(instances);
-    
-    const music = new Audio(BACKGROUND_MUSIC_PATH);
-    music.loop = true;
-    music.volume = 0.2;
-    music.load();
-    music.addEventListener('error', () => {
-        console.warn(`Could not load background music: ${BACKGROUND_MUSIC_PATH}`);
-    });
-    setMusicInstance(music);
-    
-    // Check saved preference
-    const savedMuteState = localStorage.getItem('stop-game-muted');
-    if (savedMuteState) {
-        setIsMuted(JSON.parse(savedMuteState));
-    }
-
+  // Las funciones ahora no hacen nada para prevenir intentos de carga de archivos.
+  const toggleMute = useCallback(() => {
+    // Se podría añadir un toast para informar al usuario que el sonido no está disponible.
+    console.warn("Sound functionality is disabled because audio files are missing.");
   }, []);
 
-  const toggleMute = useCallback(() => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    localStorage.setItem('stop-game-muted', JSON.stringify(newMutedState));
-    
-    if (newMutedState) {
-        musicInstance?.pause();
-    } else {
-        musicInstance?.play().catch(e => console.error("Error playing music:", e));
-    }
-  }, [isMuted, musicInstance]);
-
   const playSound = useCallback((sound: SoundEffect) => {
-    if (isMuted) return;
-    const audio = audioInstances[sound];
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(e => console.warn(`Error playing sound ${sound}:`, e));
-    }
-  }, [isMuted, audioInstances]);
+    // No hacer nada.
+  }, []);
 
   const playMusic = useCallback(() => {
-    if (isMuted || !musicInstance) return;
-    musicInstance.play().catch(e => console.warn("Error playing music:", e));
-  }, [isMuted, musicInstance]);
+    // No hacer nada.
+  }, []);
 
   const stopMusic = useCallback(() => {
-    musicInstance?.pause();
-  }, [musicInstance]);
+    // No hacer nada.
+  }, []);
   
-  // Autoplay music when unmuted for the first time
-  useEffect(() => {
-      if(!isMuted && musicInstance && musicInstance.paused) {
-          playMusic();
-      }
-  }, [isMuted, musicInstance, playMusic]);
-
-
   const value = useMemo(() => ({
     isMuted,
     toggleMute,
