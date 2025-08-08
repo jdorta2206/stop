@@ -42,13 +42,13 @@ export default function RoomManager({ language }: RoomManagerProps) {
   }, [createdRoomId, router]);
   
   const handleCreateRoom = async () => {
-    if (!user || !user.name) {
+    if (!user || !user.playerName) {
         toast({ title: "Acción requerida", description: "Debes iniciar sesión y tener un nombre de usuario para crear una sala.", variant: "destructive"});
         return;
     }
     setIsActionLoading(true);
     try {
-      const newRoom = await createRoom(user.uid, user.name);
+      const newRoom = await createRoom(user.uid, user.playerName);
       toast({
         title: translate('rooms.create.title'),
         description: translate('rooms.create.description', { roomId: newRoom.id }),
