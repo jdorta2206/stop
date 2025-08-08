@@ -70,7 +70,7 @@ export const StopButton: React.FC<StopButtonProps> = ({
         <img 
             src="/android-chrome-192x192.png" 
             alt="Logo Stop" 
-            className="w-24 h-24 md:w-28 md:h-28 p-1 rounded-full"
+            className="w-20 h-20 md:w-24 md:h-24 p-1 rounded-full"
         />
       </Button>
     </div>
