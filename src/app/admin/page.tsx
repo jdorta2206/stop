@@ -33,7 +33,7 @@ export default function AdminPage() {
     // This would in a real app check against a 'roles' collection in Firestore
     useEffect(() => {
         if (!authLoading) {
-            if (user?.email === 'admin@stopgame.com') { // Mock admin check
+            if (user?.email === 'jdorta2206@gmail.com') { // Mock admin check
                 setIsAdmin(true);
             }
             setIsLoading(false);
