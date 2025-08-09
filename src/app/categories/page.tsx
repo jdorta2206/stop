@@ -7,7 +7,7 @@ import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, BrainCircuit, Gamepad2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Gamepad2, BrainCircuit, Lightbulb } from 'lucide-react';
 
 export default function CategoriesPage() {
   const { language, translate } = useLanguage();
@@ -31,7 +31,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
-      <AppHeader onToggleChat={() => {}} isChatOpen={false} />
+      <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <Button variant="outline" onClick={() => router.back()} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
