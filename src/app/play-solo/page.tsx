@@ -9,7 +9,7 @@ import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundInput, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
+import type { GameState, LanguageCode } from '@/components/game/types';
 import { useAuth, type User } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
@@ -48,7 +48,7 @@ export default function PlaySoloPage() {
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [totalPlayerScore, setTotalPlayerScore] = useState<number>(0);
   const [totalAiScore, setTotalAiScore] = useState<number>(0);
-  const [gameState, setGameState] = useState<GameState>('PLAYING');
+  const [gameState, setGameState] = useState<GameState>('SPINNING');
  const [roundResults, setRoundResults] = useState<EvaluateRoundOutput['results'] | null>(null);
  // ... (resto de estados)
 
