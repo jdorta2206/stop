@@ -18,8 +18,8 @@ import { useToast } from '@/components/ui/use-toast';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
-        width="24"
-        height="24"
+        width="28"
+        height="28"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -40,8 +40,8 @@ const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
+        width="28"
+        height="28"
         viewBox="0 0 24 24"
         {...props}
     >
@@ -168,7 +168,7 @@ export function LandingPageContent() {
                 <Button onClick={() => handleShare('whatsapp')} variant="ghost" size="icon" className="rounded-full text-white transition-colors">
                     <WhatsappIcon />
                 </Button>
-                <Button onClick={() => handleShare('facebook')} variant="ghost" size="icon" className="rounded-full text-white hover:bg-blue-700/20 transition-colors">
+                <Button onClick={() => handleShare('facebook')} variant="ghost" size="icon" className="rounded-full text-white transition-colors">
                     <FacebookIcon />
                 </Button>
               </>
