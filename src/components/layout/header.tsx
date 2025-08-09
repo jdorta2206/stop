@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import PushNotifications from '../game/PushNotifications';
 import { useRouter } from 'next/navigation';
-import { Coins, Volume2, VolumeX, MessageSquare } from 'lucide-react';
+import { Coins, Volume2, VolumeX, MessageSquare, Trophy } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 import { ChatPanel } from '../chat/chat-panel';
 import { onChatUpdate, sendMessageToRoom, type ChatMessage } from '@/lib/room-service';
@@ -61,7 +61,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="py-4 px-4 md:px-8">
+      <header className="py-4 px-4 md:px-8 bg-black/10">
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity" aria-label={translate('game.title')}>
             <img
@@ -71,10 +71,10 @@ export function AppHeader() {
               height={40}
               className="h-10 w-auto rounded-full"
             />
-            <span className="text-xl font-bold text-primary">{translate('game.title')}</span>
+            <span className="text-xl font-bold text-white">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="hidden sm:flex items-center gap-1 bg-black/10 p-1 rounded-full">
+            <div className="hidden sm:flex items-center gap-1 bg-black/20 p-1 rounded-full border border-white/20">
               {(['es', 'en', 'fr', 'pt'] as const).map(langCode => (
                 <Button
                   key={langCode}
@@ -88,28 +88,14 @@ export function AppHeader() {
               ))}
             </div>
             
-             <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/10 text-white">
+            <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-black">
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-             </Button>
-
-            <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(prev => !prev)} className="rounded-full bg-black/10 text-white">
-                <MessageSquare className="h-5 w-5" />
             </Button>
             
             {isMounted && (
               <>
                 {isAuthenticated && user ? (
                   <>
-                    <div className="hidden sm:flex items-center gap-2 bg-black/10 p-1 pr-3 rounded-full">
-                      <Coins className="h-5 w-5 text-yellow-500" />
-                      <span className="font-bold text-sm">{user.coins?.toLocaleString() ?? 0}</span>
-                    </div>
-                    <PushNotifications 
-                      userId={user.uid}
-                      username={user.name || "Usuario"}
-                      onJoinRoom={(roomId) => router.push(`/multiplayer?roomId=${roomId}`)}
-                      onOpenChat={() => setIsChatOpen(true)}
-                    />
                     <UserAccount />
                   </>
                 ) : (
@@ -142,3 +128,5 @@ export function AppHeader() {
     </>
   );
 }
+
+    
