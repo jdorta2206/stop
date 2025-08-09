@@ -130,7 +130,7 @@ class RankingManager {
     const updatedAchievements = this.checkAchievements(playerRanking, gameResult);
     const updatedMissions = checkMissions(playerRanking.dailyMissions, gameResult);
 
-    const updatedData = {
+    const updatedData: Record<string, any> = {
       playerName: gameResult.playerName, // Ensure name is updated
       photoURL: gameResult.photoURL, // Ensure photo is updated
       totalScore: increment(gameResult.score),
@@ -145,7 +145,7 @@ class RankingManager {
       coins: increment(coinsEarned),
     };
 
-    await updateDoc(playerDocRef, updatedData as any);
+    await updateDoc(playerDocRef, updatedData);
     
     return (await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL));
   }

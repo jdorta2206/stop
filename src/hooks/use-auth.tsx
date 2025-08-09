@@ -43,13 +43,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [user, setUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
     const syncUser = async () => {
       if (firebaseUser) {
         setIsSyncing(true);
         try {
+          // Fetch or create the player profile in Firestore, ensuring it's up-to-date
           const playerData = await rankingManager.getPlayerRanking(
             firebaseUser.uid, 
             firebaseUser.displayName, 
@@ -68,20 +69,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
           console.error("Error syncing user profile:", error);
           toast({ title: "Error de sincronización", description: (error as Error).message, variant: "destructive" });
+          // Log out if profile sync fails to avoid inconsistent state
           await signOut();
           setUser(null);
         } finally {
           setIsSyncing(false);
         }
       } else {
+        // No firebase user, so no app user and no syncing needed.
         setUser(null);
+        setIsSyncing(false);
       }
     };
 
-    if (!authLoading) {
-      syncUser();
-    }
-  }, [firebaseUser, authLoading, signOut, toast]);
+    syncUser();
+  }, [firebaseUser, signOut, toast]);
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error crítico de autenticación con ${provider}:`, error);
@@ -97,7 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         variant: 'destructive'
     });
   };
-
+  
   const loginWithGoogle = useCallback(async () => {
     try {
       await signInWithGoogle();
@@ -119,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   }, [signOut]);
 
+  // Combined loading state: true if Firebase is checking auth, or if a sign-in/out is in progress, or if we are syncing profile data
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
 
   const value = useMemo(() => ({
