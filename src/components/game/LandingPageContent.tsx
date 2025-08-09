@@ -38,13 +38,15 @@ const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    {...props}>
-        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04zM16.5 10.28H14.15V20h-3.22V10.28H9.5V7.45h1.43V5.78c0-1.61.99-2.79 2.95-2.79h1.9v2.8h-1.39c-.68 0-.8.32-.8.8v1.75h2.2l-.26 2.83z" fill="#1877F2"/>
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        {...props}
+    >
+        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06c0 5.52 4.5 10.02 10 10.02s10-4.5 10-10.02C22 6.53 17.5 2.04 12 2.04z" fill="#1877F2"/>
+        <path d="M16.5 10.28H14.15V20h-3.22V10.28H9.5V7.45h1.43V5.78c0-1.61.99-2.79 2.95-2.79h1.9v2.8h-1.39c-.68 0-.8.32-.8.8v1.75h2.2l-.26 2.83z" fill="#fff"/>
     </svg>
 );
 
@@ -163,7 +165,7 @@ export function LandingPageContent() {
                   </DialogContent>
                 </Dialog>
 
-                <Button onClick={() => handleShare('whatsapp')} variant="ghost" size="icon" className="rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors">
+                <Button onClick={() => handleShare('whatsapp')} variant="ghost" size="icon" className="rounded-full text-white transition-colors">
                     <WhatsappIcon />
                 </Button>
                 <Button onClick={() => handleShare('facebook')} variant="ghost" size="icon" className="rounded-full text-white hover:bg-blue-700/20 transition-colors">
