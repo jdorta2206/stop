@@ -23,8 +23,7 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg {...props} viewBox="0 0 24 24" width="24" height="24">
-        <circle cx="12" cy="12" r="12" fill="#1877F2"/>
-        <path d="M13.43 21.94v-7.9h2.64l.39-3.06h-3.03V9.04c0-.88.24-1.49 1.52-1.49h1.62V4.89c-.28-.04-1.25-.12-2.37-.12-2.35 0-3.96 1.43-3.96 4.07v2.25H7.76v3.06h2.89v7.9h3.78z" fill="white"/>
+        <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3l-.5 3h-2.5v6.95C18.05 21.45 22 17.19 22 12z" fill="#1877F2"/>
     </svg>
 );
 

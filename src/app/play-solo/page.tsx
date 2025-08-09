@@ -48,7 +48,7 @@ export default function PlaySoloPage() {
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [totalPlayerScore, setTotalPlayerScore] = useState<number>(0);
   const [totalAiScore, setTotalAiScore] = useState<number>(0);
-  const [gameState, setGameState] = useState<GameState>('SPINNING');
+  const [gameState, setGameState] = useState<GameState>('IDLE');
  const [roundResults, setRoundResults] = useState<EvaluateRoundOutput['results'] | null>(null);
  // ... (resto de estados)
 
