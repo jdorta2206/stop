@@ -43,12 +43,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [user, setUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false); // State to manage db sync
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const syncUser = async () => {
       if (firebaseUser) {
-        setIsSyncing(true); // Start syncing
+        setIsSyncing(true);
         try {
           const playerData = await rankingManager.getPlayerRanking(
             firebaseUser.uid, 
@@ -71,25 +71,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await signOut();
           setUser(null);
         } finally {
-          setIsSyncing(false); // Finish syncing
+          setIsSyncing(false);
         }
       } else {
         setUser(null);
-        setIsSyncing(false);
       }
     };
 
-    // Only run sync if not already syncing to avoid loops
     if (!authLoading) {
       syncUser();
     }
   }, [firebaseUser, authLoading, signOut, toast]);
 
+  const handleAuthError = (error: any, provider: string) => {
+    console.error(`Error crítico de autenticación con ${provider}:`, error);
+    let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
+    if (error.code === 'auth/popup-blocked') {
+        description = "El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio e inténtalo de nuevo.";
+    } else if (error.code === 'auth/cancelled-popup-request') {
+        description = "Se ha cancelado la solicitud de inicio de sesión.";
+    }
+    toast({
+        title: `Error de inicio de sesión con ${provider}`,
+        description: description,
+        variant: 'destructive'
+    });
+  };
+
   const loginWithGoogle = useCallback(async () => {
     try {
       await signInWithGoogle();
     } catch (e) {
-      toast({ title: "Error de inicio de sesión con Google", description: (e as Error).message, variant: 'destructive' });
+      handleAuthError(e, 'Google');
     }
   }, [signInWithGoogle, toast]);
   
@@ -97,7 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await signInWithFacebook();
     } catch (e) {
-      toast({ title: "Error de inicio de sesión con Facebook", description: (e as Error).message, variant: 'destructive' });
+      handleAuthError(e, 'Facebook');
     }
   }, [signInWithFacebook, toast]);
   

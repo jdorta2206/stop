@@ -15,12 +15,19 @@ const db = getFirestore(app);
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
+// Forzar selección de cuenta para evitar problemas de caché y dar control al usuario.
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 
 const facebookProvider = new FacebookAuthProvider();
 facebookProvider.addScope('email');
 facebookProvider.addScope('public_profile');
+// Forzar selección de cuenta y asegurar que se solicitan los campos necesarios.
 facebookProvider.setCustomParameters({
-  'fields': 'id,name,email,picture'
+  'fields': 'id,name,email,picture',
+  'prompt': 'select_account'
 });
 
 
