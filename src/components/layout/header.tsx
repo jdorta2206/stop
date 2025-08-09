@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
@@ -51,12 +52,6 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
             <span className="text-xl font-bold text-primary">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
-             <Link href="/leaderboard">
-                <Button variant="ghost" className="rounded-full text-white hidden sm:flex">
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Ranking
-                </Button>
-            </Link>
             <div className="flex items-center gap-1 bg-black/10 p-1 rounded-full">
               {(['es', 'en', 'fr', 'pt'] as const).map(langCode => (
                 <Button

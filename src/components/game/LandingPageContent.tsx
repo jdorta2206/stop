@@ -104,6 +104,13 @@ export function LandingPageContent() {
                         <RoomManager language={language} />
                     </DialogContent>
                 </Dialog>
+                
+                <Link href="/leaderboard">
+                  <Button variant="outline" className="text-white font-semibold py-3 px-6 text-md rounded-full shadow-lg">
+                    <Trophy className="w-5 h-5 mr-2" />
+                    {translate('landing.ranking')}
+                  </Button>
+                </Link>
 
                 <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
                     <DialogTrigger asChild>
