@@ -46,27 +46,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // The final user object for the application
   const [user, setUser] = useState<User | null>(null);
-  // State to manage our internal loading (e.g., Firestore sync)
-  const [isSyncing, setIsSyncing] = useState(true);
 
-  // This useEffect is the core of the new logic.
+  // This useEffect is the core of the logic.
   // It reacts to changes in `firebaseUser` from `useAuthState`.
   useEffect(() => {
     const syncUser = async () => {
       // If firebaseUser exists, we sync or create their profile in Firestore.
       if (firebaseUser) {
-        setIsSyncing(true);
         try {
           // getPlayerRanking now handles both getting AND creating the user profile robustly.
-          // We use firebaseUser.uid as the consistent ID.
           const playerData = await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
           
           // Create the final User object for our app's context
           const appUser: User = {
             ...playerData,
             uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
+            name: playerData.playerName, // Use the name from Firestore as the source of truth
+            photoURL: playerData.photoURL, // Use the photo from Firestore
             coins: playerData.coins || 0
           };
 
@@ -77,34 +73,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // If sync fails, log the user out to prevent an inconsistent state.
           await signOut();
           setUser(null);
-        } finally {
-          setIsSyncing(false);
         }
       } else {
         // If there's no firebaseUser, there's no app user.
         setUser(null);
-        setIsSyncing(false);
       }
     };
 
-    syncUser();
-  }, [firebaseUser, signOut, toast]);
+    if (!authLoading) {
+      syncUser();
+    }
+  }, [firebaseUser, authLoading, signOut, toast]);
 
   const loginWithGoogle = useCallback(async () => {
     try {
       await signInWithGoogle();
-      // The useEffect above will handle the rest.
+      // The useEffect above will handle the rest once firebaseUser is updated.
     } catch (e) {
-      toast({ title: "Error de inicio de sesión", description: (e as Error).message, variant: 'destructive' });
+      toast({ title: "Error de inicio de sesión con Google", description: (e as Error).message, variant: 'destructive' });
     }
   }, [signInWithGoogle, toast]);
   
   const loginWithFacebook = useCallback(async () => {
     try {
       await signInWithFacebook();
-      // The useEffect above will handle the rest.
+      // The useEffect above will handle the rest once firebaseUser is updated.
     } catch (e) {
-      toast({ title: "Error de inicio de sesión", description: (e as Error).message, variant: 'destructive' });
+      toast({ title: "Error de inicio de sesión con Facebook", description: (e as Error).message, variant: 'destructive' });
     }
   }, [signInWithFacebook, toast]);
   
@@ -114,7 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [signOut]);
 
   // Combine all loading states into one.
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
+  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
 
   const value = useMemo(() => ({
     user,
