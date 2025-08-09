@@ -93,8 +93,7 @@ export function LandingPageContent() {
       <main className="flex-grow flex flex-col">
         <section className="flex-grow flex flex-col items-center justify-center text-center py-12 px-4">
           <div className="relative w-32 h-32 flex items-center justify-center mx-auto mb-4">
-            <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></div>
-            <img src="/android-chrome-192x192.png" alt={translate('game.logoAlt')} width={128} height={128} className="p-2 rounded-full bg-white/20 shadow-lg" />
+            <img src="/android-chrome-192x192.png" alt={translate('game.logoAlt')} width={128} height={128} className="p-2 rounded-full shadow-lg" />
           </div>
           
           <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tighter mt-4 mb-2">{translate('landing.title')}</h1>
