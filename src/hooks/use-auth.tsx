@@ -36,33 +36,31 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
-  // The single source of truth for Firebase Auth state
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   
-  // States for the sign-in processes
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  // The final user object for the application
   const [user, setUser] = useState<User | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false); // State to manage db sync
 
-  // This useEffect is the core of the logic.
-  // It reacts to changes in `firebaseUser` from `useAuthState`.
   useEffect(() => {
     const syncUser = async () => {
-      // If firebaseUser exists, we sync or create their profile in Firestore.
       if (firebaseUser) {
+        setIsSyncing(true); // Start syncing
         try {
-          // getPlayerRanking now handles both getting AND creating the user profile robustly.
-          const playerData = await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
+          const playerData = await rankingManager.getPlayerRanking(
+            firebaseUser.uid, 
+            firebaseUser.displayName, 
+            firebaseUser.photoURL
+          );
           
-          // Create the final User object for our app's context
           const appUser: User = {
             ...playerData,
             uid: firebaseUser.uid,
-            name: playerData.playerName, // Use the name from Firestore as the source of truth
-            photoURL: playerData.photoURL, // Use the photo from Firestore
+            name: playerData.playerName,
+            photoURL: playerData.photoURL,
             coins: playerData.coins || 0
           };
 
@@ -70,16 +68,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
           console.error("Error syncing user profile:", error);
           toast({ title: "Error de sincronización", description: (error as Error).message, variant: "destructive" });
-          // If sync fails, log the user out to prevent an inconsistent state.
           await signOut();
           setUser(null);
+        } finally {
+          setIsSyncing(false); // Finish syncing
         }
       } else {
-        // If there's no firebaseUser, there's no app user.
         setUser(null);
+        setIsSyncing(false);
       }
     };
 
+    // Only run sync if not already syncing to avoid loops
     if (!authLoading) {
       syncUser();
     }
@@ -88,7 +88,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithGoogle = useCallback(async () => {
     try {
       await signInWithGoogle();
-      // The useEffect above will handle the rest once firebaseUser is updated.
     } catch (e) {
       toast({ title: "Error de inicio de sesión con Google", description: (e as Error).message, variant: 'destructive' });
     }
@@ -97,7 +96,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithFacebook = useCallback(async () => {
     try {
       await signInWithFacebook();
-      // The useEffect above will handle the rest once firebaseUser is updated.
     } catch (e) {
       toast({ title: "Error de inicio de sesión con Facebook", description: (e as Error).message, variant: 'destructive' });
     }
@@ -108,8 +106,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   }, [signOut]);
 
-  // Combine all loading states into one.
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
+  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
 
   const value = useMemo(() => ({
     user,

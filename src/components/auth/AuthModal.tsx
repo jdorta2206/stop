@@ -72,7 +72,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => loginWithGoogle()}
-                    disabled={isLoading}
                 >
                     <GoogleIcon />
                     <span className="text-sm">Continuar con Google</span>
@@ -81,7 +80,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => loginWithFacebook()}
-                    disabled={isLoading}
                 >
                     <FacebookIcon />
                     <span className="text-sm">Continuar con Facebook</span>
