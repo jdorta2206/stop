@@ -1,16 +1,19 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, persistentLocalCache, memoryGarbageCollector } from 'firebase/firestore';
 import { firebaseConfig } from '@/lib/firebase-config';
 
 // Initialize Firebase App
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// Initialize Firestore with robust offline persistence
-const db = getFirestore(app);
+// Initialize Firestore with robust offline persistence for Firebase v10+
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    garbageCollector: memoryGarbageCollector({})
+  })
+});
 
 
 // --- Providers ---

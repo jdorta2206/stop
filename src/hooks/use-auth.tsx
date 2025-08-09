@@ -43,55 +43,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [user, setUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const syncUser = async () => {
-      if (firebaseUser) {
-        setIsSyncing(true);
-        try {
-          // Fetch or create the player profile in Firestore, ensuring it's up-to-date
-          const playerData = await rankingManager.getPlayerRanking(
-            firebaseUser.uid, 
-            firebaseUser.displayName, 
-            firebaseUser.photoURL
-          );
-          
-          const appUser: User = {
-            ...playerData,
-            uid: firebaseUser.uid,
-            name: playerData.playerName,
-            photoURL: playerData.photoURL,
-            coins: playerData.coins || 0
-          };
+    const syncUser = async (fbUser: FirebaseUser) => {
+      setIsSyncing(true);
+      try {
+        const playerData = await rankingManager.getPlayerRanking(
+          fbUser.uid, 
+          fbUser.displayName, 
+          fbUser.photoURL
+        );
+        
+        const appUser: User = {
+          ...playerData,
+          uid: fbUser.uid,
+          name: playerData.playerName,
+          photoURL: playerData.photoURL,
+          coins: playerData.coins || 0
+        };
 
-          setUser(appUser);
-        } catch (error) {
-          console.error("Error syncing user profile:", error);
-          toast({ title: "Error de sincronización", description: (error as Error).message, variant: "destructive" });
-          // Log out if profile sync fails to avoid inconsistent state
-          await signOut();
-          setUser(null);
-        } finally {
-          setIsSyncing(false);
-        }
-      } else {
-        // No firebase user, so no app user and no syncing needed.
+        setUser(appUser);
+      } catch (error) {
+        console.error("Error syncing user profile:", error);
+        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+        await signOut();
         setUser(null);
+      } finally {
         setIsSyncing(false);
       }
     };
 
-    syncUser();
+    if (firebaseUser) {
+      syncUser(firebaseUser);
+    } else {
+      setUser(null);
+    }
   }, [firebaseUser, signOut, toast]);
 
+  const handleAuthResult = async (result: { user: FirebaseUser } | undefined, providerName: string) => {
+    if (result?.user) {
+      toast({ title: `¡Hola, ${result.user.displayName}!`, description: "Has iniciado sesión correctamente." });
+    }
+  };
+
   const handleAuthError = (error: any, provider: string) => {
-    console.error(`Error crítico de autenticación con ${provider}:`, error);
+    console.error(`Error de autenticación con ${provider}:`, error);
     let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
     if (error.code === 'auth/popup-blocked') {
         description = "El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio e inténtalo de nuevo.";
     } else if (error.code === 'auth/cancelled-popup-request') {
         description = "Se ha cancelado la solicitud de inicio de sesión.";
+    } else if (error.code === 'auth/account-exists-with-different-credential') {
+        description = "Ya existe una cuenta con este email pero con un método de inicio de sesión diferente. Intenta acceder con el otro proveedor (ej. Google).";
     }
     toast({
         title: `Error de inicio de sesión con ${provider}`,
@@ -102,7 +106,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      await handleAuthResult(result, 'Google');
     } catch (e) {
       handleAuthError(e, 'Google');
     }
@@ -110,7 +115,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      await signInWithFacebook();
+      const result = await signInWithFacebook();
+      await handleAuthResult(result, 'Facebook');
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
@@ -119,9 +125,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     await signOut();
     setUser(null);
-  }, [signOut]);
+    toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
+  }, [signOut, toast]);
 
-  // Combined loading state: true if Firebase is checking auth, or if a sign-in/out is in progress, or if we are syncing profile data
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
 
   const value = useMemo(() => ({
