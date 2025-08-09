@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { Users, Trophy, Gamepad2, BrainCircuit, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
@@ -204,5 +205,3 @@ export function LandingPageContent() {
     </div>
   );
 }
-
-    
