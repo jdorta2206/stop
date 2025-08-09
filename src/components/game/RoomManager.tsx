@@ -1,16 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import type { Language } from '@/contexts/language-context';
 import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
-import { createRoom, getRoom } from '@/lib/room-service';
+import { createRoom, getRoom, addPlayerToRoom } from '@/lib/room-service';
 import { useAuth, type User } from '@/hooks/use-auth';
 
 interface RoomManagerProps {
@@ -20,13 +20,13 @@ interface RoomManagerProps {
 export default function RoomManager({ language }: RoomManagerProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, isLoading: isAuthLoading } = useAuth(); // Usamos el estado de carga de la autenticación
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { translate } = useLanguage() as { translate: (key: string, params?: { [key: string]: string | number }) => string };
   
   const [activeTab, setActiveTab] = useState('create');
   const [joinRoomId, setJoinRoomId] = useState('');
-  const [isActionLoading, setIsActionLoading] = useState(false); // Estado de carga para las acciones
-  
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
   const handleCreateRoom = async () => {
     if (!user || !user.name) {
         toast({ title: "Acción requerida", description: "Debes iniciar sesión y tener un nombre de usuario para crear una sala.", variant: "destructive"});
@@ -37,9 +37,9 @@ export default function RoomManager({ language }: RoomManagerProps) {
       const newRoom = await createRoom(user.uid, user.name);
       toast({
         title: translate('rooms.create.title'),
-        description: `La funcionalidad de sala privada está en desarrollo. Por ahora, puedes compartir el ID: ${newRoom.id}`,
+        description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
       });
-      // router.push(`/room/${newRoom.id}`); // Deshabilitado temporalmente
+      router.push(`/multiplayer?roomId=${newRoom.id}`);
     } catch (error) {
        toast({
         title: "Error al crear la sala",
@@ -52,7 +52,7 @@ export default function RoomManager({ language }: RoomManagerProps) {
   };
 
   const handleJoinRoom = async () => {
-    if (!user) {
+    if (!user || !user.name) {
         toast({ title: "Acción requerida", description: "Debes iniciar sesión para unirte a una sala.", variant: "destructive"});
         return;
     }
@@ -69,11 +69,12 @@ export default function RoomManager({ language }: RoomManagerProps) {
     try {
         const roomExists = await getRoom(roomId);
         if (roomExists) {
+            await addPlayerToRoom(roomId, user.uid, user.name, user.photoURL || null);
             toast({
               title: "Sala encontrada",
-              description: `La funcionalidad para unirse a la sala ${roomId} está en desarrollo.`,
+              description: `Uniéndote a la sala ${roomId}...`,
             });
-            // router.push(`/room/${roomId}`); // Deshabilitado temporalmente
+            router.push(`/multiplayer?roomId=${roomId}`);
         } else {
             toast({ title: "Error", description: "La sala no existe o el ID es incorrecto.", variant: "destructive" });
         }

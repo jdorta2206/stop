@@ -20,7 +20,7 @@ import {
   LogOut,
   Play
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/components/ui/use-toast";
 import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, type Player, type Room } from '@/lib/room-service';
 import type { Language } from '@/contexts/language-context';
 import ContactsManager from './ContactsManager';
