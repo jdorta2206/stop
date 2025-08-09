@@ -43,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const syncUser = async (fbUser: FirebaseUser) => {
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (e) {
       handleAuthError(e, 'Google');
     }
-  }, [signInWithGoogle, toast]);
+  }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
     try {
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
-  }, [signInWithFacebook, toast]);
+  }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
     await signOut();
