@@ -42,8 +42,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  const [user, setUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [appUser, setAppUser] = useState<User | null>(null);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
     const syncUser = async (fbUser: FirebaseUser) => {
@@ -55,20 +55,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
           fbUser.photoURL
         );
         
-        const appUser: User = {
+        const currentUser: User = {
           ...playerData,
           uid: fbUser.uid,
           name: playerData.playerName,
           photoURL: playerData.photoURL,
           coins: playerData.coins || 0
         };
-
-        setUser(appUser);
+        setAppUser(currentUser);
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
         await signOut();
-        setUser(null);
+        setAppUser(null);
       } finally {
         setIsSyncing(false);
       }
@@ -77,7 +76,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (firebaseUser) {
       syncUser(firebaseUser);
     } else {
-      setUser(null);
+      setAppUser(null);
+      setIsSyncing(false);
     }
   }, [firebaseUser, signOut, toast]);
 
@@ -124,21 +124,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const logout = useCallback(async () => {
     await signOut();
-    setUser(null);
+    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
 
   const value = useMemo(() => ({
-    user,
+    user: appUser,
     isLoading,
     error: authError || googleError || facebookError || signOutError,
     loginWithGoogle,
     loginWithFacebook,
     logout,
   }), [
-    user, 
+    appUser, 
     isLoading,
     authError, googleError, facebookError, signOutError, 
     loginWithGoogle, loginWithFacebook, logout

@@ -31,18 +31,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, loginWithGoogle, loginWithFacebook, isLoading, error } = useAuth();
   const { toast } = useToast();
   
-  // This effect closes the modal once the user is successfully logged in and loaded.
   useEffect(() => {
-    if (user && isOpen && !isLoading) {
+    if (user && !isLoading) {
       onClose();
     }
-  }, [user, isOpen, onClose, isLoading]);
+  }, [user, isLoading, onClose]);
   
   useEffect(() => {
     if (error) {
        toast({
         title: "Error de inicio de sesión",
-        description: error.message || "No se pudo completar el inicio de sesión. Por favor, revisa la consola y asegúrate de que tu dominio esté autorizado en Firebase.",
+        description: error.message || "No se pudo completar el inicio de sesión.",
         variant: 'destructive'
       });
     }
@@ -72,6 +71,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => loginWithGoogle()}
+                    disabled={isLoading}
                 >
                     <GoogleIcon />
                     <span className="text-sm">Continuar con Google</span>
@@ -80,6 +80,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => loginWithFacebook()}
+                    disabled={isLoading}
                 >
                     <FacebookIcon />
                     <span className="text-sm">Continuar con Facebook</span>
