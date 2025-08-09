@@ -27,12 +27,14 @@ export interface RoomGameContextValue {
   resetRound: () => void;
 }
 
-export const RoomGameContext = createContext<RoomGameContextValue | undefined>(undefined);
+// El contexto ya no se exporta porque el provider se ha eliminado
+const RoomGameContext = createContext<RoomGameContextValue | undefined>(undefined);
 
 interface RoomGameProviderProps {
   children: ReactNode;
 }
 
+// El provider se deja aquí por si se reutiliza en el futuro, pero no se usará
 export function RoomGameProvider({ children }: RoomGameProviderProps) {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [players, setPlayers] = useState<PlayerInLobby[]>([]);

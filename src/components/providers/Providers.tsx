@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { LanguageProvider } from '@/contexts/language-context';
-import { RoomGameProvider } from '@/contexts/room-game-context';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/hooks/use-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -21,11 +20,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
             <LanguageProvider>
               <SoundProvider>
-                <RoomGameProvider>
                   <TooltipProvider>
                     {children}
                   </TooltipProvider>
-                </RoomGameProvider>
               </SoundProvider>
             </LanguageProvider>
         </AuthProvider>

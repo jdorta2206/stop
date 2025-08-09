@@ -10,16 +10,10 @@ import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import PushNotifications from '../game/PushNotifications';
 import { useRouter } from 'next/navigation';
-import { Badge } from '../ui/badge';
-import { Coins, Volume2, VolumeX, Swords, Trophy } from 'lucide-react';
+import { Coins, Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 
-interface AppHeaderProps {
-  onToggleChat: () => void;
-  isChatOpen: boolean;
-}
-
-export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
+export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
   const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -31,7 +25,6 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
 
   const handleLanguageChange = useCallback((langCode: LanguageOption['code']) => {
     setLanguage(langCode);
@@ -52,11 +45,11 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
             <span className="text-xl font-bold text-primary">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="flex items-center gap-1 bg-black/10 p-1 rounded-full">
+            <div className="hidden sm:flex items-center gap-1 bg-black/10 p-1 rounded-full">
               {(['es', 'en', 'fr', 'pt'] as const).map(langCode => (
                 <Button
                   key={langCode}
-                  variant={language === langCode ? 'default' : 'ghost'}
+                  variant={language === langCode ? 'secondary' : 'ghost'}
                   size="sm"
                   onClick={() => handleLanguageChange(langCode)}
                   className="rounded-full !px-3 !py-1 text-xs"
@@ -81,15 +74,15 @@ export function AppHeader({ onToggleChat, isChatOpen }: AppHeaderProps) {
                     <PushNotifications 
                       userId={user.uid}
                       username={user.name || "Usuario"}
-                      onJoinRoom={(roomId) => router.push(`/room/${roomId}`)}
-                      onOpenChat={onToggleChat}
+                      onJoinRoom={(roomId) => { /* Navigation disabled */ }}
+                      onOpenChat={() => { /* Chat disabled */}}
                     />
                     <UserAccount />
                   </>
                 ) : (
                   <Button 
-                    variant="default"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-lg"
+                    variant="secondary"
+                    className="font-semibold rounded-full shadow-lg"
                     onClick={() => setAuthModalOpen(true)}
                   >
                     {translate('auth.signIn')}

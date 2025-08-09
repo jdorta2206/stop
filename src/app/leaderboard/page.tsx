@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth, type User } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -13,18 +13,10 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { rankingManager } from '@/lib/ranking';
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
-import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
-
-// Definición de tipo para el usuario autenticado
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  // Agrega aquí otras propiedades que necesites
-}
+import { addFriend } from '@/lib/friends-service';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -33,7 +25,6 @@ export default function LeaderboardPage() {
   const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
-  const [friendsLeaderboard, setFriendsLeaderboard] = useState<PlayerScore[]>([]);
   const [personalStats, setPersonalStats] = useState<PlayerScore | null>(null);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,13 +41,6 @@ export default function LeaderboardPage() {
         
         const historyData = await rankingManager.getGameHistory(user.uid, 5);
         setGameHistory(historyData);
-
-        const friendIds = (await getFriends(user.uid)).map(f => f.id);
-        const friendScores = await Promise.all(
-          friendIds.map(id => rankingManager.getPlayerRanking(id))
-        );
-        const validFriendScores = friendScores.filter((s): s is PlayerScore => s !== null);
-        setFriendsLeaderboard(validFriendScores);
       }
     } catch (error) {
       toast({ 
@@ -114,7 +98,7 @@ export default function LeaderboardPage() {
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
-      <AppHeader onToggleChat={() => {}} isChatOpen={false} />
+      <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
@@ -135,16 +119,6 @@ export default function LeaderboardPage() {
               translateUi={translate}
               isLoading={isLoading}
             />
-            {user && (
-              <FriendsLeaderboardCard 
-                leaderboardData={friendsLeaderboard}
-                currentUserId={user.uid}
-                onChallenge={handleChallenge}
-                language={language}
-                translateUi={translate}
-                isLoading={isLoading}
-              />
-            )}
           </div>
           
           <div className="space-y-6">
