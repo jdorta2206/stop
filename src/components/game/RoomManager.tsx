@@ -26,13 +26,6 @@ export default function RoomManager({ language }: RoomManagerProps) {
   const [activeTab, setActiveTab] = useState('create');
   const [joinRoomId, setJoinRoomId] = useState('');
   const [isActionLoading, setIsActionLoading] = useState(false); // Estado de carga para las acciones
-  const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (createdRoomId) {
-      router.push(`/room/${createdRoomId}`);
-    }
-  }, [createdRoomId, router]);
   
   const handleCreateRoom = async () => {
     if (!user || !user.name) {
@@ -44,18 +37,18 @@ export default function RoomManager({ language }: RoomManagerProps) {
       const newRoom = await createRoom(user.uid, user.name);
       toast({
         title: translate('rooms.create.title'),
-        description: translate('rooms.create.description', { roomId: newRoom.id }),
+        description: `La funcionalidad de sala privada está en desarrollo. Por ahora, puedes compartir el ID: ${newRoom.id}`,
       });
-      setCreatedRoomId(newRoom.id);
+      // router.push(`/room/${newRoom.id}`); // Deshabilitado temporalmente
     } catch (error) {
        toast({
         title: "Error al crear la sala",
         description: (error as Error).message,
         variant: "destructive"
        });
-       setIsActionLoading(false); // Restablecer en caso de error
+    } finally {
+        setIsActionLoading(false);
     }
-    // No establecemos setIsActionLoading a false aquí porque la redirección se encargará
   };
 
   const handleJoinRoom = async () => {
@@ -76,13 +69,17 @@ export default function RoomManager({ language }: RoomManagerProps) {
     try {
         const roomExists = await getRoom(roomId);
         if (roomExists) {
-            router.push(`/room/${roomId}`);
+            toast({
+              title: "Sala encontrada",
+              description: `La funcionalidad para unirse a la sala ${roomId} está en desarrollo.`,
+            });
+            // router.push(`/room/${roomId}`); // Deshabilitado temporalmente
         } else {
             toast({ title: "Error", description: "La sala no existe o el ID es incorrecto.", variant: "destructive" });
-            setIsActionLoading(false);
         }
     } catch (error) {
         toast({ title: "Error al unirse a la sala", description: (error as Error).message, variant: "destructive"});
+    } finally {
         setIsActionLoading(false);
     }
   };
