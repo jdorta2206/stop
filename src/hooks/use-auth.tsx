@@ -75,28 +75,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [signOut, toast]);
 
   useEffect(() => {
-    if (authLoading) {
-      setIsSyncing(true);
-      return;
-    }
-    if (firebaseUser) {
-        if (!appUser || appUser.uid !== firebaseUser.uid) {
-           syncUserProfile(firebaseUser);
+    const handleAuthChange = async () => {
+        if (firebaseUser) {
+            await syncUserProfile(firebaseUser);
         } else {
+            setAppUser(null);
             setIsSyncing(false);
         }
-    } else {
-      setAppUser(null);
-      setIsSyncing(false);
-    }
-  }, [firebaseUser, authLoading, syncUserProfile]);
+    };
+
+    handleAuthChange();
+  }, [firebaseUser, syncUserProfile]);
   
   const handleAuthAction = async (authFunction: () => Promise<any>, providerName: string) => {
       try {
-          const userCredential = await authFunction();
-          if (userCredential) {
-              await syncUserProfile(userCredential.user);
-          }
+          // No need to process result here, the useAuthState hook will trigger the useEffect
+          await authFunction();
       } catch(error: any) {
           console.error(`Error de autenticación con ${providerName}:`, error);
           let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
