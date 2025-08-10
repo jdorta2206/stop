@@ -54,7 +54,7 @@ class RankingManager {
       const newPlayer: PlayerScore = {
         id: playerId,
         playerName: displayName || 'Jugador', // Default name
-        photoURL: photoURL || null,
+        photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
         totalScore: 0,
         gamesPlayed: 0,
         gamesWon: 0,

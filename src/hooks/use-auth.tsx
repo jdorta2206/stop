@@ -44,11 +44,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const syncUserProfile = async () => {
       if (firebaseUser) {
+        setIsSyncing(true);
         try {
+          // Fetch or create the player profile from Firestore
           const playerData = await rankingManager.getPlayerRanking(
             firebaseUser.uid, 
             firebaseUser.displayName, 
@@ -69,8 +72,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
           await signOut();
           setAppUser(null);
+        } finally {
+            setIsSyncing(false);
         }
       } else {
+        // No firebase user, so no app user.
         setAppUser(null);
       }
     };
@@ -119,14 +125,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value = useMemo(() => ({
     user: appUser,
-    isLoading: authLoading || googleLoading || facebookLoading || signOutLoading,
+    isLoading: authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing,
     error: authError || googleError || facebookError || signOutError,
     loginWithGoogle,
     loginWithFacebook,
     logout,
   }), [
     appUser, 
-    authLoading, googleLoading, facebookLoading, signOutLoading,
+    authLoading, googleLoading, facebookLoading, signOutLoading, isSyncing,
     authError, googleError, facebookError, signOutError, 
     loginWithGoogle, loginWithFacebook, logout
   ]);
