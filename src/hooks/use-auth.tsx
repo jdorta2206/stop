@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase"; 
+import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -95,7 +95,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [signOut, toast]);
 
   useEffect(() => {
-    // This useEffect will only handle the initial auth state check on page load.
     if (firebaseUser && !appUser) {
       syncUserProfile(firebaseUser);
     } else if (!firebaseUser) {
@@ -105,25 +104,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      const userCredential = await signInWithGoogle();
-      if (userCredential) {
-          await syncUserProfile(userCredential.user);
-      }
+      // Llamar sin argumentos para usar la configuración por defecto del hook
+      // El proveedor se pasa al momento de la configuración de Firebase si es necesario,
+      // o se usan los custom parameters en la llamada
+      await signInWithGoogle(undefined);
     } catch (e) {
       handleAuthError(e, 'Google');
     }
-  }, [signInWithGoogle, syncUserProfile]);
+  }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      const userCredential = await signInWithFacebook();
-      if (userCredential) {
-          await syncUserProfile(userCredential.user);
-      }
+      await signInWithFacebook(undefined);
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
-  }, [signInWithFacebook, syncUserProfile]);
+  }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
     await signOut();
