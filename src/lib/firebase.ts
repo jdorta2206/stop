@@ -1,4 +1,3 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
@@ -11,7 +10,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Habilitar la persistencia de datos offline (caché)
-// Esta es la forma correcta para Firebase v9+ y soluciona el problema de bloqueo.
 try {
   enableIndexedDbPersistence(db);
 } catch (error: any) {
