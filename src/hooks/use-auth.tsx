@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
-import type { User as FirebaseUser, UserCredential } from "firebase/auth";
+import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
 import type { PlayerScore } from "@/components/game/types";
@@ -95,16 +95,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [signOut, toast]);
 
   useEffect(() => {
-    if (firebaseUser) {
+    // This useEffect will only handle the initial auth state check on page load.
+    if (firebaseUser && !appUser) {
       syncUserProfile(firebaseUser);
-    } else {
+    } else if (!firebaseUser) {
       setAppUser(null);
     }
-  }, [firebaseUser, syncUserProfile]);
+  }, [firebaseUser, appUser, syncUserProfile]);
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      const userCredential = await signInWithGoogle(undefined, { prompt: 'select_account' });
+      const userCredential = await signInWithGoogle();
       if (userCredential) {
           await syncUserProfile(userCredential.user);
       }
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      const userCredential = await signInWithFacebook(undefined, { prompt: 'select_account' });
+      const userCredential = await signInWithFacebook();
       if (userCredential) {
           await syncUserProfile(userCredential.user);
       }
