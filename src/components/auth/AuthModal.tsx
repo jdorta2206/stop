@@ -31,8 +31,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, loginWithGoogle, loginWithFacebook, isLoading, error } = useAuth();
   const { toast } = useToast();
   
+  // This useEffect will now correctly close the modal once the user object is fully populated and loading is false.
   useEffect(() => {
-    // Solo cerrar el modal cuando la carga haya terminado y tengamos un usuario.
     if (user && !isLoading) {
       onClose();
     }
@@ -71,7 +71,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => loginWithGoogle()}
+                    onClick={loginWithGoogle}
                     disabled={isLoading}
                 >
                     <GoogleIcon />
@@ -80,7 +80,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                  <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => loginWithFacebook()}
+                    onClick={loginWithFacebook}
                     disabled={isLoading}
                 >
                     <FacebookIcon />
