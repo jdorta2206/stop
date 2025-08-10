@@ -48,22 +48,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const syncUserProfile = async () => {
-      // If there's a Firebase user but we haven't synced their profile yet
-      if (firebaseUser && !appUser) {
+    const syncUserProfile = async (fbUser: FirebaseUser) => {
         setIsSyncing(true);
         try {
+          // Aseguramos que siempre se intente crear o buscar el perfil del jugador
           const playerData = await rankingManager.getPlayerRanking(
-            firebaseUser.uid, 
-            firebaseUser.displayName, 
-            firebaseUser.photoURL
+            fbUser.uid, 
+            fbUser.displayName, 
+            fbUser.photoURL
           );
           
           const currentUser: User = {
             ...playerData,
-            uid: firebaseUser.uid,
+            uid: fbUser.uid,
             name: playerData.playerName,
-            email: firebaseUser.email,
+            email: fbUser.email,
             photoURL: playerData.photoURL,
             coins: playerData.coins || 0
           };
@@ -75,14 +74,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } finally {
           setIsSyncing(false);
         }
-      } else if (!firebaseUser) {
-        // If there's no Firebase user, ensure app user is also null
-        setAppUser(null);
-      }
     };
 
-    syncUserProfile();
-  }, [firebaseUser, appUser, signOut, toast]); // Rerun when firebaseUser or appUser changes
+    if (firebaseUser && !appUser) {
+        syncUserProfile(firebaseUser);
+    } else if (!firebaseUser) {
+        setAppUser(null);
+    }
+  }, [firebaseUser, signOut, toast, appUser]);
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error de autenticación con ${provider}:`, error);
@@ -103,8 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      // La forma correcta de forzar el prompt es pasar los parámetros aquí.
-      await signInWithGoogle([], { prompt: 'select_account' });
+      await signInWithGoogle(undefined, { prompt: 'select_account' });
     } catch (e) {
       handleAuthError(e, 'Google');
     }
@@ -112,8 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      // La forma correcta de forzar el prompt es pasar los parámetros aquí.
-      await signInWithFacebook([], { prompt: 'select_account' });
+      await signInWithFacebook(undefined, { prompt: 'select_account' });
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
