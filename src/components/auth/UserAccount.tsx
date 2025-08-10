@@ -6,16 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
-
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string | null;
-}
+import type { User as AuthUser } from '@/hooks/use-auth';
 
 export function UserAccount() {
-  const { user, logout } = useAuth() as { user: AuthUser | null; logout: () => Promise<void> };
+  const { user, logout } = useAuth();
 
   if (!user) return null;
 
