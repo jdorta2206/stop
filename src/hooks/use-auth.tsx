@@ -70,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut(); // Sign out if profile sync fails
+        await signOut();
         setAppUser(null);
       } finally {
         setIsSyncing(false);
@@ -81,34 +81,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // If a firebase user is detected, sync their profile data
       syncUserProfile(firebaseUser);
     } else {
-      // If there's no Firebase user, clear the app user and stop syncing.
+      // If there's no Firebase user, clear the app user.
       setAppUser(null);
-      setIsSyncing(false);
     }
   }, [firebaseUser, signOut, toast]);
 
-  const handleLogin = async (loginFunction: () => Promise<any>, providerName: string) => {
+  const loginWithGoogle = useCallback(async () => {
     try {
-      // Calling the login function will trigger the popup and update `firebaseUser` via `useAuthState`
-      // The useEffect above will handle the rest.
-      await loginFunction();
-    } catch (error: any) {
-      let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
-      if (error.code === 'auth/popup-blocked') {
-        description = "El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio e inténtalo de nuevo.";
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
-        description = "Ya existe una cuenta con este email pero con un método de inicio de sesión diferente. Intenta acceder con el otro proveedor.";
-      }
-      toast({
-        title: `Error de inicio de sesión con ${providerName}`,
-        description: description,
-        variant: 'destructive'
-      });
+      await signInWithGoogle();
+    } catch (e) {
+       toast({ title: "Error al iniciar sesión", description: (e as Error).message, variant: "destructive" });
     }
-  };
-
-  const loginWithGoogle = useCallback(() => handleLogin(signInWithGoogle, 'Google'), [signInWithGoogle]);
-  const loginWithFacebook = useCallback(() => handleLogin(signInWithFacebook, 'Facebook'), [signInWithFacebook]);
+  }, [signInWithGoogle, toast]);
+  
+  const loginWithFacebook = useCallback(async () => {
+     try {
+      await signInWithFacebook();
+    } catch (e) {
+       toast({ title: "Error al iniciar sesión", description: (e as Error).message, variant: "destructive" });
+    }
+  }, [signInWithFacebook, toast]);
   
   const logout = useCallback(async () => {
     await signOut();
