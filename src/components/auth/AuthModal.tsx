@@ -32,10 +32,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { toast } = useToast();
   
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && isOpen) {
       onClose();
     }
-  }, [user, isLoading, onClose]);
+  }, [user, isOpen, onClose]);
   
   useEffect(() => {
     if (error) {

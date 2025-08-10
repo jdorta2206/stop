@@ -113,7 +113,7 @@ export function AppHeader() {
         </div>
       </header>
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-      {isMounted && roomId && (
+      {isMounted && roomId && user && (
          <ChatPanel 
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}

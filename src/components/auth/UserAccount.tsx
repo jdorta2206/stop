@@ -11,8 +11,10 @@ import type { User as AuthUser } from '@/hooks/use-auth';
 export function UserAccount() {
   const { user, logout } = useAuth();
 
-  if (!user) return null;
-
+  if (!user) {
+    return null;
+  }
+  
   const fallbackContent = user.name ? user.name.charAt(0).toUpperCase() : <User />;
 
   return (
