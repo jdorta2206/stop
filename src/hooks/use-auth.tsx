@@ -39,7 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   
-  // Pasar los providers configurados a los hooks
+  // Hooks de autenticación
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
@@ -103,6 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
+      // Pasa el proveedor configurado directamente a la función de inicio de sesión.
       await signInWithGoogle(googleProvider);
     } catch (e) {
       handleAuthError(e, 'Google');
@@ -111,6 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
+      // Pasa el proveedor configurado directamente a la función de inicio de sesión.
       await signInWithFacebook(facebookProvider);
     } catch (e) {
       handleAuthError(e, 'Facebook');
