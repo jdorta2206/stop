@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
+import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,30 +44,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const handleAuthError = (error: any, provider: string) => {
-    console.error(`Error de autenticación con ${provider}:`, error);
-    let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
-    if (error.code === 'auth/popup-blocked') {
-        description = "El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio e inténtalo de nuevo.";
-    } else if (error.code === 'auth/cancelled-popup-request') {
-        description = "Se ha cancelado la solicitud de inicio de sesión.";
-    } else if (error.code === 'auth/account-exists-with-different-credential') {
-        description = "Ya existe una cuenta con este email pero con un método de inicio de sesión diferente. Intenta acceder con el otro proveedor (ej. Google).";
-    }
-    toast({
-        title: `Error de inicio de sesión con ${provider}`,
-        description: description,
-        variant: 'destructive'
-    });
-  };
+  const [isSyncing, setIsSyncing] = useState(true);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-    if (!fbUser) {
-        setAppUser(null);
-        return;
-    }
     setIsSyncing(true);
     try {
       const playerData = await rankingManager.getPlayerRanking(
@@ -88,42 +67,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error("Error syncing user profile:", error);
       toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-      await signOut();
+      await signOut(); // Sign out if profile sync fails
+      setAppUser(null);
     } finally {
       setIsSyncing(false);
     }
   }, [signOut, toast]);
 
   useEffect(() => {
-    if (firebaseUser && !appUser) {
+    if (authLoading) {
+      setIsSyncing(true);
+      return;
+    }
+    if (firebaseUser) {
       syncUserProfile(firebaseUser);
-    } else if (!firebaseUser) {
+    } else {
       setAppUser(null);
+      setIsSyncing(false);
     }
-  }, [firebaseUser, appUser, syncUserProfile]);
+  }, [firebaseUser, authLoading, syncUserProfile]);
   
+  const handleAuthAction = async (authFunction: () => Promise<any>, providerName: string) => {
+      try {
+          await authFunction();
+      } catch(error: any) {
+          console.error(`Error de autenticación con ${providerName}:`, error);
+          let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
+          if (error.code === 'auth/popup-blocked') {
+              description = "El navegador bloqueó la ventana emergente. Por favor, permite los popups para este sitio e inténtalo de nuevo.";
+          } else if (error.code === 'auth/cancelled-popup-request') {
+              description = "Se ha cancelado la solicitud de inicio de sesión.";
+          } else if (error.code === 'auth/account-exists-with-different-credential') {
+              description = "Ya existe una cuenta con este email pero con un método de inicio de sesión diferente. Intenta acceder con el otro proveedor (ej. Google).";
+          }
+          toast({
+              title: `Error de inicio de sesión con ${providerName}`,
+              description: description,
+              variant: 'destructive'
+          });
+      }
+  }
+
   const loginWithGoogle = useCallback(async () => {
-    try {
-      // Llamar sin argumentos para usar la configuración por defecto del hook
-      // El proveedor se pasa al momento de la configuración de Firebase si es necesario,
-      // o se usan los custom parameters en la llamada
-      await signInWithGoogle(undefined);
-    } catch (e) {
-      handleAuthError(e, 'Google');
-    }
+      await handleAuthAction(signInWithGoogle, 'Google');
   }, [signInWithGoogle]);
-  
+
   const loginWithFacebook = useCallback(async () => {
-    try {
-      await signInWithFacebook(undefined);
-    } catch (e) {
-      handleAuthError(e, 'Facebook');
-    }
+      await handleAuthAction(signInWithFacebook, 'Facebook');
   }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
     await signOut();
-    setAppUser(null); // Clear app user state on logout
+    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
