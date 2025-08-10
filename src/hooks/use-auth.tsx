@@ -52,12 +52,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
       setIsSyncing(true);
       try {
+        // Get or create the player profile from our Firestore 'rankings' collection
         const playerData = await rankingManager.getPlayerRanking(
           fbUser.uid, 
           fbUser.displayName, 
           fbUser.photoURL
         );
         
+        // Combine auth data and player data into a single app user object
         const currentUser: User = {
           ...playerData,
           uid: fbUser.uid,
@@ -91,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await signInWithGoogle();
     } catch (e) {
-       toast({ title: "Error al iniciar sesión", description: (e as Error).message, variant: "destructive" });
+       toast({ title: "Error al iniciar sesión con Google", description: (e as Error).message, variant: "destructive" });
     }
   }, [signInWithGoogle, toast]);
   
@@ -99,7 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
      try {
       await signInWithFacebook();
     } catch (e) {
-       toast({ title: "Error al iniciar sesión", description: (e as Error).message, variant: "destructive" });
+       toast({ title: "Error al iniciar sesión con Facebook", description: (e as Error).message, variant: "destructive" });
     }
   }, [signInWithFacebook, toast]);
   
@@ -109,6 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
+  // The overall loading state is a combination of Firebase auth loading and our profile syncing
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 
