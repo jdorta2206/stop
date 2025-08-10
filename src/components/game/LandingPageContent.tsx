@@ -83,6 +83,22 @@ export function LandingPageContent() {
       description: `Se ha abierto una nueva pestaña para compartir en ${platform}.`
     });
   };
+  
+  const handlePrivateRoomClick = () => {
+    if (user) {
+      setRoomModalOpen(true);
+    } else {
+      setAuthModalOpen(true);
+    }
+  };
+
+  const handleInviteClick = () => {
+    if (user) {
+      setIsInviteModalOpen(true);
+    } else {
+      setAuthModalOpen(true);
+    }
+  };
 
   const whyPlayFeatures = [
     { key: 'multiplayer', icon: <Users className="h-10 w-10 text-primary" /> },
@@ -99,6 +115,25 @@ export function LandingPageContent() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
       />
+
+      <Dialog open={roomModalOpen} onOpenChange={setRoomModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{translate('landing.privateRoom')}</DialogTitle>
+          </DialogHeader>
+          <RoomManager language={language} />
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{translate('social.inviteFriends')}</DialogTitle>
+          </DialogHeader>
+          <FriendsInvite language={language} onFriendAdded={() => {}}/>
+        </DialogContent>
+      </Dialog>
+
 
       <main className="flex-grow flex flex-col">
         <section className="flex-grow flex flex-col items-center justify-center text-center py-12 px-4">
@@ -121,23 +156,13 @@ export function LandingPageContent() {
             
             {isMounted && (
               <>
-                <Dialog open={roomModalOpen} onOpenChange={setRoomModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="secondary"
-                      onClick={() => user ? setRoomModalOpen(true) : setAuthModalOpen(true)}
-                      className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
-                    >
-                      {translate('landing.privateRoom')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{translate('landing.privateRoom')}</DialogTitle>
-                    </DialogHeader>
-                    <RoomManager language={language} />
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  variant="secondary"
+                  onClick={handlePrivateRoomClick}
+                  className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
+                >
+                  {translate('landing.privateRoom')}
+                </Button>
                 
                 <Link href="/leaderboard">
                   <Button variant="outline" className="text-white font-semibold py-3 px-6 text-md rounded-full shadow-lg border-white/30 bg-black/20 hover:bg-white/10 hover:text-white transition-transform hover:scale-105">
@@ -146,24 +171,14 @@ export function LandingPageContent() {
                   </Button>
                 </Link>
 
-                <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="text-white font-semibold py-3 px-6 text-md rounded-full shadow-lg border-white/30 bg-black/20 hover:bg-white/10 hover:text-white transition-transform hover:scale-105"
-                      onClick={() => user ? setIsInviteModalOpen(true) : setAuthModalOpen(true)}
-                    >
-                      <Users className="w-5 h-5 mr-2" />
-                      {translate('social.inviteFriends')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>{translate('social.inviteFriends')}</DialogTitle>
-                    </DialogHeader>
-                    <FriendsInvite language={language} onFriendAdded={() => {}}/>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="outline"
+                  className="text-white font-semibold py-3 px-6 text-md rounded-full shadow-lg border-white/30 bg-black/20 hover:bg-white/10 hover:text-white transition-transform hover:scale-105"
+                  onClick={handleInviteClick}
+                >
+                  <Users className="w-5 h-5 mr-2" />
+                  {translate('social.inviteFriends')}
+                </Button>
 
                 <Button onClick={() => handleShare('whatsapp')} variant="ghost" size="icon" className="rounded-full text-white transition-colors">
                     <WhatsappIcon />

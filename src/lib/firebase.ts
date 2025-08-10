@@ -37,4 +37,3 @@ facebookProvider.setCustomParameters({
 
 
 export { app, auth, db, googleProvider, facebookProvider };
-
