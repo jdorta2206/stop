@@ -32,6 +32,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { toast } = useToast();
   
   useEffect(() => {
+    // Solo cerrar el modal cuando la carga haya terminado y tengamos un usuario.
     if (user && !isLoading) {
       onClose();
     }

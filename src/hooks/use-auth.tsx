@@ -43,49 +43,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  // Este estado gestionará todo el proceso de carga, incluyendo la sincronización.
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const syncUser = async (fbUser: FirebaseUser) => {
-      setIsSyncing(true);
-      try {
-        const playerData = await rankingManager.getPlayerRanking(
-          fbUser.uid, 
-          fbUser.displayName, 
-          fbUser.photoURL
-        );
-        
-        const currentUser: User = {
-          ...playerData,
-          uid: fbUser.uid,
-          name: playerData.playerName,
-          photoURL: playerData.photoURL,
-          coins: playerData.coins || 0
-        };
-        setAppUser(currentUser);
-      } catch (error) {
-        console.error("Error syncing user profile:", error);
-        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut();
+    const syncUserAndSetLoadingState = async (fbUser: FirebaseUser | null) => {
+      // Inicia la carga total
+      setIsLoading(true);
+      
+      if (fbUser) {
+        try {
+          // Sincroniza el perfil del jugador
+          const playerData = await rankingManager.getPlayerRanking(
+            fbUser.uid, 
+            fbUser.displayName, 
+            fbUser.photoURL
+          );
+          
+          const currentUser: User = {
+            ...playerData,
+            uid: fbUser.uid,
+            name: playerData.playerName,
+            photoURL: playerData.photoURL,
+            coins: playerData.coins || 0
+          };
+          setAppUser(currentUser);
+        } catch (error) {
+          console.error("Error syncing user profile:", error);
+          toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+          await signOut(); // Desloguear si falla la sincronización
+          setAppUser(null);
+        }
+      } else {
+        // No hay usuario de Firebase
         setAppUser(null);
-      } finally {
-        setIsSyncing(false);
       }
+      
+      // Finaliza la carga total
+      setIsLoading(false);
     };
 
-    if (firebaseUser) {
-      syncUser(firebaseUser);
-    } else {
-      setAppUser(null);
-      setIsSyncing(false);
+    // Usamos el estado de carga de useAuthState para saber cuándo empezar a sincronizar
+    if (!authLoading) {
+      syncUserAndSetLoadingState(firebaseUser);
     }
-  }, [firebaseUser, signOut, toast]);
 
-  const handleAuthResult = async (result: { user: FirebaseUser } | undefined, providerName: string) => {
-    if (result?.user) {
-      toast({ title: `¡Hola, ${result.user.displayName}!`, description: "Has iniciado sesión correctamente." });
-    }
-  };
+  }, [firebaseUser, authLoading, signOut, toast]);
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error de autenticación con ${provider}:`, error);
@@ -102,44 +105,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
         description: description,
         variant: 'destructive'
     });
+    setIsLoading(false); // Asegúrate de detener la carga si hay un error
   };
   
   const loginWithGoogle = useCallback(async () => {
+    setIsLoading(true); // Inicia el estado de carga
     try {
-      const result = await signInWithGoogle();
-      await handleAuthResult(result, 'Google');
+      await signInWithGoogle();
+      // El useEffect se encargará del resto. No es necesario hacer más aquí.
     } catch (e) {
       handleAuthError(e, 'Google');
     }
   }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
+    setIsLoading(true); // Inicia el estado de carga
     try {
-      const result = await signInWithFacebook();
-      await handleAuthResult(result, 'Facebook');
+      await signInWithFacebook();
+      // El useEffect se encargará del resto.
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
   }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
+    setIsLoading(true);
     await signOut();
     setAppUser(null);
+    setIsLoading(false);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
-
   const value = useMemo(() => ({
     user: appUser,
-    isLoading,
+    isLoading: isLoading || authLoading || googleLoading || facebookLoading || signOutLoading,
     error: authError || googleError || facebookError || signOutError,
     loginWithGoogle,
     loginWithFacebook,
     logout,
   }), [
     appUser, 
-    isLoading,
+    isLoading, authLoading, googleLoading, facebookLoading, signOutLoading,
     authError, googleError, facebookError, signOutError, 
     loginWithGoogle, loginWithFacebook, logout
   ]);
