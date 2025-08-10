@@ -5,7 +5,6 @@ import { createContext, useContext, useState, useCallback, useMemo, useEffect, t
 
 type SoundEffect = 'click' | 'spin-start' | 'spin-end' | 'round-win' | 'round-lose' | 'timer-tick';
 
-// Aunque las rutas están aquí, no se usarán, pero se mantienen por si se añaden los archivos en el futuro.
 const SOUND_PATHS: Record<SoundEffect, string> = {
   click: '/sounds/button-click.mp3',
   'spin-start': '/sounds/spin-start.mp3',
@@ -27,26 +26,65 @@ interface SoundContextType {
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
-export function SoundProvider({ children }: { children: ReactNode }) {
-  // El estado ahora es permanentemente silenciado para evitar errores.
-  const [isMuted, setIsMuted] = useState(true);
+// Define a placeholder for the Audio object on the server
+let musicPlayer: HTMLAudioElement | null = null;
 
-  // Las funciones ahora no hacen nada para prevenir intentos de carga de archivos.
+export function SoundProvider({ children }: { children: ReactNode }) {
+  const [isMuted, setIsMuted] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const storedMute = localStorage.getItem('globalStopMuted');
+    if (storedMute !== null) {
+      setIsMuted(JSON.parse(storedMute));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('globalStopMuted', JSON.stringify(isMuted));
+      if (isMuted) {
+        stopMusic();
+      }
+    }
+  }, [isMuted, isMounted]);
+
   const toggleMute = useCallback(() => {
-    // Se podría añadir un toast para informar al usuario que el sonido no está disponible.
-    console.warn("Sound functionality is disabled because audio files are missing.");
+    setIsMuted(prev => !prev);
   }, []);
 
   const playSound = useCallback((sound: SoundEffect) => {
-    // No hacer nada.
-  }, []);
+    if (isMuted || typeof window === 'undefined') return;
+    try {
+      const audio = new Audio(SOUND_PATHS[sound]);
+      audio.volume = 0.5;
+      audio.play().catch(e => console.error("Error playing sound:", e));
+    } catch (e) {
+      console.error(`Could not play sound ${sound}:`, e);
+    }
+  }, [isMuted]);
 
   const playMusic = useCallback(() => {
-    // No hacer nada.
-  }, []);
+    if (isMuted || typeof window === 'undefined') return;
+    if (!musicPlayer) {
+      try {
+        musicPlayer = new Audio(BACKGROUND_MUSIC_PATH);
+        musicPlayer.loop = true;
+        musicPlayer.volume = 0.3;
+      } catch(e) {
+        console.error("Could not create music player:", e);
+        return;
+      }
+    }
+    musicPlayer.play().catch(e => console.error("Error playing music:", e));
+  }, [isMuted]);
 
   const stopMusic = useCallback(() => {
-    // No hacer nada.
+    if (musicPlayer) {
+      musicPlayer.pause();
+      musicPlayer.currentTime = 0;
+    }
   }, []);
   
   const value = useMemo(() => ({
