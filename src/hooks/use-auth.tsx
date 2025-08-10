@@ -76,12 +76,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     };
 
-    if (firebaseUser && !appUser) {
+    if (firebaseUser) {
         syncUserProfile(firebaseUser);
-    } else if (!firebaseUser) {
+    } else {
         setAppUser(null);
     }
-  }, [firebaseUser, signOut, toast, appUser]);
+  }, [firebaseUser, signOut, toast]);
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error de autenticación con ${provider}:`, error);
