@@ -34,7 +34,7 @@ googleProvider.setCustomParameters({
 const facebookProvider = new FacebookAuthProvider();
 // Forzar selección de cuenta y asegurar que se solicitan los campos necesarios.
 facebookProvider.setCustomParameters({
-  'prompt': 'select_account'
+  prompt: 'select_account'
 });
 
 export { app, auth, db, googleProvider, facebookProvider };

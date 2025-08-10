@@ -103,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      await signInWithGoogle(googleProvider);
+      await signInWithGoogle();
     } catch (e) {
       handleAuthError(e, 'Google');
     }
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      await signInWithFacebook(facebookProvider);
+      await signInWithFacebook();
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
