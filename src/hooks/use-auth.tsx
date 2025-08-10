@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase";
+import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; // Importar providers
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -39,8 +39,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   
-  const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
-  const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
+  // Pasar los providers configurados a los hooks
+  const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth, googleProvider);
+  const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth, facebookProvider);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
