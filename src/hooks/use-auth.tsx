@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // App-specific user state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   // This effect runs when the Firebase auth state changes.
   useEffect(() => {
@@ -81,8 +81,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // If a firebase user is detected, sync their profile data
       syncUserProfile(firebaseUser);
     } else {
-      // If there's no Firebase user, clear the app user.
+      // If there's no Firebase user, clear the app user and stop syncing.
       setAppUser(null);
+      setIsSyncing(false);
     }
   }, [firebaseUser, signOut, toast]);
 
