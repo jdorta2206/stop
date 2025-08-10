@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
+import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // App-specific user state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true); // Always start syncing
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // This effect runs when the Firebase auth state changes.
   useEffect(() => {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut();
+        await signOut(); // Sign out if profile sync fails
         setAppUser(null);
       } finally {
         setIsSyncing(false);
@@ -78,6 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     if (firebaseUser) {
+      // If a firebase user is detected, sync their profile data
       syncUserProfile(firebaseUser);
     } else {
       // If there's no Firebase user, clear the app user and stop syncing.
@@ -88,12 +89,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const handleLogin = async (loginFunction: () => Promise<any>, providerName: string) => {
     try {
-      const userCredential = await loginFunction();
-      // The useEffect above will handle the rest once `firebaseUser` is updated by the hook
-      if (!userCredential) {
-          // This can happen if the user closes the popup
-          console.log(`Login with ${providerName} was cancelled by the user.`);
-      }
+      // Calling the login function will trigger the popup and update `firebaseUser` via `useAuthState`
+      // The useEffect above will handle the rest.
+      await loginFunction();
     } catch (error: any) {
       let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
       if (error.code === 'auth/popup-blocked') {
@@ -109,8 +107,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const loginWithGoogle = useCallback(() => handleLogin(() => signInWithGoogle(), 'Google'), [signInWithGoogle]);
-  const loginWithFacebook = useCallback(() => handleLogin(() => signInWithFacebook(), 'Facebook'), [signInWithFacebook]);
+  const loginWithGoogle = useCallback(() => handleLogin(signInWithGoogle, 'Google'), [signInWithGoogle]);
+  const loginWithFacebook = useCallback(() => handleLogin(signInWithFacebook, 'Facebook'), [signInWithFacebook]);
   
   const logout = useCallback(async () => {
     await signOut();
