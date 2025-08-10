@@ -48,10 +48,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const syncUserProfile = async () => {
-      if (firebaseUser) {
+      // If there's a Firebase user but we haven't synced their profile yet
+      if (firebaseUser && !appUser) {
         setIsSyncing(true);
         try {
-          // Fetch or create the player profile from Firestore
           const playerData = await rankingManager.getPlayerRanking(
             firebaseUser.uid, 
             firebaseUser.displayName, 
@@ -70,19 +70,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
           console.error("Error syncing user profile:", error);
           toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-          await signOut();
-          setAppUser(null);
+          await signOut(); // Log out if profile sync fails
         } finally {
-            setIsSyncing(false);
+          setIsSyncing(false);
         }
-      } else {
-        // No firebase user, so no app user.
+      } else if (!firebaseUser) {
+        // If there's no Firebase user, ensure app user is also null
         setAppUser(null);
       }
     };
 
     syncUserProfile();
-  }, [firebaseUser, toast, signOut]);
+  }, [firebaseUser, appUser, signOut, toast]); // Rerun when firebaseUser or appUser changes
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error de autenticación con ${provider}:`, error);
@@ -119,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const logout = useCallback(async () => {
     await signOut();
-    setAppUser(null);
+    setAppUser(null); // Clear app user state on logout
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
