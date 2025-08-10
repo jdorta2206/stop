@@ -89,13 +89,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAppUser(null);
       setIsSyncing(false);
     }
-  }, [firebaseUser, authLoading, syncUserProfile, appUser]);
+  }, [firebaseUser, authLoading, syncUserProfile]);
   
   const handleAuthAction = async (authFunction: () => Promise<any>, providerName: string) => {
       try {
-          await authFunction();
-          // After a successful login from the hook, firebaseUser will be updated,
-          // and the useEffect will trigger the profile sync.
+          const userCredential = await authFunction();
+          if (userCredential) {
+              await syncUserProfile(userCredential.user);
+          }
       } catch(error: any) {
           console.error(`Error de autenticación con ${providerName}:`, error);
           let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
@@ -115,12 +116,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const loginWithGoogle = useCallback(async () => {
-      // The hook's function is called with the provider from firebase.ts
       await handleAuthAction(() => signInWithGoogle(), 'Google');
   }, [signInWithGoogle]);
 
   const loginWithFacebook = useCallback(async () => {
-      // The hook's function is called with the provider from firebase.ts
       await handleAuthAction(() => signInWithFacebook(), 'Facebook');
   }, [signInWithFacebook]);
   
