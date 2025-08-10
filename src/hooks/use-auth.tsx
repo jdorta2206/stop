@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; // Importar providers
+import { auth } from "@/lib/firebase"; // No necesitamos los providers aquí
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -103,7 +103,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     try {
-      await signInWithGoogle(googleProvider);
+      // La forma correcta de forzar el prompt es pasar los parámetros aquí.
+      await signInWithGoogle([], { prompt: 'select_account' });
     } catch (e) {
       handleAuthError(e, 'Google');
     }
@@ -111,7 +112,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithFacebook = useCallback(async () => {
     try {
-      await signInWithFacebook(facebookProvider);
+      // La forma correcta de forzar el prompt es pasar los parámetros aquí.
+      await signInWithFacebook([], { prompt: 'select_account' });
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }

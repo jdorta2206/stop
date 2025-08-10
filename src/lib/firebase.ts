@@ -25,16 +25,9 @@ try {
 
 
 // --- Providers ---
+// Ya no necesitamos configurar los parámetros aquí, se hará en el hook.
 const googleProvider = new GoogleAuthProvider();
-// Forzar selección de cuenta para evitar problemas de caché y dar control al usuario.
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-});
-
 const facebookProvider = new FacebookAuthProvider();
-// Forzar selección de cuenta y asegurar que se solicitan los campos necesarios.
-facebookProvider.setCustomParameters({
-  prompt: 'select_account'
-});
+
 
 export { app, auth, db, googleProvider, facebookProvider };
