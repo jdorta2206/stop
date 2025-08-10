@@ -80,16 +80,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
     if (firebaseUser) {
-      syncUserProfile(firebaseUser);
+        if (!appUser || appUser.uid !== firebaseUser.uid) {
+           syncUserProfile(firebaseUser);
+        } else {
+            setIsSyncing(false);
+        }
     } else {
       setAppUser(null);
       setIsSyncing(false);
     }
-  }, [firebaseUser, authLoading, syncUserProfile]);
+  }, [firebaseUser, authLoading, syncUserProfile, appUser]);
   
   const handleAuthAction = async (authFunction: () => Promise<any>, providerName: string) => {
       try {
           await authFunction();
+          // After a successful login from the hook, firebaseUser will be updated,
+          // and the useEffect will trigger the profile sync.
       } catch(error: any) {
           console.error(`Error de autenticación con ${providerName}:`, error);
           let description = "No se pudo completar el inicio de sesión. Por favor, inténtalo de nuevo.";
@@ -109,11 +115,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const loginWithGoogle = useCallback(async () => {
-      await handleAuthAction(() => signInWithGoogle(googleProvider), 'Google');
+      // The hook's function is called with the provider from firebase.ts
+      await handleAuthAction(() => signInWithGoogle(), 'Google');
   }, [signInWithGoogle]);
 
   const loginWithFacebook = useCallback(async () => {
-      await handleAuthAction(() => signInWithFacebook(facebookProvider), 'Facebook');
+      // The hook's function is called with the provider from firebase.ts
+      await handleAuthAction(() => signInWithFacebook(), 'Facebook');
   }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
