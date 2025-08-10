@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase"; 
+import { auth } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -14,6 +14,7 @@ import type { PlayerScore } from "@/components/game/types";
 export interface User extends Omit<PlayerScore, 'id' | 'playerName' | 'photoURL'> {
   uid: string;
   name: string | null;
+  email: string | null; // Added email from Firebase User
   photoURL?: string | null;
   coins: number;
 }
@@ -43,27 +44,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
   const [appUser, setAppUser] = useState<User | null>(null);
-  // Este estado gestionará todo el proceso de carga, incluyendo la sincronización.
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const syncUserAndSetLoadingState = async (fbUser: FirebaseUser | null) => {
-      // Inicia la carga total
-      setIsLoading(true);
-      
-      if (fbUser) {
+    const syncUserProfile = async () => {
+      if (firebaseUser) {
         try {
-          // Sincroniza el perfil del jugador
           const playerData = await rankingManager.getPlayerRanking(
-            fbUser.uid, 
-            fbUser.displayName, 
-            fbUser.photoURL
+            firebaseUser.uid, 
+            firebaseUser.displayName, 
+            firebaseUser.photoURL
           );
           
           const currentUser: User = {
             ...playerData,
-            uid: fbUser.uid,
+            uid: firebaseUser.uid,
             name: playerData.playerName,
+            email: firebaseUser.email,
             photoURL: playerData.photoURL,
             coins: playerData.coins || 0
           };
@@ -71,24 +67,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (error) {
           console.error("Error syncing user profile:", error);
           toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-          await signOut(); // Desloguear si falla la sincronización
+          await signOut();
           setAppUser(null);
         }
       } else {
-        // No hay usuario de Firebase
         setAppUser(null);
       }
-      
-      // Finaliza la carga total
-      setIsLoading(false);
     };
 
-    // Usamos el estado de carga de useAuthState para saber cuándo empezar a sincronizar
-    if (!authLoading) {
-      syncUserAndSetLoadingState(firebaseUser);
-    }
-
-  }, [firebaseUser, authLoading, signOut, toast]);
+    syncUserProfile();
+  }, [firebaseUser, toast, signOut]);
 
   const handleAuthError = (error: any, provider: string) => {
     console.error(`Error de autenticación con ${provider}:`, error);
@@ -105,47 +93,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
         description: description,
         variant: 'destructive'
     });
-    setIsLoading(false); // Asegúrate de detener la carga si hay un error
   };
   
   const loginWithGoogle = useCallback(async () => {
-    setIsLoading(true); // Inicia el estado de carga
     try {
       await signInWithGoogle();
-      // El useEffect se encargará del resto. No es necesario hacer más aquí.
     } catch (e) {
       handleAuthError(e, 'Google');
     }
   }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
-    setIsLoading(true); // Inicia el estado de carga
     try {
       await signInWithFacebook();
-      // El useEffect se encargará del resto.
     } catch (e) {
       handleAuthError(e, 'Facebook');
     }
   }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
-    setIsLoading(true);
     await signOut();
     setAppUser(null);
-    setIsLoading(false);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
   const value = useMemo(() => ({
     user: appUser,
-    isLoading: isLoading || authLoading || googleLoading || facebookLoading || signOutLoading,
+    isLoading: authLoading || googleLoading || facebookLoading || signOutLoading,
     error: authError || googleError || facebookError || signOutError,
     loginWithGoogle,
     loginWithFacebook,
     logout,
   }), [
     appUser, 
-    isLoading, authLoading, googleLoading, facebookLoading, signOutLoading,
+    authLoading, googleLoading, facebookLoading, signOutLoading,
     authError, googleError, facebookError, signOutError, 
     loginWithGoogle, loginWithFacebook, logout
   ]);
