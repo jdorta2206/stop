@@ -50,6 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // This effect runs when the Firebase auth state changes.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
+      if (!fbUser) return;
       setIsSyncing(true);
       try {
         // Get or create the player profile from our Firestore 'rankings' collection
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut();
+        await signOut(); // Sign out if profile sync fails
         setAppUser(null);
       } finally {
         setIsSyncing(false);
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const logout = useCallback(async () => {
     await signOut();
-    setAppUser(null);
+    setAppUser(null); // Clear local user state on logout
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 

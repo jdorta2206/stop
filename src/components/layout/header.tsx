@@ -8,7 +8,6 @@ import { AuthModal } from '../auth/AuthModal';
 import { UserAccount } from '../auth/UserAccount';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import PushNotifications from '../game/PushNotifications';
 import { useRouter } from 'next/navigation';
 import { Coins, Volume2, VolumeX, MessageSquare, Trophy } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
@@ -19,7 +18,7 @@ export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
   const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const isAuthenticated = !!user;
   const { isMuted, toggleMute } = useSound();
   const [isMounted, setIsMounted] = useState(false);
@@ -103,6 +102,7 @@ export function AppHeader() {
                     variant="secondary"
                     className="font-semibold rounded-full shadow-lg"
                     onClick={() => setAuthModalOpen(true)}
+                    disabled={isLoading}
                   >
                     {translate('auth.signIn')}
                   </Button>
@@ -128,5 +128,3 @@ export function AppHeader() {
     </>
   );
 }
-
-    
