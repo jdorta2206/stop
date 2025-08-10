@@ -50,7 +50,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // This effect runs when the Firebase auth state changes.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
-      if (!fbUser) return;
       setIsSyncing(true);
       try {
         // Get or create the player profile from our Firestore 'rankings' collection
