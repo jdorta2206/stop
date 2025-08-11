@@ -143,9 +143,9 @@ export default function PlaySoloPage() {
       setTotalAiScore(prev => prev + aiRoundScore);
       
       const winner = playerRoundScore > aiRoundScore ? user?.name || 'Player' : playerRoundScore < aiRoundScore ? 'IA' : 'Tie';
-      setRoundWinner(winner);
+      setRoundWinner(winner || 'Player');
 
-      if(winner === user?.name) playSound('round-win');
+      if(winner === (user?.name || 'Player')) playSound('round-win');
       else playSound('round-lose');
 
       if (user) {

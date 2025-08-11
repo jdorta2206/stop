@@ -29,17 +29,17 @@ export default function LeaderboardPage() {
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
-      if (user) {
-        const personalData = await rankingManager.getPlayerRanking(user.uid);
+      if (userId) {
+        const personalData = await rankingManager.getPlayerRanking(userId);
         setPersonalStats(personalData);
         
-        const historyData = await rankingManager.getGameHistory(user.uid, 5);
+        const historyData = await rankingManager.getGameHistory(userId, 5);
         setGameHistory(historyData);
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(user?.uid);
   }, [user]);
 
   const handleAddFriend = async (player: PlayerScore) => {
@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
         title: translate('success'), 
         description: translate('leaderboards.friendAdded', { name: player.playerName }) 
       });
-      fetchData(); // Refresh friends list
+      fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast({ 
         title: translate('error'), 
@@ -102,7 +102,7 @@ export default function LeaderboardPage() {
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
-          <Button onClick={fetchData} disabled={isLoading} variant="outline">
+          <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? translate('loading') : translate('refresh')}
           </Button>

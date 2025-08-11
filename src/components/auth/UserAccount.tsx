@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type User } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
-import type { User as AuthUser } from '@/hooks/use-auth';
+import { LogOut, User as UserIcon } from "lucide-react";
+
 
 export function UserAccount() {
   const { user, logout } = useAuth();
@@ -15,7 +15,7 @@ export function UserAccount() {
     return null;
   }
   
-  const fallbackContent = user.name ? user.name.charAt(0).toUpperCase() : <User />;
+  const fallbackContent = user.name ? user.name.charAt(0).toUpperCase() : <UserIcon />;
 
   return (
     <DropdownMenu>

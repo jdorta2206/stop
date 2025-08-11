@@ -47,8 +47,11 @@ const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 class RankingManager {
   private rankingsCollection = collection(db, 'rankings');
 
-  async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore | null> {
-    if (!playerId) return null;
+  // This function now primarily ensures a player profile exists and is up-to-date.
+  async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore> {
+    if (!playerId) {
+      throw new Error("getPlayerRanking requires a valid playerId.");
+    }
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
@@ -71,7 +74,7 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
         };
         await setDoc(playerDocRef, newPlayer);
-        docSnap = await getDoc(playerDocRef); // Re-fetch the document to get server-generated timestamp
+        docSnap = await getDoc(playerDocRef);
       }
 
       if (docSnap.exists()) {
@@ -81,7 +84,7 @@ class RankingManager {
           if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
               const newMissions = getDailyMissions();
               await updateDoc(playerDocRef, {
-                  dailyMissions: newMissions.map(m => ({...m})), // Ensure plain objects are written
+                  dailyMissions: newMissions.map(m => ({...m})),
                   missionsLastReset: today,
               });
               playerData = {...playerData, dailyMissions: newMissions, missionsLastReset: today};
@@ -92,7 +95,7 @@ class RankingManager {
       }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
-        return null;
+        throw error; // Re-throw the error to be caught by the caller
     }
   }
   

@@ -33,13 +33,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   
   useEffect(() => {
     if (user && isOpen) {
-      toast({
-        title: "¡Bienvenido/a!",
-        description: `Has iniciado sesión como ${user.name}.`,
-      });
       onClose();
     }
-  }, [user, isOpen, onClose, toast]);
+  }, [user, isOpen, onClose]);
   
   useEffect(() => {
     if (error) {

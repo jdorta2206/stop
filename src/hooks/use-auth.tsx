@@ -7,15 +7,13 @@ import { auth } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
-import type { PlayerScore } from "@/components/game/types";
-import type { Timestamp } from "firebase/firestore";
 
-// The final, unified User object for the app.
-export interface User extends Omit<PlayerScore, 'lastPlayed'> {
+// Simplified User object, directly from Firebase Auth
+export interface User {
   uid: string;
   email: string | null;
-  name: string; // Ensure name is always present
-  lastPlayed: string; // Convert Timestamp to string for client-side safety
+  name: string | null;
+  photoURL: string | null;
 }
 
 interface AuthContextType {
@@ -33,17 +31,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const toAppUser = (playerData: PlayerScore, fbUser: FirebaseUser): User => {
-    const lastPlayedTimestamp = playerData.lastPlayed as unknown as Timestamp;
-    return {
-        ...playerData,
-        uid: fbUser.uid,
-        name: playerData.playerName, 
-        email: fbUser.email,
-        lastPlayed: lastPlayedTimestamp?.toDate()?.toISOString() || new Date().toISOString()
-    };
-};
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
@@ -52,60 +39,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
-  
-  // App-specific state
-  const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
-    const syncUserProfile = async (fbUser: FirebaseUser) => {
-      setIsSyncing(true);
-      try {
-        const playerData = await rankingManager.getPlayerRanking(
-          fbUser.uid, 
-          fbUser.displayName, 
-          fbUser.photoURL
-        );
-        
-        if (playerData) {
-          setAppUser(toAppUser(playerData, fbUser));
-        } else {
-           throw new Error("Could not create or retrieve player profile.");
-        }
-      } catch (error) {
-        console.error("Error syncing user profile:", error);
-        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut();
-      } finally {
-        setIsSyncing(false);
-      }
-    };
-    
-    // Only sync if there's a firebaseUser and they are not yet synced to the appUser state
-    if (firebaseUser && firebaseUser.uid !== appUser?.uid) {
-        syncUserProfile(firebaseUser);
-    } else if (!firebaseUser && !authLoading) {
-        // User is logged out
-        setAppUser(null);
+  const handleSuccessfulLogin = useCallback(async (fbUser: FirebaseUser) => {
+    try {
+      // Ensure user profile exists in Firestore
+      await rankingManager.getPlayerRanking(
+        fbUser.uid, 
+        fbUser.displayName, 
+        fbUser.photoURL
+      );
+      toast({
+        title: "¡Bienvenido/a!",
+        description: `Has iniciado sesión como ${fbUser.displayName || 'Jugador'}.`,
+      });
+    } catch (error) {
+      console.error("Error creating/syncing user profile:", error);
+      toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+      await signOut(); // Log out if profile sync fails
     }
-  }, [firebaseUser, authLoading, signOut, toast, appUser?.uid]);
+  }, [toast, signOut]);
 
   const loginWithGoogle = useCallback(async () => {
-    await signInWithGoogle();
-  }, [signInWithGoogle]);
+    try {
+      const userCredential = await signInWithGoogle();
+      if (userCredential) {
+        await handleSuccessfulLogin(userCredential.user);
+      }
+    } catch (e) {
+      // Error is already captured by the hook
+    }
+  }, [signInWithGoogle, handleSuccessfulLogin]);
   
   const loginWithFacebook = useCallback(async () => {
-    await signInWithFacebook();
-  }, [signInWithFacebook]);
+     try {
+      const userCredential = await signInWithFacebook();
+      if (userCredential) {
+        await handleSuccessfulLogin(userCredential.user);
+      }
+    } catch (e) {
+       // Error is already captured by the hook
+    }
+  }, [signInWithFacebook, handleSuccessfulLogin]);
   
   const handleLogout = useCallback(async () => {
     await signOut();
-    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
+  // The user object for the app is now a simplified version of the Firebase user
+  const appUser = firebaseUser ? {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
+  } : null;
+
   // Combine all loading states into one
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
+  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
   const error = authError || googleError || facebookError || signOutError;
 
   const value = useMemo(() => ({
