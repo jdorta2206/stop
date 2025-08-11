@@ -39,24 +39,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // App-level state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Sync Firebase user with Firestore profile
   useEffect(() => {
     const syncUserProfile = async () => {
-      if (authLoading) {
-        // Still waiting for firebase auth to initialize
+      if (authLoading) return; // Wait until Firebase auth is resolved
+
+      if (!firebaseUser) {
+        setAppUser(null);
+        setIsSyncing(false); // No user to sync
         return;
       }
       
-      setIsSyncing(true);
-      if (!firebaseUser) {
-        setAppUser(null);
+      // Don't re-sync if we already have the profile for the current firebase user
+      if (appUser && appUser.uid === firebaseUser.uid) {
         setIsSyncing(false);
         return;
       }
 
-      // User is authenticated with Firebase, now get/create our app profile
+      setIsSyncing(true);
       try {
         const playerProfile = await rankingManager.getPlayerRanking(
           firebaseUser.uid, 
@@ -68,13 +70,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
         await signOut(); // Log out if profile sync fails
+        setAppUser(null);
       } finally {
         setIsSyncing(false);
       }
     };
 
     syncUserProfile();
-  }, [firebaseUser, authLoading, signOut, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUser, authLoading]);
 
 
   const handleLogin = async (loginFunction: () => Promise<any>) => {

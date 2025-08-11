@@ -66,7 +66,11 @@ class RankingManager {
   private rankingsCollection = collection(db, 'rankings');
 
   // This function now primarily ensures a player profile exists and is up-to-date.
-  async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore> {
+  async getPlayerRanking(
+    playerId: string, 
+    displayName?: string | null, 
+    photoURL?: string | null
+  ): Promise<Omit<PlayerScore, 'id'>> {
     if (!playerId) {
       throw new Error("getPlayerRanking requiere un playerId válido.");
     }
@@ -92,7 +96,8 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
         };
         await setDoc(playerDocRef, newPlayer);
-        docSnap = await getDoc(playerDocRef); // Re-fetch the document after creation
+        // Return the newly created player data immediately
+        return newPlayer;
       }
 
       let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
@@ -109,7 +114,7 @@ class RankingManager {
           playerData = { ...playerData, ...updatedData };
       }
       
-      return { id: docSnap.id, ...playerData };
+      return playerData;
 
     } catch(error) {
         console.error("Error en getPlayerRanking: ", error);
@@ -118,6 +123,10 @@ class RankingManager {
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
+    if (!gameResult.playerId) {
+        console.error("saveGameResult requires a valid playerId.");
+        return null;
+    }
     const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
     const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
     
@@ -125,7 +134,6 @@ class RankingManager {
     await addDoc(gameHistoryCollectionRef, finalGameResult);
 
     const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
-    if(!playerRanking) return null;
     
     const coinsEarned = COINS_PER_GAME * (gameResult.won ? COINS_PER_WIN_MULTIPLIER : 1);
 
@@ -141,7 +149,7 @@ class RankingManager {
         level: this.calculateLevel(newTotalScore),
     };
     
-    const updatedAchievements = this.checkAchievements(playerRanking, gameResult);
+    const updatedAchievements = this.checkAchievements(playerRanking as PlayerScore, gameResult);
     const updatedMissions = checkMissions(playerRanking.dailyMissions, gameResult);
 
     const updatedData: Record<string, any> = {
