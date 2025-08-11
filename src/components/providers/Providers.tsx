@@ -11,21 +11,21 @@ import { SoundProvider } from '@/hooks/use-sound';
 export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
+    <AuthProvider>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
-        <AuthProvider>
-            <LanguageProvider>
-              <SoundProvider>
-                  <TooltipProvider>
-                    {children}
-                  </TooltipProvider>
-              </SoundProvider>
-            </LanguageProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <SoundProvider>
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+          </SoundProvider>
+        </LanguageProvider>
       </ThemeProvider>
+    </AuthProvider>
   );
 }

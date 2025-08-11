@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // App-specific user state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   // This effect runs when the Firebase auth state changes.
   useEffect(() => {
