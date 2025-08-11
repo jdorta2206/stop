@@ -54,27 +54,24 @@ class RankingManager {
         const docSnap = await getDoc(playerDocRef);
 
         if (docSnap.exists()) {
-            let playerData = docSnap.data() as PlayerScore;
+            const playerData = docSnap.data() as PlayerScore;
             
             const today = new Date().toISOString().split('T')[0];
-            let missionsNeedUpdate = !playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today;
-            const needsProfileUpdate = (displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL);
+            const missionsNeedUpdate = !playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today;
+            const profileNeedsUpdate = (displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL);
 
-            if (missionsNeedUpdate || needsProfileUpdate) {
-                const batch = writeBatch(db);
+            if (missionsNeedUpdate || profileNeedsUpdate) {
                 const updates: Partial<PlayerScore> = {};
-
                 if (missionsNeedUpdate) {
                     updates.dailyMissions = getDailyMissions();
                     updates.missionsLastReset = today;
                 }
-                if (needsProfileUpdate) {
+                if (profileNeedsUpdate) {
                     if (displayName) updates.playerName = displayName;
                     if (photoURL) updates.photoURL = photoURL;
                 }
-                batch.update(playerDocRef, updates);
-                await batch.commit();
-                playerData = {...playerData, ...updates};
+                await updateDoc(playerDocRef, updates);
+                return { ...playerData, ...updates, id: docSnap.id };
             }
             
             return {
@@ -83,7 +80,8 @@ class RankingManager {
             };
 
         } else {
-            const newPlayer: Omit<PlayerScore, 'id'> = {
+            const newPlayer: PlayerScore = {
+                id: playerId,
                 playerName: displayName || 'Jugador',
                 photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
                 totalScore: 0,
@@ -103,9 +101,8 @@ class RankingManager {
             
             return {
                 ...newPlayer,
-                id: playerId,
                 lastPlayed: new Date(), // Use current date for the returned object
-            } as PlayerScore;
+            };
         }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);

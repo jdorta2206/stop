@@ -79,7 +79,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Only attempt to sync if we have a firebaseUser but not an appUser yet,
     // and no other operations are in progress.
-    if (firebaseUser && !appUser && !authLoading && !isSyncing) {
+    if (firebaseUser && !appUser && !isSyncing) {
       syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
       // Clear app user if firebase user is logged out.
