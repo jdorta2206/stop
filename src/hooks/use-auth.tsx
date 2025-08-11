@@ -13,7 +13,8 @@ import type { PlayerScore } from "@/components/game/types";
 // It combines Firebase Auth info with our game-specific PlayerScore.
 export interface User extends PlayerScore {
   uid: string;
-  email: string | null; 
+  email: string | null;
+  name: string; // Ensure name is always present
 }
 
 interface AuthContextType {
