@@ -1,3 +1,4 @@
+
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -48,12 +49,12 @@ class RankingManager {
   async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore> {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     const docSnap = await getDoc(playerDocRef);
-    
+
     if (docSnap.exists()) {
         const data = docSnap.data();
         const today = new Date().toISOString().split('T')[0];
         
-        // Solo actualiza si las misiones diarias necesitan reseteo
+        // Check if missions need to be reset
         if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
             await updateDoc(playerDocRef, {
                 dailyMissions: getDailyMissions(),
@@ -61,8 +62,19 @@ class RankingManager {
             });
         }
         
-        const finalData = { ...docSnap.data(), id: docSnap.id } as PlayerScore;
-        // Convertir Firestore Timestamp a ISO string si existe
+        // Check if player name or photo needs an update from auth provider
+        const needsUpdate = (data.playerName !== displayName && displayName) || (data.photoURL !== photoURL && photoURL);
+        if (needsUpdate) {
+            await updateDoc(playerDocRef, {
+                playerName: displayName,
+                photoURL: photoURL
+            });
+        }
+        
+        const freshSnap = await getDoc(playerDocRef); // re-fetch after potential updates
+        const finalData = { ...freshSnap.data(), id: freshSnap.id } as PlayerScore;
+        
+        // Convert Firestore Timestamp to ISO string if it exists for client-side compatibility
         if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
             finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
         }
@@ -70,7 +82,7 @@ class RankingManager {
         return finalData;
 
     } else {
-        // Si el jugador no existe, crea un nuevo registro.
+        // If the player does not exist, create a new profile.
         const newPlayer: PlayerScore = {
             id: playerId,
             playerName: displayName || 'Jugador', // Default name
@@ -80,14 +92,23 @@ class RankingManager {
             gamesWon: 0,
             averageScore: 0,
             bestScore: 0,
-            lastPlayed: new Date().toISOString(),
+            lastPlayed: new Date().toISOString(), // Use ISO string directly
             level: this.calculateLevel(0),
             achievements: [],
             coins: 50, // Welcome coins
             dailyMissions: getDailyMissions(),
             missionsLastReset: new Date().toISOString().split('T')[0],
         };
-        await setDoc(playerDocRef, newPlayer);
+        // Use setDoc to create the new player document
+        await setDoc(playerDocRef, {
+          ...newPlayer,
+          lastPlayed: serverTimestamp() // Use server timestamp on creation
+        });
+        
+        // Don't return the serverTimestamp object to the client
+        delete (newPlayer as any).lastPlayed; 
+        newPlayer.lastPlayed = new Date().toISOString();
+        
         return newPlayer;
     }
   }
@@ -120,8 +141,6 @@ class RankingManager {
     const updatedMissions = checkMissions(playerRanking.dailyMissions, gameResult);
 
     const updatedData: Record<string, any> = {
-      playerName: gameResult.playerName, // Ensure name is updated
-      photoURL: gameResult.photoURL, // Ensure photo is updated
       totalScore: increment(gameResult.score),
       gamesPlayed: increment(1),
       gamesWon: increment(gameResult.won ? 1 : 0),
@@ -136,7 +155,7 @@ class RankingManager {
 
     await updateDoc(playerDocRef, updatedData);
     
-    return (await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL));
+    return (await this.getPlayerRanking(gameResult.playerId));
   }
 
   async claimMissionReward(playerId: string, missionId: string): Promise<void> {

@@ -46,17 +46,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(true);
 
   // This effect runs when the Firebase auth state changes.
+  // It's responsible for fetching/creating the user's game profile in Firestore.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
       setIsSyncing(true);
       try {
+        // Fetch or create the player's profile from our database
         const playerData = await rankingManager.getPlayerRanking(
           fbUser.uid, 
           fbUser.displayName, 
           fbUser.photoURL
         );
         
-        // Combine auth data and player data into a single app user object
+        // Combine auth data and player data into a single, unified app user object
         const currentUser: User = {
           ...playerData,
           uid: fbUser.uid,
@@ -68,9 +70,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut(); 
+        await signOut(); // Sign out on profile error to prevent inconsistent state
         setAppUser(null);
       } finally {
+        // This is crucial: always stop the syncing indicator
         setIsSyncing(false);
       }
     };
@@ -78,6 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (firebaseUser) {
       syncUserProfile(firebaseUser);
     } else {
+      // No firebase user, so not syncing and no app user.
       setAppUser(null);
       setIsSyncing(false);
     }
@@ -85,9 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginWithGoogle = useCallback(async () => {
     try {
-      await signInWithGoogle(undefined, {
-        prompt: "select_account"
-      });
+      await signInWithGoogle();
     } catch (e) {
        toast({ title: "Error al iniciar sesión con Google", description: (e as Error).message, variant: "destructive" });
     }
@@ -107,7 +109,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
 
-  // The overall loading state is a combination of Firebase auth loading and our profile syncing
+  // The overall loading state is a combination of Firebase auth state changes,
+  // login provider loading, and our own profile syncing.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 
