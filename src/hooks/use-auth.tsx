@@ -46,6 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+      if (isSyncing) return;
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -54,13 +55,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           fbUser.photoURL
         );
         
-        const currentUser: User = {
-          ...playerData,
-          uid: fbUser.uid,
-          name: playerData.playerName, 
-          email: fbUser.email,
-        };
-        setAppUser(currentUser);
+        if (playerData) {
+            const currentUser: User = {
+              ...playerData,
+              uid: fbUser.uid,
+              name: playerData.playerName, 
+              email: fbUser.email,
+            };
+            setAppUser(currentUser);
+        } else {
+            throw new Error("Could not create or retrieve player profile.");
+        }
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
@@ -69,11 +74,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsSyncing(false);
       }
-    }, [signOut, toast]);
+    }, [isSyncing, signOut, toast]);
 
 
   useEffect(() => {
-    if (firebaseUser && !appUser && !isSyncing) {
+    if (firebaseUser && !appUser && !authLoading && !isSyncing) {
       syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
       setAppUser(null);
