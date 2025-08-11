@@ -46,6 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+      if (isSyncing) return; // Prevent concurrent syncs
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -73,7 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsSyncing(false);
       }
-    }, [signOut, toast]);
+    }, [signOut, toast, isSyncing]);
 
 
   useEffect(() => {
@@ -83,7 +84,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
       // Clear app user if firebase user is logged out.
-      setAppUser(null);
+      if (appUser) {
+        setAppUser(null);
+      }
     }
   }, [firebaseUser, appUser, authLoading, isSyncing, syncUserProfile]);
 
@@ -109,6 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
+  // isLoading is true if firebase is checking auth state, or if any login/logout process is happening, or we're syncing the profile.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

@@ -57,29 +57,34 @@ class RankingManager {
             const playerData = docSnap.data() as PlayerScore;
             
             const today = new Date().toISOString().split('T')[0];
-            const missionsNeedUpdate = !playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today;
-            const profileNeedsUpdate = (displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL);
+            let needsUpdate = false;
+            const updates: Partial<PlayerScore> = {};
 
-            if (missionsNeedUpdate || profileNeedsUpdate) {
-                const updates: Partial<PlayerScore> = {};
-                if (missionsNeedUpdate) {
-                    updates.dailyMissions = getDailyMissions();
-                    updates.missionsLastReset = today;
-                }
-                if (profileNeedsUpdate) {
-                    if (displayName) updates.playerName = displayName;
-                    if (photoURL) updates.photoURL = photoURL;
-                }
+            // Check if missions need to be reset
+            if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+                updates.dailyMissions = getDailyMissions();
+                updates.missionsLastReset = today;
+                needsUpdate = true;
+            }
+
+            // Check if profile info has changed
+            if ((displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL)) {
+                if (displayName) updates.playerName = displayName;
+                if (photoURL) updates.photoURL = photoURL;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
                 await updateDoc(playerDocRef, updates);
+                // Return the merged data immediately
                 return { ...playerData, ...updates, id: docSnap.id };
             }
             
-            return {
-                ...playerData, 
-                id: docSnap.id
-            };
+            // Return existing data if no update was needed
+            return { ...playerData, id: docSnap.id };
 
         } else {
+            // Document does not exist, so create it
             const newPlayer: PlayerScore = {
                 id: playerId,
                 playerName: displayName || 'Jugador',
@@ -99,9 +104,11 @@ class RankingManager {
             
             await setDoc(playerDocRef, newPlayer);
             
+            // Return the newly created player data.
+            // Replace serverTimestamp with a client-side date for immediate use.
             return {
                 ...newPlayer,
-                lastPlayed: new Date(), // Use current date for the returned object
+                lastPlayed: new Date(), 
             };
         }
     } catch(error) {
