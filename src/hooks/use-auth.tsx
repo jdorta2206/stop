@@ -8,12 +8,14 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
 import type { PlayerScore } from "@/components/game/types";
+import type { Timestamp } from "firebase/firestore";
 
 // The final, unified User object for the app.
-export interface User extends PlayerScore {
+export interface User extends Omit<PlayerScore, 'lastPlayed'> {
   uid: string;
   email: string | null;
   name: string; // Ensure name is always present
+  lastPlayed: string; // Convert Timestamp to string for client-side safety
 }
 
 interface AuthContextType {
@@ -31,6 +33,17 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const toAppUser = (playerData: PlayerScore, fbUser: FirebaseUser): User => {
+    const lastPlayedTimestamp = playerData.lastPlayed as unknown as Timestamp;
+    return {
+        ...playerData,
+        uid: fbUser.uid,
+        name: playerData.playerName, 
+        email: fbUser.email,
+        lastPlayed: lastPlayedTimestamp?.toDate().toISOString() || new Date().toISOString()
+    };
+};
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
@@ -44,50 +57,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Function to get or create player profile from our database
-  const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-    setIsSyncing(true);
-    try {
-      const playerData = await rankingManager.getPlayerRanking(
-        fbUser.uid, 
-        fbUser.displayName, 
-        fbUser.photoURL
-      );
-      
-      if (playerData) {
-        const currentUser: User = {
-          ...playerData,
-          uid: fbUser.uid,
-          name: playerData.playerName, 
-          email: fbUser.email,
-        };
-        setAppUser(currentUser);
-      } else {
-        throw new Error("Could not create or retrieve player profile.");
-      }
-    } catch (error) {
-      console.error("Error syncing user profile:", error);
-      toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-      await signOut(); // Sign out if profile sync fails
-      setAppUser(null);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [signOut, toast]);
-
-  // Effect to handle user state changes from Firebase
+  // This effect runs when the Firebase user object changes.
+  // It's responsible for fetching or creating the player profile.
   useEffect(() => {
-    // If we have a firebase user but no app user, and we're not already syncing, sync the profile
-    if (firebaseUser && !appUser && !isSyncing) {
-      syncUserProfile(firebaseUser);
-    } 
-    // If there's no firebase user and the auth is not loading, ensure app user is cleared
-    else if (!firebaseUser && !authLoading) {
-      if (appUser) {
+    const syncUserProfile = async (fbUser: FirebaseUser) => {
+      // Prevent running if another sync is in progress or if user is already loaded
+      if (isSyncing || appUser?.uid === fbUser.uid) return;
+
+      setIsSyncing(true);
+      try {
+        const playerData = await rankingManager.getPlayerRanking(
+          fbUser.uid, 
+          fbUser.displayName, 
+          fbUser.photoURL
+        );
+        
+        if (playerData) {
+          setAppUser(toAppUser(playerData, fbUser));
+        } else {
+          throw new Error("Could not create or retrieve player profile.");
+        }
+      } catch (error) {
+        console.error("Error syncing user profile:", error);
+        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+        await signOut(); // Sign out if profile sync fails
         setAppUser(null);
+      } finally {
+        setIsSyncing(false);
       }
+    };
+    
+    if (firebaseUser) {
+      syncUserProfile(firebaseUser);
+    } else {
+      // Clear app user if firebase user is null
+      setAppUser(null);
     }
-  }, [firebaseUser, appUser, authLoading, isSyncing, syncUserProfile]);
+  // We only want this to run when the firebaseUser object itself changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUser]);
 
   const loginWithGoogle = useCallback(async () => {
     await signInWithGoogle();

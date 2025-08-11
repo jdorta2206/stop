@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -64,7 +63,8 @@ class RankingManager {
             dailyMissions: updatedMissions.map(m => ({...m})),
             missionsLastReset: today,
           });
-          return { ...playerData, dailyMissions: updatedMissions, missionsLastReset: today, id: docSnap.id };
+          const reFetchedData = (await getDoc(playerDocRef)).data() as PlayerScore;
+          return { ...reFetchedData, id: docSnap.id };
         }
         
         // Return existing player data
@@ -90,11 +90,9 @@ class RankingManager {
         
         await setDoc(playerDocRef, newPlayer);
         
-        // Return the newly created player data, converting server timestamp for client use
-        return {
-          ...newPlayer,
-          lastPlayed: new Date().toISOString(),
-        };
+        // IMPORTANT: Re-fetch the document to get the server-generated timestamp
+        const newDocSnap = await getDoc(playerDocRef);
+        return { ...(newDocSnap.data() as PlayerScore), id: newDocSnap.id };
       }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
