@@ -8,8 +8,8 @@ import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager, type PlayerScore } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
 
-// This will be our app's user object, combining Firebase Auth and our Firestore profile data.
-export interface User extends FirebaseUser, PlayerScore {}
+// App's user object, combining Firebase Auth data and Firestore profile data.
+export interface User extends FirebaseUser, Partial<PlayerScore> {}
 
 interface AuthContextType {
   user: User | null;
@@ -29,75 +29,85 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
-  // Firebase hooks for auth state and providers
+  // Base Firebase auth state
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
+  
+  // Sign-in method hooks
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
 
+  // App-level state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true); // Start as true to handle initial load
+  const [isSyncing, setIsSyncing] = useState(true);
 
-  // This function syncs the Firebase user with our Firestore player profile.
-  const syncUserProfile = useCallback(async (fbUser: FirebaseUser | null) => {
-    setIsSyncing(true);
-    if (!fbUser) {
+  // Sync Firebase user with Firestore profile
+  useEffect(() => {
+    const syncUserProfile = async () => {
+      if (authLoading) {
+        setIsSyncing(true);
+        return;
+      }
+      if (!firebaseUser) {
         setAppUser(null);
         setIsSyncing(false);
         return;
-    }
+      }
+
+      // User is authenticated with Firebase, now get/create our app profile
+      setIsSyncing(true);
+      try {
+        const playerProfile = await rankingManager.getPlayerRanking(
+          firebaseUser.uid, 
+          firebaseUser.displayName, 
+          firebaseUser.photoURL
+        );
+        setAppUser({ ...firebaseUser, ...playerProfile });
+      } catch (error) {
+        console.error("Error syncing user profile:", error);
+        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+        await signOut(); // Log out if profile sync fails
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    syncUserProfile();
+  }, [firebaseUser, authLoading, signOut, toast]);
+
+
+  const handleLogin = async (loginFunction: () => Promise<any>) => {
     try {
-      // Get or create the player profile from our ranking manager.
-      const playerProfile = await rankingManager.getPlayerRanking(
-        fbUser.uid, 
-        fbUser.displayName, 
-        fbUser.photoURL
-      );
-      
-      // Combine Firebase auth data and Firestore profile data into one user object.
-      setAppUser({ ...fbUser, ...playerProfile });
-
-    } catch (error) {
-      console.error("Error syncing user profile:", error);
-      toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-      await signOut(); // Log out if profile sync fails
-    } finally {
-      setIsSyncing(false);
+        const userCredential = await loginFunction();
+        if (userCredential?.user) {
+            toast({
+                title: "¡Bienvenido/a!",
+                description: `Has iniciado sesión como ${userCredential.user.displayName || 'Jugador'}.`,
+            });
+            // The useEffect above will handle profile syncing
+        } else if (!googleError && !facebookError) {
+             // Handle cases where the user closes the popup
+            toast({ title: "Inicio de sesión cancelado", description: "No has completado el inicio de sesión.", variant: 'default' });
+        }
+    } catch (e) {
+      // Errors are already handled by the hook's error state
     }
-  }, [toast, signOut]);
-  
-  // This effect triggers the profile sync when the firebase user changes.
-  useEffect(() => {
-      syncUserProfile(firebaseUser);
-  }, [firebaseUser, syncUserProfile]);
-
-
-  const handleLoginSuccess = useCallback(async (userCredential?: { user: FirebaseUser }) => {
-    if (userCredential?.user) {
-      toast({
-        title: "¡Bienvenido/a!",
-        description: `Has iniciado sesión como ${userCredential.user.displayName || 'Jugador'}.`,
-      });
-      // The useEffect will handle the profile sync automatically.
-    }
-  }, [toast]);
+  };
 
   const loginWithGoogle = useCallback(async () => {
-    const cred = await signInWithGoogle();
-    await handleLoginSuccess(cred);
-  }, [signInWithGoogle, handleLoginSuccess]);
+    await handleLogin(signInWithGoogle);
+  }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
-    const cred = await signInWithFacebook();
-    await handleLoginSuccess(cred);
-  }, [signInWithFacebook, handleLoginSuccess]);
+    await handleLogin(signInWithFacebook);
+  }, [signInWithFacebook]);
   
   const handleLogout = useCallback(async () => {
     await signOut();
+    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
-  // Combine all loading states into one for a simpler loading indicator.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

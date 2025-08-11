@@ -15,9 +15,10 @@ export function AuthStatus() {
   
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-10 w-24">
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </div>
+      <Button variant="secondary" className="rounded-md" disabled>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Cargando...
+      </Button>
     );
   }
 

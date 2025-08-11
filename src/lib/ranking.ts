@@ -68,7 +68,7 @@ class RankingManager {
   // This function now primarily ensures a player profile exists and is up-to-date.
   async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore> {
     if (!playerId) {
-      throw new Error("getPlayerRanking requires a valid playerId.");
+      throw new Error("getPlayerRanking requiere un playerId válido.");
     }
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
@@ -77,7 +77,7 @@ class RankingManager {
 
       if (!docSnap.exists()) {
         const newPlayer: Omit<PlayerScore, 'id'> = {
-          playerName: displayName || 'Jugador',
+          playerName: displayName || 'Jugador Anónimo',
           photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
           totalScore: 0,
           gamesPlayed: 0,
@@ -87,7 +87,7 @@ class RankingManager {
           lastPlayed: serverTimestamp(),
           level: this.calculateLevel(0),
           achievements: [],
-          coins: 50, // Starting coins
+          coins: 50, // Monedas iniciales
           dailyMissions: getDailyMissions(),
           missionsLastReset: new Date().toISOString().split('T')[0],
         };
@@ -98,11 +98,11 @@ class RankingManager {
       let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
       const today = new Date().toISOString().split('T')[0];
       
-      // Check if missions need to be reset
-      if (!playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today) {
+      // Comprobar si las misiones necesitan ser reseteadas
+      if (!playerData.missionsLastReset || playerData.missionsLastReset !== today) {
           const newMissions = getDailyMissions();
           const updatedData = {
-              dailyMissions: newMissions.map(m => ({...m})), // Firestore needs plain objects
+              dailyMissions: newMissions.map(m => ({...m})), // Firestore necesita objetos planos
               missionsLastReset: today,
           };
           await updateDoc(playerDocRef, updatedData);
@@ -112,8 +112,8 @@ class RankingManager {
       return { id: docSnap.id, ...playerData };
 
     } catch(error) {
-        console.error("Error in getPlayerRanking: ", error);
-        throw new Error("Could not get or create player profile.");
+        console.error("Error en getPlayerRanking: ", error);
+        throw new Error("No se pudo obtener o crear el perfil del jugador.");
     }
   }
   
@@ -153,7 +153,7 @@ class RankingManager {
       lastPlayed: serverTimestamp(),
       level: updatedPlayerStats.level,
       achievements: updatedAchievements,
-      dailyMissions: updatedMissions.map(m => ({...m})), // Firestore needs plain objects
+      dailyMissions: updatedMissions.map(m => ({...m})), // Firestore necesita objetos planos
       coins: increment(coinsEarned),
     };
 
@@ -167,12 +167,12 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     const player = await this.getPlayerRanking(playerId);
 
-    if (!player || !player.dailyMissions) throw new Error("Player or missions not found");
+    if (!player || !player.dailyMissions) throw new Error("Jugador o misiones no encontrados");
 
     const mission = player.dailyMissions.find(m => m.id === missionId);
-    if (!mission) throw new Error("Mission not found");
-    if (mission.progress < mission.goal) throw new Error("Mission not completed");
-    if (mission.claimed) throw new Error("Mission already claimed");
+    if (!mission) throw new Error("Misión no encontrada");
+    if (mission.progress < mission.goal) throw new Error("Misión no completada");
+    if (mission.claimed) throw new Error("Misión ya reclamada");
 
     const updatedMissions = player.dailyMissions.map(m => 
       m.id === missionId ? { ...m, claimed: true } : m
