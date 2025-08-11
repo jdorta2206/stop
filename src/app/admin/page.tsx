@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
-import type { User } from '@/hooks/use-auth';
+import type { AppUser } from '@/hooks/use-auth';
 
 // Mock data for admin panel
 const MOCK_USERS = [
