@@ -69,7 +69,8 @@ class RankingManager {
         return { ...playerData, id: docSnap.id };
       } else {
         // Create a new player profile with all default fields
-        const newPlayer: Omit<PlayerScore, 'id'> = {
+        const newPlayer: PlayerScore = {
+          id: playerId,
           playerName: displayName || 'Jugador',
           photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
           totalScore: 0,

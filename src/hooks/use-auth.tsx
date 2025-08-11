@@ -96,7 +96,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     // We only want this effect to run when the `firebaseUser` object itself changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firebaseUser]);
+  }, [firebaseUser, signOut, toast]);
 
   const loginWithGoogle = useCallback(async () => {
     await signInWithGoogle();
