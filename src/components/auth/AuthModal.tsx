@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth'; 
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { rankingManager } from '@/lib/ranking';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="18" height="18" {...props}>
@@ -47,6 +48,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   }, [error, toast]);
 
+  const handleLogin = async (loginMethod: () => Promise<any>) => {
+    const firebaseUser = await loginMethod();
+    if (firebaseUser) {
+        // After successful login, ensure the user profile exists in Firestore.
+        await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
+        onClose();
+    }
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
@@ -70,7 +80,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={loginWithGoogle}
+                    onClick={() => handleLogin(loginWithGoogle)}
                     disabled={isLoading}
                 >
                     <GoogleIcon />
@@ -79,7 +89,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                  <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={loginWithFacebook}
+                    onClick={() => handleLogin(loginWithFacebook)}
                     disabled={isLoading}
                 >
                     <FacebookIcon />
