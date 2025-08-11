@@ -36,11 +36,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
 
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true); // Start as true to handle initial load
 
   // This function syncs the Firebase user with our Firestore player profile.
-  const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+  const syncUserProfile = useCallback(async (fbUser: FirebaseUser | null) => {
     setIsSyncing(true);
+    if (!fbUser) {
+        setAppUser(null);
+        setIsSyncing(false);
+        return;
+    }
     try {
       // Get or create the player profile from our ranking manager.
       const playerProfile = await rankingManager.getPlayerRanking(
@@ -63,13 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // This effect triggers the profile sync when the firebase user changes.
   useEffect(() => {
-    if (firebaseUser) {
-      // We have a user from Firebase, now get their game profile.
       syncUserProfile(firebaseUser);
-    } else {
-      // No user, clear the app user.
-      setAppUser(null);
-    }
   }, [firebaseUser, syncUserProfile]);
 
 

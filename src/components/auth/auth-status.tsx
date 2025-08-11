@@ -15,9 +15,9 @@ export function AuthStatus() {
   
   if (isLoading) {
     return (
-      <Button variant="ghost" size="icon" disabled className="rounded-full">
+      <div className="flex items-center justify-center h-10 w-24">
         <Loader2 className="h-5 w-5 animate-spin" />
-      </Button>
+      </div>
     );
   }
 

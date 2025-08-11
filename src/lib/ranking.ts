@@ -95,18 +95,18 @@ class RankingManager {
         docSnap = await getDoc(playerDocRef); // Re-fetch the document after creation
       }
 
-      const playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
+      let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
       const today = new Date().toISOString().split('T')[0];
       
       // Check if missions need to be reset
-      if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+      if (!playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today) {
           const newMissions = getDailyMissions();
-          await updateDoc(playerDocRef, {
+          const updatedData = {
               dailyMissions: newMissions.map(m => ({...m})), // Firestore needs plain objects
               missionsLastReset: today,
-          });
-          playerData.dailyMissions = newMissions;
-          playerData.missionsLastReset = today;
+          };
+          await updateDoc(playerDocRef, updatedData);
+          playerData = { ...playerData, ...updatedData };
       }
       
       return { id: docSnap.id, ...playerData };
