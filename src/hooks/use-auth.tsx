@@ -10,7 +10,6 @@ import { useToast } from "@/components/ui/use-toast";
 import type { PlayerScore } from "@/components/game/types";
 
 // The final, unified User object for the app.
-// It combines Firebase Auth info with our game-specific PlayerScore.
 export interface User extends PlayerScore {
   uid: string;
   email: string | null;
@@ -46,7 +45,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-      if (isSyncing) return; // Prevent concurrent syncs
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -74,16 +72,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsSyncing(false);
       }
-    }, [signOut, toast, isSyncing]);
+    }, [signOut, toast]);
 
 
   useEffect(() => {
-    // Only attempt to sync if we have a firebaseUser but not an appUser yet,
-    // and no other operations are in progress.
+    // This effect handles the initial user load and profile synchronization.
+    // It runs when the Firebase auth state changes.
     if (firebaseUser && !appUser && !isSyncing) {
-      syncUserProfile(firebaseUser);
+        syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
-      // Clear app user if firebase user is logged out.
+      // If Firebase user is logged out and we are not in an auth transition, clear the app user.
       if (appUser) {
         setAppUser(null);
       }
@@ -112,7 +110,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
-  // isLoading is true if firebase is checking auth state, or if any login/logout process is happening, or we're syncing the profile.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

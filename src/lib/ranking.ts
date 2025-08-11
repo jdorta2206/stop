@@ -58,19 +58,22 @@ class RankingManager {
             
             const today = new Date().toISOString().split('T')[0];
             let needsUpdate = false;
-            const updates: Partial<PlayerScore> = {};
+            const updates: any = {};
 
             // Check if missions need to be reset
             if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
-                updates.dailyMissions = getDailyMissions();
+                updates.dailyMissions = getDailyMissions().map(m => ({...m}));
                 updates.missionsLastReset = today;
                 needsUpdate = true;
             }
 
-            // Check if profile info has changed
-            if ((displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL)) {
-                if (displayName) updates.playerName = displayName;
-                if (photoURL) updates.photoURL = photoURL;
+            // Check if profile info has changed, only update if it's different and not null
+            if (displayName && playerData.playerName !== displayName) {
+                updates.playerName = displayName;
+                needsUpdate = true;
+            }
+            if (photoURL && playerData.photoURL !== photoURL) {
+                updates.photoURL = photoURL;
                 needsUpdate = true;
             }
 
@@ -104,11 +107,9 @@ class RankingManager {
             
             await setDoc(playerDocRef, newPlayer);
             
-            // Return the newly created player data.
-            // Replace serverTimestamp with a client-side date for immediate use.
             return {
                 ...newPlayer,
-                lastPlayed: new Date(), 
+                lastPlayed: new Date().toISOString(), 
             };
         }
     } catch(error) {
