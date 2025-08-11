@@ -57,13 +57,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // This effect synchronizes the Firebase user with our application's user profile.
-  // It runs only when the firebaseUser object changes.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
-      // Avoid re-syncing if the user is already logged in and matches.
-      if (appUser?.uid === fbUser.uid) return;
-
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -75,13 +70,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (playerData) {
           setAppUser(toAppUser(playerData, fbUser));
         } else {
-          // This should not happen if getPlayerRanking is robust.
           throw new Error("Could not create or retrieve player profile.");
         }
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut(); // Sign out if profile sync fails
+        await signOut();
         setAppUser(null);
       } finally {
         setIsSyncing(false);
@@ -89,14 +83,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     
     if (firebaseUser) {
-      syncUserProfile(firebaseUser);
+      if (appUser?.uid !== firebaseUser.uid) {
+        syncUserProfile(firebaseUser);
+      }
     } else {
-      // Clear app user if firebase user is null (e.g., on logout).
       setAppUser(null);
     }
-    // We only want this effect to run when the `firebaseUser` object itself changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firebaseUser, signOut, toast]);
+  }, [firebaseUser, appUser, signOut, toast]);
 
   const loginWithGoogle = useCallback(async () => {
     await signInWithGoogle();
@@ -108,12 +101,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const handleLogout = useCallback(async () => {
     await signOut();
-    setAppUser(null); // Clear app user immediately on logout
+    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
-  // Combine all loading states. The app is loading if Firebase is checking the initial
-  // auth state, or if a sign-in/out process is active, or if we are syncing the profile.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

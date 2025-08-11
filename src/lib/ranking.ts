@@ -48,6 +48,7 @@ class RankingManager {
   private rankingsCollection = collection(db, 'rankings');
 
   async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore | null> {
+    if (!playerId) return null;
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
@@ -57,7 +58,6 @@ class RankingManager {
         let playerData = docSnap.data() as PlayerScore;
         const today = new Date().toISOString().split('T')[0];
         
-        // Ensure missions are initialized if they are missing
         if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
             const newMissions = getDailyMissions();
             await updateDoc(playerDocRef, {
@@ -68,7 +68,6 @@ class RankingManager {
         }
         return { ...playerData, id: docSnap.id };
       } else {
-        // Create a new player profile with all default fields
         const newPlayer: PlayerScore = {
           id: playerId,
           playerName: displayName || 'Jugador',
