@@ -62,7 +62,7 @@ class RankingManager {
             });
         }
         
-        // Check if player name or photo needs an update from auth provider
+        // Check if player name or photo needs an update from auth provider, only if different
         const needsUpdate = (data.playerName !== displayName && displayName) || (data.photoURL !== photoURL && photoURL);
         if (needsUpdate) {
             await updateDoc(playerDocRef, {

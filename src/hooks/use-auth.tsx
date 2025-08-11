@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase"; 
+import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // App-specific user state
   const [appUser, setAppUser] = useState<User | null>(null);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // This effect runs when the Firebase auth state changes.
   // It's responsible for fetching/creating the user's game profile in Firestore.
