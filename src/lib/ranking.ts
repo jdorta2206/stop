@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -50,63 +49,47 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     const docSnap = await getDoc(playerDocRef);
     
-    if (!docSnap.exists()) {
-      // If player does not exist, create a new record.
-      const newPlayer: PlayerScore = {
-        id: playerId,
-        playerName: displayName || 'Jugador', // Default name
-        photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
-        totalScore: 0,
-        gamesPlayed: 0,
-        gamesWon: 0,
-        averageScore: 0,
-        bestScore: 0,
-        lastPlayed: new Date().toISOString(),
-        level: this.calculateLevel(0),
-        achievements: [],
-        coins: 50, // Welcome coins
-        dailyMissions: getDailyMissions(),
-        missionsLastReset: new Date().toISOString().split('T')[0],
-      };
-      await setDoc(playerDocRef, newPlayer);
-      return newPlayer;
-    }
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Solo actualiza si las misiones diarias necesitan reseteo
+        if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
+            await updateDoc(playerDocRef, {
+                dailyMissions: getDailyMissions(),
+                missionsLastReset: today,
+            });
+        }
+        
+        const finalData = { ...docSnap.data(), id: docSnap.id } as PlayerScore;
+        // Convertir Firestore Timestamp a ISO string si existe
+        if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
+            finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
+        }
 
-    const data = docSnap.data();
-    const today = new Date().toISOString().split('T')[0];
-    
-    const updates: Partial<PlayerScore> = {};
-    let needsUpdate = false;
+        return finalData;
 
-    // Check if daily missions need to be reset
-    if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
-      updates.dailyMissions = getDailyMissions();
-      updates.missionsLastReset = today;
-      needsUpdate = true;
+    } else {
+        // Si el jugador no existe, crea un nuevo registro.
+        const newPlayer: PlayerScore = {
+            id: playerId,
+            playerName: displayName || 'Jugador', // Default name
+            photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
+            totalScore: 0,
+            gamesPlayed: 0,
+            gamesWon: 0,
+            averageScore: 0,
+            bestScore: 0,
+            lastPlayed: new Date().toISOString(),
+            level: this.calculateLevel(0),
+            achievements: [],
+            coins: 50, // Welcome coins
+            dailyMissions: getDailyMissions(),
+            missionsLastReset: new Date().toISOString().split('T')[0],
+        };
+        await setDoc(playerDocRef, newPlayer);
+        return newPlayer;
     }
-    
-    // Ensure local data is consistent with latest login info if provided, only if changed
-    if (displayName && data.playerName !== displayName) {
-      updates.playerName = displayName;
-      needsUpdate = true;
-    }
-     if (photoURL && data.photoURL !== photoURL) {
-      updates.photoURL = photoURL;
-      needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-        await updateDoc(playerDocRef, updates);
-    }
-    
-    const finalData = { ...data, ...updates, id: docSnap.id } as PlayerScore;
-    
-    // Convert Firestore Timestamp to ISO string if it exists
-    if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
-      finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
-    }
-
-    return finalData;
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
