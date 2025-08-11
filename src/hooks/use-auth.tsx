@@ -34,49 +34,55 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
+  // Firebase hooks for auth state and providers
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
+  // App-specific state
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Function to get or create player profile from our database
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-      if (isSyncing) return;
-      setIsSyncing(true);
-      try {
-        const playerData = await rankingManager.getPlayerRanking(
-          fbUser.uid, 
-          fbUser.displayName, 
-          fbUser.photoURL
-        );
-        
-        if (playerData) {
-            const currentUser: User = {
-              ...playerData,
-              uid: fbUser.uid,
-              name: playerData.playerName, 
-              email: fbUser.email,
-            };
-            setAppUser(currentUser);
-        } else {
-            throw new Error("Could not create or retrieve player profile.");
-        }
-      } catch (error) {
-        console.error("Error syncing user profile:", error);
-        toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut();
-        setAppUser(null);
-      } finally {
-        setIsSyncing(false);
+    setIsSyncing(true);
+    try {
+      const playerData = await rankingManager.getPlayerRanking(
+        fbUser.uid, 
+        fbUser.displayName, 
+        fbUser.photoURL
+      );
+      
+      if (playerData) {
+        const currentUser: User = {
+          ...playerData,
+          uid: fbUser.uid,
+          name: playerData.playerName, 
+          email: fbUser.email,
+        };
+        setAppUser(currentUser);
+      } else {
+        throw new Error("Could not create or retrieve player profile.");
       }
-    }, [isSyncing, signOut, toast]);
+    } catch (error) {
+      console.error("Error syncing user profile:", error);
+      toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
+      await signOut(); // Sign out if profile sync fails
+      setAppUser(null);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [signOut, toast]);
 
+  // Effect to handle user state changes from Firebase
   useEffect(() => {
+    // If we have a firebase user but no app user, and we're not already syncing, sync the profile
     if (firebaseUser && !appUser && !isSyncing) {
-        syncUserProfile(firebaseUser);
-    } else if (!firebaseUser && !authLoading) {
+      syncUserProfile(firebaseUser);
+    } 
+    // If there's no firebase user and the auth is not loading, ensure app user is cleared
+    else if (!firebaseUser && !authLoading) {
       if (appUser) {
         setAppUser(null);
       }
@@ -91,12 +97,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await signInWithFacebook();
   }, [signInWithFacebook]);
   
-  const logout = useCallback(async () => {
+  const handleLogout = useCallback(async () => {
     await signOut();
-    setAppUser(null);
+    setAppUser(null); // Clear app user immediately on logout
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
+  // Unified loading state
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 
@@ -106,8 +113,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error: error || null,
     loginWithGoogle,
     loginWithFacebook,
-    logout,
-  }), [appUser, isLoading, error, loginWithGoogle, loginWithFacebook, logout]);
+    logout: handleLogout,
+  }), [appUser, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout]);
 
   return (
     <AuthContext.Provider value={value}>

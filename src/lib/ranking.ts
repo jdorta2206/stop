@@ -51,62 +51,51 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
-        const docSnap = await getDoc(playerDocRef);
+      const docSnap = await getDoc(playerDocRef);
 
-        if (docSnap.exists()) {
-            const playerData = docSnap.data() as PlayerScore;
-            
-            const today = new Date().toISOString().split('T')[0];
-            let needsUpdate = false;
-            const updates: any = {};
+      if (docSnap.exists()) {
+        const playerData = docSnap.data() as PlayerScore;
+        const today = new Date().toISOString().split('T')[0];
 
-            if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
-                updates.dailyMissions = getDailyMissions().map(m => ({...m}));
-                updates.missionsLastReset = today;
-                needsUpdate = true;
-            }
-
-            if (displayName && playerData.playerName !== displayName) {
-                updates.playerName = displayName;
-                needsUpdate = true;
-            }
-            if (photoURL && playerData.photoURL !== photoURL) {
-                updates.photoURL = photoURL;
-                needsUpdate = true;
-            }
-
-            if (needsUpdate) {
-                await updateDoc(playerDocRef, updates);
-                return { ...playerData, ...updates, id: docSnap.id };
-            }
-            
-            return { ...playerData, id: docSnap.id };
-
-        } else {
-            const newPlayer: PlayerScore = {
-                id: playerId,
-                playerName: displayName || 'Jugador',
-                photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
-                totalScore: 0,
-                gamesPlayed: 0,
-                gamesWon: 0,
-                averageScore: 0,
-                bestScore: 0,
-                lastPlayed: serverTimestamp(),
-                level: this.calculateLevel(0),
-                achievements: [],
-                coins: 50,
-                dailyMissions: getDailyMissions(),
-                missionsLastReset: new Date().toISOString().split('T')[0],
-            };
-            
-            await setDoc(playerDocRef, newPlayer);
-            
-            return {
-                ...newPlayer,
-                lastPlayed: new Date().toISOString(), 
-            };
+        // Check if missions need to be reset
+        if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+          const updatedMissions = getDailyMissions();
+          await updateDoc(playerDocRef, { 
+            dailyMissions: updatedMissions.map(m => ({...m})),
+            missionsLastReset: today,
+          });
+          return { ...playerData, dailyMissions: updatedMissions, missionsLastReset: today, id: docSnap.id };
         }
+        
+        // Return existing player data
+        return { ...playerData, id: docSnap.id };
+      } else {
+        // Create a new player profile
+        const newPlayer: PlayerScore = {
+          id: playerId,
+          playerName: displayName || 'Jugador',
+          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
+          totalScore: 0,
+          gamesPlayed: 0,
+          gamesWon: 0,
+          averageScore: 0,
+          bestScore: 0,
+          lastPlayed: serverTimestamp(),
+          level: this.calculateLevel(0),
+          achievements: [],
+          coins: 50,
+          dailyMissions: getDailyMissions(),
+          missionsLastReset: new Date().toISOString().split('T')[0],
+        };
+        
+        await setDoc(playerDocRef, newPlayer);
+        
+        // Return the newly created player data, converting server timestamp for client use
+        return {
+          ...newPlayer,
+          lastPlayed: new Date().toISOString(),
+        };
+      }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
         return null;
