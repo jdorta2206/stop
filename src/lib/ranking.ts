@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -13,7 +12,8 @@ import {
     updateDoc, 
     increment, 
     serverTimestamp,
-    addDoc
+    addDoc,
+    Timestamp
 } from "firebase/firestore";
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
