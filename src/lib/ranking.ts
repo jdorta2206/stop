@@ -65,61 +65,66 @@ const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 class RankingManager {
   private rankingsCollection = collection(db, 'rankings');
 
-  // This function now primarily ensures a player profile exists and is up-to-date.
   async getPlayerRanking(
-    playerId: string, 
-    displayName?: string | null, 
-    photoURL?: string | null
+    playerId: string,
+    displayName?: string | null,
+    photoURL?: string | null,
+    retries = 3
   ): Promise<Omit<PlayerScore, 'id'>> {
     if (!playerId) {
       throw new Error("getPlayerRanking requiere un playerId válido.");
     }
     const playerDocRef = doc(this.rankingsCollection, playerId);
-    
-    try {
-      let docSnap = await getDoc(playerDocRef);
 
-      if (!docSnap.exists()) {
-        const newPlayer: Omit<PlayerScore, 'id'> = {
-          playerName: displayName || 'Jugador Anónimo',
-          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
-          totalScore: 0,
-          gamesPlayed: 0,
-          gamesWon: 0,
-          averageScore: 0,
-          bestScore: 0,
-          lastPlayed: serverTimestamp(),
-          level: this.calculateLevel(0),
-          achievements: [],
-          coins: 50, // Monedas iniciales
-          dailyMissions: getDailyMissions(),
-          missionsLastReset: new Date().toISOString().split('T')[0],
-        };
-        await setDoc(playerDocRef, newPlayer);
-        // Return the newly created player data immediately
-        return newPlayer;
-      }
+    for (let i = 0; i < retries; i++) {
+        try {
+            const docSnap = await getDoc(playerDocRef);
 
-      let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Comprobar si las misiones necesitan ser reseteadas
-      if (!playerData.missionsLastReset || playerData.missionsLastReset !== today) {
-          const newMissions = getDailyMissions();
-          const updatedData = {
-              dailyMissions: newMissions.map(m => ({...m})), // Firestore necesita objetos planos
-              missionsLastReset: today,
-          };
-          await updateDoc(playerDocRef, updatedData);
-          playerData = { ...playerData, ...updatedData };
-      }
-      
-      return playerData;
+            if (!docSnap.exists()) {
+                const newPlayer: Omit<PlayerScore, 'id'> = {
+                    playerName: displayName || 'Jugador Anónimo',
+                    photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
+                    totalScore: 0,
+                    gamesPlayed: 0,
+                    gamesWon: 0,
+                    averageScore: 0,
+                    bestScore: 0,
+                    lastPlayed: serverTimestamp(),
+                    level: this.calculateLevel(0),
+                    achievements: [],
+                    coins: 50, // Monedas iniciales
+                    dailyMissions: getDailyMissions(),
+                    missionsLastReset: new Date().toISOString().split('T')[0],
+                };
+                await setDoc(playerDocRef, newPlayer);
+                return newPlayer;
+            }
 
-    } catch(error) {
-        console.error("Error en getPlayerRanking: ", error);
-        throw new Error("No se pudo obtener o crear el perfil del jugador.");
+            let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!playerData.missionsLastReset || playerData.missionsLastReset !== today) {
+                const newMissions = getDailyMissions();
+                const updatedData = {
+                    dailyMissions: newMissions.map(m => ({...m})),
+                    missionsLastReset: today,
+                };
+                await updateDoc(playerDocRef, updatedData);
+                playerData = { ...playerData, ...updatedData };
+            }
+            
+            return playerData;
+
+        } catch (error) {
+            console.error(`Error en getPlayerRanking (intento ${i + 1}/${retries}):`, error);
+            if (i === retries - 1) {
+                 throw new Error(`No se pudo obtener o crear el perfil del jugador tras ${retries} intentos.`);
+            }
+            // Esperar antes de reintentar
+            await new Promise(res => setTimeout(res, 1000 * (i + 1)));
+        }
     }
+     throw new Error("No se pudo obtener o crear el perfil del jugador.");
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
