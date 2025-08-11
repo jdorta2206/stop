@@ -45,9 +45,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const syncUserProfile = async () => {
       if (authLoading) {
-        setIsSyncing(true);
+        // Still waiting for firebase auth to initialize
         return;
       }
+      
+      setIsSyncing(true);
       if (!firebaseUser) {
         setAppUser(null);
         setIsSyncing(false);
@@ -55,7 +57,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // User is authenticated with Firebase, now get/create our app profile
-      setIsSyncing(true);
       try {
         const playerProfile = await rankingManager.getPlayerRanking(
           firebaseUser.uid, 
