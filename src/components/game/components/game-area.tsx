@@ -25,8 +25,7 @@ const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: 
     </div>
 );
 
-
-const ResultsArea: React.FC<{
+interface ResultsAreaProps {
   roundResults?: RoundResults;
   playerRoundScore?: number;
   aiRoundScore?: number;
@@ -36,7 +35,9 @@ const ResultsArea: React.FC<{
   startNextRound: () => void;
   translateUi: (key: string, replacements?: Record<string, string>) => string;
   currentLetter: string | null;
-}> = ({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }) => {
+}
+
+const ResultsArea: React.FC<ResultsAreaProps> = ({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }) => {
   const router = useRouter();
   const { user } = useAuth();
   
@@ -290,5 +291,3 @@ export function GameArea({
     </div>
   );
 }
-
-    
