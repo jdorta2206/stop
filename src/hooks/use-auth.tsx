@@ -61,8 +61,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // It's responsible for fetching or creating the player profile.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
-      // Prevent running if another sync is in progress or if user is already loaded
-      if (isSyncing || appUser?.uid === fbUser.uid) return;
+      // Prevent re-syncing if the user is already loaded and matches.
+      if (appUser?.uid === fbUser.uid) return;
 
       setIsSyncing(true);
       try {
@@ -75,6 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (playerData) {
           setAppUser(toAppUser(playerData, fbUser));
         } else {
+          // This case should ideally not be reached if getPlayerRanking is robust.
           throw new Error("Could not create or retrieve player profile.");
         }
       } catch (error) {
@@ -88,12 +89,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     
     if (firebaseUser) {
-      syncUserProfile(firebaseUser);
+      // Only run sync if there's a Firebase user and we are not already syncing.
+      if (!isSyncing) {
+        syncUserProfile(firebaseUser);
+      }
     } else {
-      // Clear app user if firebase user is null
+      // Clear app user if firebase user is null (logout)
       setAppUser(null);
     }
-  // We only want this to run when the firebaseUser object itself changes.
+  // This dependency array is critical. It should only run when the firebaseUser object changes.
+  // We disable the lint rule because we are intentionally managing the `isSyncing` and `appUser` state manually inside the effect.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser]);
 
@@ -111,7 +116,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
-  // Unified loading state
+  // Combine all loading states. The app is loading if Firebase is checking auth,
+  // or if a sign-in process is active, or if we are syncing the profile.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

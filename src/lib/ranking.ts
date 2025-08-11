@@ -1,3 +1,4 @@
+
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -50,7 +51,7 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
-      const docSnap = await getDoc(playerDocRef);
+      let docSnap = await getDoc(playerDocRef);
 
       if (docSnap.exists()) {
         const playerData = docSnap.data() as PlayerScore;
@@ -63,7 +64,9 @@ class RankingManager {
             dailyMissions: updatedMissions.map(m => ({...m})),
             missionsLastReset: today,
           });
-          const reFetchedData = (await getDoc(playerDocRef)).data() as PlayerScore;
+          // Re-fetch data after update to ensure consistency
+          docSnap = await getDoc(playerDocRef);
+          const reFetchedData = docSnap.data() as PlayerScore;
           return { ...reFetchedData, id: docSnap.id };
         }
         
@@ -71,8 +74,7 @@ class RankingManager {
         return { ...playerData, id: docSnap.id };
       } else {
         // Create a new player profile
-        const newPlayer: PlayerScore = {
-          id: playerId,
+        const newPlayer: Omit<PlayerScore, 'id'> = {
           playerName: displayName || 'Jugador',
           photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
           totalScore: 0,
@@ -90,9 +92,14 @@ class RankingManager {
         
         await setDoc(playerDocRef, newPlayer);
         
-        // IMPORTANT: Re-fetch the document to get the server-generated timestamp
+        // IMPORTANT: Re-fetch the document to get the server-generated timestamp and ensure data consistency
         const newDocSnap = await getDoc(playerDocRef);
-        return { ...(newDocSnap.data() as PlayerScore), id: newDocSnap.id };
+        if (newDocSnap.exists()) {
+            return { ...(newDocSnap.data() as PlayerScore), id: newDocSnap.id };
+        } else {
+            // This should not happen, but as a fallback
+            throw new Error("Failed to create and retrieve player profile.");
+        }
       }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
@@ -142,7 +149,8 @@ class RankingManager {
 
     await updateDoc(playerDocRef, updatedData);
     
-    return (await this.getPlayerRanking(gameResult.playerId));
+    const updatedPlayerDoc = await getDoc(playerDocRef);
+    return updatedPlayerDoc.exists() ? { id: updatedPlayerDoc.id, ...updatedPlayerDoc.data() } as PlayerScore : null;
   }
 
   async claimMissionReward(playerId: string, missionId: string): Promise<void> {
