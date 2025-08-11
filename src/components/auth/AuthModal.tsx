@@ -54,7 +54,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [error, toast]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { onClose(); }}}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">

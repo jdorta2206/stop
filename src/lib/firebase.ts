@@ -13,6 +13,7 @@ const db = getFirestore(app);
 // --- Providers ---
 // This was the critical error: The auth instance must be passed to the provider constructors.
 const googleProvider = new GoogleAuthProvider(auth);
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 const facebookProvider = new FacebookAuthProvider(auth);
 
 

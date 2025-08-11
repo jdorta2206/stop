@@ -4,22 +4,18 @@
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
 import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AuthModal } from '../auth/AuthModal';
-import { UserAccount } from '../auth/UserAccount';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Coins, Volume2, VolumeX, MessageSquare, Trophy } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 import { ChatPanel } from '../chat/chat-panel';
 import { onChatUpdate, sendMessageToRoom, type ChatMessage } from '@/lib/room-service';
+import { AuthStatus } from '../auth/auth-status';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
-  const router = useRouter();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const { user, isLoading } = useAuth();
-  const isAuthenticated = !!user;
+  const { user } = useAuth();
   const { isMuted, toggleMute } = useSound();
   const [isMounted, setIsMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -91,28 +87,11 @@ export function AppHeader() {
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
             
-            {isMounted && (
-              <>
-                {isAuthenticated && user ? (
-                  <>
-                    <UserAccount />
-                  </>
-                ) : (
-                  <Button 
-                    variant="secondary"
-                    className="font-semibold rounded-full shadow-lg"
-                    onClick={() => setAuthModalOpen(true)}
-                    disabled={isLoading}
-                  >
-                    {translate('auth.signIn')}
-                  </Button>
-                )}
-              </>
-            )}
+            {isMounted && <AuthStatus /> }
           </div>
         </div>
       </header>
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      
       {isMounted && roomId && user && (
          <ChatPanel 
           isOpen={isChatOpen}
