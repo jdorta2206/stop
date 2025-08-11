@@ -52,24 +52,10 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
-      const docSnap = await getDoc(playerDocRef);
+      let docSnap = await getDoc(playerDocRef);
 
-      if (docSnap.exists()) {
-        let playerData = docSnap.data() as PlayerScore;
-        const today = new Date().toISOString().split('T')[0];
-        
-        if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
-            const newMissions = getDailyMissions();
-            await updateDoc(playerDocRef, {
-                dailyMissions: newMissions.map(m => ({...m})),
-                missionsLastReset: today,
-            });
-            playerData = {...playerData, dailyMissions: newMissions, missionsLastReset: today};
-        }
-        return { ...playerData, id: docSnap.id };
-      } else {
-        const newPlayer: PlayerScore = {
-          id: playerId,
+      if (!docSnap.exists()) {
+        const newPlayer: Omit<PlayerScore, 'id'> = {
           playerName: displayName || 'Jugador',
           photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
           totalScore: 0,
@@ -84,15 +70,25 @@ class RankingManager {
           dailyMissions: getDailyMissions(),
           missionsLastReset: new Date().toISOString().split('T')[0],
         };
-        
         await setDoc(playerDocRef, newPlayer);
-        
-        const newDocSnap = await getDoc(playerDocRef);
-        if (newDocSnap.exists()) {
-            return { ...(newDocSnap.data() as PlayerScore), id: newDocSnap.id };
-        } else {
-            throw new Error("Failed to create and retrieve player profile.");
-        }
+        docSnap = await getDoc(playerDocRef); // Re-fetch the document to get server-generated timestamp
+      }
+
+      if (docSnap.exists()) {
+          let playerData = docSnap.data() as PlayerScore;
+          const today = new Date().toISOString().split('T')[0];
+          
+          if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+              const newMissions = getDailyMissions();
+              await updateDoc(playerDocRef, {
+                  dailyMissions: newMissions.map(m => ({...m})), // Ensure plain objects are written
+                  missionsLastReset: today,
+              });
+              playerData = {...playerData, dailyMissions: newMissions, missionsLastReset: today};
+          }
+          return { ...playerData, id: docSnap.id };
+      } else {
+        throw new Error("Failed to create and retrieve player profile.");
       }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);

@@ -70,26 +70,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (playerData) {
           setAppUser(toAppUser(playerData, fbUser));
         } else {
-          throw new Error("Could not create or retrieve player profile.");
+           throw new Error("Could not create or retrieve player profile.");
         }
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
         await signOut();
-        setAppUser(null);
       } finally {
         setIsSyncing(false);
       }
     };
     
-    if (firebaseUser) {
-      if (appUser?.uid !== firebaseUser.uid) {
+    // Only sync if there's a firebaseUser and they are not yet synced to the appUser state
+    if (firebaseUser && firebaseUser.uid !== appUser?.uid) {
         syncUserProfile(firebaseUser);
-      }
-    } else {
-      setAppUser(null);
+    } else if (!firebaseUser && !authLoading) {
+        // User is logged out
+        setAppUser(null);
     }
-  }, [firebaseUser, appUser, signOut, toast]);
+  }, [firebaseUser, authLoading, signOut, toast, appUser?.uid]);
 
   const loginWithGoogle = useCallback(async () => {
     await signInWithGoogle();
@@ -105,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
+  // Combine all loading states into one
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 
