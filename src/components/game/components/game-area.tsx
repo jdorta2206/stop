@@ -17,33 +17,7 @@ import type { ProcessingState } from '@/app/play-solo/page';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-interface GameAreaProps {
-  gameState: GameState;
-  currentLetter: string | null;
-  onSpinComplete: (letter: string) => void;
-  categories: string[];
-  alphabet: string[];
-  playerResponses: Record<string, string>;
-  onInputChange: (category: string, value: string) => void;
-  onStop: () => void;
-  isLoadingAi: boolean;
-  roundResults?: RoundResults;
-  playerRoundScore?: number;
-  aiRoundScore?: number;
-  roundWinner?: string;
-  startNextRound: () => void;
-  totalPlayerScore: number;
-  totalAiScore: number;
-  timeLeft: number;
-  countdownWarningText: string;
-  translateUi: (key: string, replacements?: Record<string, string>) => string;
-  language: LanguageCode;
-  gameMode: 'solo' | 'multiplayer';
-  localPlayerSubmitted?: boolean;
-  processingState: ProcessingState;
-}
-
-const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: GameAreaProps['translateUi'] }> = ({ processingState, translateUi }) => (
+const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: (key: string) => string }> = ({ processingState, translateUi }) => (
     <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 text-white rounded-lg">
         <Loader2 className="h-12 w-12 animate-spin mb-4" />
         <h3 className="text-2xl font-bold">{translateUi(`game.loadingAI.${processingState}`)}</h3>
@@ -146,6 +120,32 @@ const ResultsArea: React.FC<{
 };
 
 
+interface GameAreaProps {
+  gameState: GameState;
+  currentLetter: string | null;
+  onSpinComplete: (letter: string) => void;
+  categories: string[];
+  alphabet: string[];
+  playerResponses: Record<string, string>;
+  onInputChange: (category: string, value: string) => void;
+  onStop: () => void;
+  isLoadingAi: boolean;
+  roundResults?: RoundResults;
+  playerRoundScore?: number;
+  aiRoundScore?: number;
+  roundWinner?: string;
+  startNextRound: () => void;
+  totalPlayerScore: number;
+  totalAiScore: number;
+  timeLeft: number;
+  countdownWarningText: string;
+  translateUi: (key: string, replacements?: Record<string, string>) => string;
+  language: LanguageCode;
+  gameMode: 'solo' | 'multiplayer';
+  localPlayerSubmitted?: boolean;
+  processingState: ProcessingState;
+}
+
 export function GameArea({
   gameState,
   currentLetter,
@@ -187,7 +187,20 @@ export function GameArea({
   }
 
   if (gameState === "EVALUATING") {
-    return <LoadingOverlay processingState={processingState} translateUi={translateUi} />;
+    return (
+        <div className="w-full max-w-2xl mx-auto relative">
+            <Card className="w-full max-w-2xl mx-auto shadow-xl rounded-xl blur-sm">
+                <CardHeader className="text-center">
+                    <CardTitle className="text-5xl font-extrabold">
+                        <span className="text-muted-foreground">{translateUi('game.letterLabel')} </span>
+                        <span className="text-primary tracking-wider">{currentLetter}</span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-4 md:p-6" />
+            </Card>
+            <LoadingOverlay processingState={processingState} translateUi={translateUi as (key: string) => string} />
+        </div>
+    );
   }
   
   if (gameState === "RESULTS") {
