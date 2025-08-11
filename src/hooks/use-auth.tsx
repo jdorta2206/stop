@@ -11,12 +11,9 @@ import type { PlayerScore } from "@/components/game/types";
 
 // The final, unified User object for the app.
 // It combines Firebase Auth info with our game-specific PlayerScore.
-export interface User extends Omit<PlayerScore, 'id' | 'playerName' | 'photoURL'> {
+export interface User extends PlayerScore {
   uid: string;
-  name: string | null;
   email: string | null; 
-  photoURL?: string | null;
-  coins: number;
 }
 
 interface AuthContextType {
@@ -52,7 +49,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
       setIsSyncing(true);
       try {
-        // Get or create the player profile from our Firestore 'rankings' collection
         const playerData = await rankingManager.getPlayerRanking(
           fbUser.uid, 
           fbUser.displayName, 
@@ -63,16 +59,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const currentUser: User = {
           ...playerData,
           uid: fbUser.uid,
-          name: playerData.playerName,
+          name: playerData.playerName, // Ensure name is consistent
           email: fbUser.email,
-          photoURL: playerData.photoURL,
-          coins: playerData.coins || 0
         };
         setAppUser(currentUser);
+
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut(); // Sign out if profile sync fails
+        await signOut(); 
         setAppUser(null);
       } finally {
         setIsSyncing(false);
@@ -80,10 +75,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     if (firebaseUser) {
-      // If a firebase user is detected, sync their profile data
       syncUserProfile(firebaseUser);
     } else {
-      // If there's no Firebase user, clear the app user and stop syncing.
       setAppUser(null);
       setIsSyncing(false);
     }

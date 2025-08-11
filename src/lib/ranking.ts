@@ -72,7 +72,7 @@ class RankingManager {
       return newPlayer;
     }
 
-    const data = { id: docSnap.id, ...docSnap.data() } as PlayerScore;
+    const data = { ...docSnap.data(), id: docSnap.id } as PlayerScore;
     const today = new Date().toISOString().split('T')[0];
     
     const updates: Partial<PlayerScore> = {};
@@ -86,11 +86,11 @@ class RankingManager {
     }
     
     // Ensure local data is consistent with latest login info if provided
-    if (displayName && (data.playerName !== displayName)) {
+    if (displayName && data.playerName !== displayName) {
       updates.playerName = displayName;
       needsUpdate = true;
     }
-     if (typeof photoURL !== 'undefined' && data.photoURL !== photoURL) {
+     if (photoURL && data.photoURL !== photoURL) {
       updates.photoURL = photoURL;
       needsUpdate = true;
     }

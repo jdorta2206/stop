@@ -37,7 +37,7 @@ export function UserAccount() {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer">
+            <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Cerrar sesión</span>
             </DropdownMenuItem>
