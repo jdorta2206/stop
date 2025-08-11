@@ -17,7 +17,7 @@ import {
     Timestamp,
     writeBatch
 } from "firebase/firestore";
-import type { PlayerScore, GameResult } from '@/components/game/types';
+import type { GameResult } from '@/components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
 
 const LEVELS = [
@@ -39,6 +39,24 @@ export const ACHIEVEMENTS: Record<string, { name: string; description: string; i
   'high_scorer': { name: 'Puntuación Alta', description: 'Obtén más de 50 puntos en una sola ronda', icon: '🚀' },
   'champion': { name: 'Campeón', description: 'Gana 10 juegos', icon: '👑' }
 };
+
+export interface PlayerScore {
+  id: string;
+  playerName: string;
+  photoURL?: string | null;
+  totalScore: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  averageScore: number;
+  bestScore: number;
+  lastPlayed: any; // Can be Firestore Timestamp on server, string on client
+  level: string;
+  achievements: string[];
+  coins: number;
+  dailyMissions: MissionProgress[];
+  missionsLastReset: string; // YYYY-MM-DD
+}
+
 
 // Cantidad de monedas a otorgar
 const COINS_PER_GAME = 10;
@@ -69,33 +87,33 @@ class RankingManager {
           lastPlayed: serverTimestamp(),
           level: this.calculateLevel(0),
           achievements: [],
-          coins: 50,
+          coins: 50, // Starting coins
           dailyMissions: getDailyMissions(),
           missionsLastReset: new Date().toISOString().split('T')[0],
         };
         await setDoc(playerDocRef, newPlayer);
-        docSnap = await getDoc(playerDocRef);
+        docSnap = await getDoc(playerDocRef); // Re-fetch the document after creation
       }
 
-      if (docSnap.exists()) {
-          let playerData = docSnap.data() as PlayerScore;
-          const today = new Date().toISOString().split('T')[0];
-          
-          if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
-              const newMissions = getDailyMissions();
-              await updateDoc(playerDocRef, {
-                  dailyMissions: newMissions.map(m => ({...m})),
-                  missionsLastReset: today,
-              });
-              playerData = {...playerData, dailyMissions: newMissions, missionsLastReset: today};
-          }
-          return { ...playerData, id: docSnap.id };
-      } else {
-        throw new Error("Failed to create and retrieve player profile.");
+      const playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if missions need to be reset
+      if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+          const newMissions = getDailyMissions();
+          await updateDoc(playerDocRef, {
+              dailyMissions: newMissions.map(m => ({...m})), // Firestore needs plain objects
+              missionsLastReset: today,
+          });
+          playerData.dailyMissions = newMissions;
+          playerData.missionsLastReset = today;
       }
+      
+      return { id: docSnap.id, ...playerData };
+
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
-        throw error; // Re-throw the error to be caught by the caller
+        throw new Error("Could not get or create player profile.");
     }
   }
   
@@ -135,7 +153,7 @@ class RankingManager {
       lastPlayed: serverTimestamp(),
       level: updatedPlayerStats.level,
       achievements: updatedAchievements,
-      dailyMissions: updatedMissions.map(m => ({...m})),
+      dailyMissions: updatedMissions.map(m => ({...m})), // Firestore needs plain objects
       coins: increment(coinsEarned),
     };
 
@@ -185,6 +203,7 @@ class RankingManager {
   }
 
   async getGameHistory(playerId: string, historyLimit: number = 5): Promise<GameResult[]> {
+    if (!playerId) return [];
     const q = query(collection(db, `rankings/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GameResult));

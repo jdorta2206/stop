@@ -45,7 +45,7 @@ export function AppHeader() {
       sendMessageToRoom(roomId, {
         text,
         sender: {
-          name: user.name || 'Anonymous',
+          name: user.displayName || 'Anonymous',
           avatar: user.photoURL,
           uid: user.uid,
         },

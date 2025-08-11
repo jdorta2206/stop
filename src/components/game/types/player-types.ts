@@ -1,6 +1,8 @@
 
 // src/components/game/types/player-types.ts
 import type { MissionProgress } from "@/lib/missions";
+import type { PlayerScore } from "@/lib/ranking";
+
 
 export interface Player {
   id: string;
@@ -8,22 +10,7 @@ export interface Player {
   avatar?: string | null;
 }
 
-export interface PlayerScore {
-  id: string;
-  playerName: string;
-  photoURL?: string | null;
-  totalScore: number;
-  gamesPlayed: number;
-  gamesWon: number;
-  averageScore: number;
-  bestScore: number;
-  lastPlayed: any; // Can be Firestore Timestamp on server, string on client
-  level: string;
-  achievements: string[];
-  coins: number;
-  dailyMissions: MissionProgress[];
-  missionsLastReset: string; // YYYY-MM-DD
-}
+export type { PlayerScore };
 
 export interface GameResult {
     id: string;

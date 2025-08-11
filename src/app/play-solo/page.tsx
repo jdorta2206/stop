@@ -142,16 +142,16 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + playerRoundScore);
       setTotalAiScore(prev => prev + aiRoundScore);
       
-      const winner = playerRoundScore > aiRoundScore ? user?.name || 'Player' : playerRoundScore < aiRoundScore ? 'IA' : 'Tie';
+      const winner = playerRoundScore > aiRoundScore ? user?.displayName || 'Player' : playerRoundScore < aiRoundScore ? 'IA' : 'Tie';
       setRoundWinner(winner || 'Player');
 
-      if(winner === (user?.name || 'Player')) playSound('round-win');
+      if(winner === (user?.displayName || 'Player')) playSound('round-win');
       else playSound('round-lose');
 
       if (user) {
         await rankingManager.saveGameResult({
           playerId: user.uid,
-          playerName: user.name || 'Jugador',
+          playerName: user.displayName || 'Jugador',
           photoURL: user.photoURL || null,
           score: playerRoundScore,
           categories: playerResponses,

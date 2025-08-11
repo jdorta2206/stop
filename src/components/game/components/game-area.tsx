@@ -103,7 +103,7 @@ const ResultsArea: React.FC<{
     );
   };
   
-  const playerName = user?.name || translateUi('game.results.labels.you');
+  const playerName = user?.displayName || translateUi('game.results.labels.you');
 
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-xl bg-card/80 p-6" key={`results-area-${currentLetter}`}>

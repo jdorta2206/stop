@@ -15,14 +15,14 @@ export function UserAccount() {
     return null;
   }
   
-  const fallbackContent = user.name ? user.name.charAt(0).toUpperCase() : <UserIcon />;
+  const fallbackContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : <UserIcon />;
 
   return (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.photoURL || ''} alt={user.name || 'User'} />
+                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
                     <AvatarFallback>
                       {fallbackContent}
                     </AvatarFallback>
@@ -32,7 +32,7 @@ export function UserAccount() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name || 'Usuario sin nombre'}</p>
+                    <p className="text-sm font-medium leading-none">{user.displayName || 'Usuario sin nombre'}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email || 'Sin email'}</p>
                 </div>
             </DropdownMenuLabel>
