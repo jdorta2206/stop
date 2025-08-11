@@ -61,7 +61,7 @@ class RankingManager {
         gamesWon: 0,
         averageScore: 0,
         bestScore: 0,
-        lastPlayed: null,
+        lastPlayed: new Date().toISOString(),
         level: this.calculateLevel(0),
         achievements: [],
         coins: 50, // Welcome coins
@@ -72,7 +72,7 @@ class RankingManager {
       return newPlayer;
     }
 
-    const data = { ...docSnap.data(), id: docSnap.id } as PlayerScore;
+    const data = docSnap.data();
     const today = new Date().toISOString().split('T')[0];
     
     const updates: Partial<PlayerScore> = {};
@@ -85,7 +85,7 @@ class RankingManager {
       needsUpdate = true;
     }
     
-    // Ensure local data is consistent with latest login info if provided
+    // Ensure local data is consistent with latest login info if provided, only if changed
     if (displayName && data.playerName !== displayName) {
       updates.playerName = displayName;
       needsUpdate = true;
@@ -95,13 +95,18 @@ class RankingManager {
       needsUpdate = true;
     }
 
-
     if (needsUpdate) {
         await updateDoc(playerDocRef, updates);
-        return { ...data, ...updates };
+    }
+    
+    const finalData = { ...data, ...updates, id: docSnap.id } as PlayerScore;
+    
+    // Convert Firestore Timestamp to ISO string if it exists
+    if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
+      finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
     }
 
-    return data;
+    return finalData;
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {

@@ -17,7 +17,7 @@ export interface PlayerScore {
   gamesWon: number;
   averageScore: number;
   bestScore: number;
-  lastPlayed: any; // Firestore Timestamp or null
+  lastPlayed: any; // Can be Firestore Timestamp on server, string on client
   level: string;
   achievements: string[];
   coins: number;
@@ -35,6 +35,6 @@ export interface GameResult {
     letter: string;
     gameMode: 'solo' | 'multiplayer' | 'private';
     roomId?: string;
-    timestamp: any; // Firestore Timestamp
+    timestamp: any; // Can be Firestore Timestamp on server, Date on client
     won?: boolean;
 }
