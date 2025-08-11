@@ -44,14 +44,10 @@ interface GameAreaProps {
 }
 
 const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: GameAreaProps['translateUi'] }> = ({ processingState, translateUi }) => (
-    <div className="processing-overlay">
-        <div className="processing-message">
-            <h3 className="text-2xl font-bold mb-4">{translateUi('game.loadingAI.title')}</h3>
-            <div className="flex justify-center items-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-            <p className="mt-6 text-sm text-gray-400">{translateUi('game.loadingAI.description')}</p>
-        </div>
+    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 text-white rounded-lg">
+        <Loader2 className="h-12 w-12 animate-spin mb-4" />
+        <h3 className="text-2xl font-bold">{translateUi(`game.loadingAI.${processingState}`)}</h3>
+        <p className="mt-2 text-muted-foreground">{translateUi('game.loadingAI.description')}</p>
     </div>
 );
 
@@ -132,7 +128,7 @@ const ResultsArea: React.FC<{
             <CardHeader>
               <CardTitle className="text-xl">{translateUi('game.results.labels.ai')}</CardTitle>
                <p className="text-3xl font-bold text-primary">{aiRoundScore} pts</p>
-            </CardHeader>
+            </Header>
             <CardContent className="space-y-2">
                {Object.entries(roundResults).map(([category, result]) => renderCategoryResult(category, result.ai))}
             </CardContent>
@@ -190,10 +186,10 @@ export function GameArea({
     )
   }
 
-  if (isLoadingAi || gameState === "EVALUATING") {
+  if (gameState === "EVALUATING") {
     return <LoadingOverlay processingState={processingState} translateUi={translateUi} />;
   }
-
+  
   if (gameState === "RESULTS") {
      return <ResultsArea 
         roundResults={roundResults}
@@ -207,7 +203,6 @@ export function GameArea({
         currentLetter={currentLetter}
      />;
   }
-
 
   if (gameState !== "PLAYING" || !currentLetter) {
     return (
@@ -282,3 +277,5 @@ export function GameArea({
     </div>
   );
 }
+
+    
