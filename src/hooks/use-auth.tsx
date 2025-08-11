@@ -46,7 +46,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
-      if (isSyncing) return;
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -74,13 +73,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsSyncing(false);
       }
-    }, [isSyncing, signOut, toast]);
+    }, [signOut, toast]);
 
 
   useEffect(() => {
+    // Only attempt to sync if we have a firebaseUser but not an appUser yet,
+    // and no other operations are in progress.
     if (firebaseUser && !appUser && !authLoading && !isSyncing) {
       syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
+      // Clear app user if firebase user is logged out.
       setAppUser(null);
     }
   }, [firebaseUser, appUser, authLoading, isSyncing, syncUserProfile]);

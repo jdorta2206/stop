@@ -14,7 +14,8 @@ import {
     increment, 
     serverTimestamp,
     addDoc,
-    Timestamp
+    Timestamp,
+    writeBatch
 } from "firebase/firestore";
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
@@ -53,41 +54,33 @@ class RankingManager {
         const docSnap = await getDoc(playerDocRef);
 
         if (docSnap.exists()) {
-            const data = docSnap.data();
-            const today = new Date().toISOString().split('T')[0];
-            let missionsNeedUpdate = false;
-
-            if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
-                missionsNeedUpdate = true;
-            }
+            let playerData = docSnap.data() as PlayerScore;
             
-            // Also check if display name or photo has changed and update if necessary
-            const needsProfileUpdate = data.playerName !== displayName || data.photoURL !== photoURL;
+            const today = new Date().toISOString().split('T')[0];
+            let missionsNeedUpdate = !playerData.dailyMissions || !playerData.missionsLastReset || playerData.missionsLastReset !== today;
+            const needsProfileUpdate = (displayName && playerData.playerName !== displayName) || (photoURL && playerData.photoURL !== photoURL);
 
             if (missionsNeedUpdate || needsProfileUpdate) {
-                const updates: Record<string, any> = {};
+                const batch = writeBatch(db);
+                const updates: Partial<PlayerScore> = {};
+
                 if (missionsNeedUpdate) {
                     updates.dailyMissions = getDailyMissions();
                     updates.missionsLastReset = today;
                 }
                 if (needsProfileUpdate) {
-                    updates.playerName = displayName;
-                    updates.photoURL = photoURL;
+                    if (displayName) updates.playerName = displayName;
+                    if (photoURL) updates.photoURL = photoURL;
                 }
-                await updateDoc(playerDocRef, updates);
-                const freshSnap = await getDoc(playerDocRef);
-                const finalData = { ...freshSnap.data(), id: freshSnap.id } as PlayerScore;
-                 if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
-                    finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
-                }
-                return finalData;
+                batch.update(playerDocRef, updates);
+                await batch.commit();
+                playerData = {...playerData, ...updates};
             }
             
-            const finalData = { ...data, id: docSnap.id } as PlayerScore;
-            if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
-                finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
-            }
-            return finalData;
+            return {
+                ...playerData, 
+                id: docSnap.id
+            };
 
         } else {
             const newPlayer: Omit<PlayerScore, 'id'> = {
@@ -107,13 +100,12 @@ class RankingManager {
             };
             
             await setDoc(playerDocRef, newPlayer);
-
-            const createdPlayer: PlayerScore = {
+            
+            return {
                 ...newPlayer,
                 id: playerId,
-                lastPlayed: new Date().toISOString(), // Use current date for the returned object
-            }
-            return createdPlayer;
+                lastPlayed: new Date(), // Use current date for the returned object
+            } as PlayerScore;
         }
     } catch(error) {
         console.error("Error in getPlayerRanking: ", error);
@@ -177,7 +169,7 @@ class RankingManager {
     if (mission.progress < mission.goal) throw new Error("Mission not completed");
     if (mission.claimed) throw new Error("Mission already claimed");
 
-    const updatedMissions = player.dailyMisions.map(m => 
+    const updatedMissions = player.dailyMissions.map(m => 
       m.id === missionId ? { ...m, claimed: true } : m
     );
 
