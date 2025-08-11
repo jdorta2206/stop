@@ -51,29 +51,24 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
     try {
-      let docSnap = await getDoc(playerDocRef);
+      const docSnap = await getDoc(playerDocRef);
 
       if (docSnap.exists()) {
-        const playerData = docSnap.data() as PlayerScore;
+        let playerData = docSnap.data() as PlayerScore;
         const today = new Date().toISOString().split('T')[0];
-
-        // Check if missions need to be reset
-        if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
-          const updatedMissions = getDailyMissions();
-          await updateDoc(playerDocRef, { 
-            dailyMissions: updatedMissions.map(m => ({...m})),
-            missionsLastReset: today,
-          });
-          // Re-fetch data after update to ensure consistency
-          docSnap = await getDoc(playerDocRef);
-          const reFetchedData = docSnap.data() as PlayerScore;
-          return { ...reFetchedData, id: docSnap.id };
-        }
         
-        // Return existing player data
+        // Ensure missions are initialized if they are missing
+        if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
+            const newMissions = getDailyMissions();
+            await updateDoc(playerDocRef, {
+                dailyMissions: newMissions.map(m => ({...m})),
+                missionsLastReset: today,
+            });
+            playerData = {...playerData, dailyMissions: newMissions, missionsLastReset: today};
+        }
         return { ...playerData, id: docSnap.id };
       } else {
-        // Create a new player profile
+        // Create a new player profile with all default fields
         const newPlayer: Omit<PlayerScore, 'id'> = {
           playerName: displayName || 'Jugador',
           photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
@@ -92,12 +87,10 @@ class RankingManager {
         
         await setDoc(playerDocRef, newPlayer);
         
-        // IMPORTANT: Re-fetch the document to get the server-generated timestamp and ensure data consistency
         const newDocSnap = await getDoc(playerDocRef);
         if (newDocSnap.exists()) {
             return { ...(newDocSnap.data() as PlayerScore), id: newDocSnap.id };
         } else {
-            // This should not happen, but as a fallback
             throw new Error("Failed to create and retrieve player profile.");
         }
       }

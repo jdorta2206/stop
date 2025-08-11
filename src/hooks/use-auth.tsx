@@ -40,7 +40,7 @@ const toAppUser = (playerData: PlayerScore, fbUser: FirebaseUser): User => {
         uid: fbUser.uid,
         name: playerData.playerName, 
         email: fbUser.email,
-        lastPlayed: lastPlayedTimestamp?.toDate().toISOString() || new Date().toISOString()
+        lastPlayed: lastPlayedTimestamp?.toDate()?.toISOString() || new Date().toISOString()
     };
 };
 
@@ -57,11 +57,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // This effect runs when the Firebase user object changes.
-  // It's responsible for fetching or creating the player profile.
+  // This effect synchronizes the Firebase user with our application's user profile.
+  // It runs only when the firebaseUser object changes.
   useEffect(() => {
     const syncUserProfile = async (fbUser: FirebaseUser) => {
-      // Prevent re-syncing if the user is already loaded and matches.
+      // Avoid re-syncing if the user is already logged in and matches.
       if (appUser?.uid === fbUser.uid) return;
 
       setIsSyncing(true);
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (playerData) {
           setAppUser(toAppUser(playerData, fbUser));
         } else {
-          // This case should ideally not be reached if getPlayerRanking is robust.
+          // This should not happen if getPlayerRanking is robust.
           throw new Error("Could not create or retrieve player profile.");
         }
       } catch (error) {
@@ -89,17 +89,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
     
     if (firebaseUser) {
-      // Only run sync if there's a Firebase user and we are not already syncing.
-      if (!isSyncing) {
-        syncUserProfile(firebaseUser);
-      }
+      syncUserProfile(firebaseUser);
     } else {
-      // Clear app user if firebase user is null (logout)
+      // Clear app user if firebase user is null (e.g., on logout).
       setAppUser(null);
     }
-  // This dependency array is critical. It should only run when the firebaseUser object changes.
-  // We disable the lint rule because we are intentionally managing the `isSyncing` and `appUser` state manually inside the effect.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // We only want this effect to run when the `firebaseUser` object itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firebaseUser]);
 
   const loginWithGoogle = useCallback(async () => {
@@ -116,8 +112,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
   
-  // Combine all loading states. The app is loading if Firebase is checking auth,
-  // or if a sign-in process is active, or if we are syncing the profile.
+  // Combine all loading states. The app is loading if Firebase is checking the initial
+  // auth state, or if a sign-in/out process is active, or if we are syncing the profile.
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 
