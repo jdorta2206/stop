@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
+import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
@@ -45,47 +45,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // This effect runs when the Firebase auth state changes.
-  // It's responsible for fetching/creating the user's game profile in Firestore.
-  useEffect(() => {
-    const syncUserProfile = async (fbUser: FirebaseUser) => {
+  const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
       setIsSyncing(true);
       try {
-        // Fetch or create the player's profile from our database
         const playerData = await rankingManager.getPlayerRanking(
           fbUser.uid, 
           fbUser.displayName, 
           fbUser.photoURL
         );
         
-        // Combine auth data and player data into a single, unified app user object
         const currentUser: User = {
           ...playerData,
           uid: fbUser.uid,
-          name: playerData.playerName, // Ensure name is consistent
+          name: playerData.playerName, 
           email: fbUser.email,
         };
         setAppUser(currentUser);
-
       } catch (error) {
         console.error("Error syncing user profile:", error);
         toast({ title: "Error de perfil", description: "No se pudo cargar tu perfil de jugador.", variant: "destructive" });
-        await signOut(); // Sign out on profile error to prevent inconsistent state
+        await signOut();
         setAppUser(null);
       } finally {
-        // This is crucial: always stop the syncing indicator
         setIsSyncing(false);
       }
-    };
+    }, [signOut, toast]);
 
-    if (firebaseUser) {
+
+  useEffect(() => {
+    if (firebaseUser && !appUser && !isSyncing) {
       syncUserProfile(firebaseUser);
-    } else {
-      // No firebase user, so not syncing and no app user.
+    } else if (!firebaseUser && !authLoading) {
       setAppUser(null);
-      setIsSyncing(false);
     }
-  }, [firebaseUser, signOut, toast]);
+  }, [firebaseUser, appUser, authLoading, isSyncing, syncUserProfile]);
 
   const loginWithGoogle = useCallback(async () => {
     try {
@@ -105,12 +98,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const logout = useCallback(async () => {
     await signOut();
-    setAppUser(null); // Clear local user state on logout
+    setAppUser(null);
     toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
   }, [signOut, toast]);
-
-  // The overall loading state is a combination of Firebase auth state changes,
-  // login provider loading, and our own profile syncing.
+  
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
   const error = authError || googleError || facebookError || signOutError;
 

@@ -52,9 +52,9 @@ class RankingManager {
 
     if (docSnap.exists()) {
         const data = docSnap.data();
-        const today = new Date().toISOString().split('T')[0];
         
-        // Check if missions need to be reset
+        // Ensure missions are up-to-date
+        const today = new Date().toISOString().split('T')[0];
         if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
             await updateDoc(playerDocRef, {
                 dailyMissions: getDailyMissions(),
@@ -62,52 +62,36 @@ class RankingManager {
             });
         }
         
-        // Check if player name or photo needs an update from auth provider, only if different
-        const needsUpdate = (data.playerName !== displayName && displayName) || (data.photoURL !== photoURL && photoURL);
-        if (needsUpdate) {
-            await updateDoc(playerDocRef, {
-                playerName: displayName,
-                photoURL: photoURL
-            });
-        }
-        
-        const freshSnap = await getDoc(playerDocRef); // re-fetch after potential updates
+        const freshSnap = await getDoc(playerDocRef);
         const finalData = { ...freshSnap.data(), id: freshSnap.id } as PlayerScore;
         
-        // Convert Firestore Timestamp to ISO string if it exists for client-side compatibility
         if (finalData.lastPlayed && finalData.lastPlayed.toDate) {
             finalData.lastPlayed = finalData.lastPlayed.toDate().toISOString();
         }
-
         return finalData;
 
     } else {
-        // If the player does not exist, create a new profile.
         const newPlayer: PlayerScore = {
             id: playerId,
-            playerName: displayName || 'Jugador', // Default name
+            playerName: displayName || 'Jugador',
             photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
             totalScore: 0,
             gamesPlayed: 0,
             gamesWon: 0,
             averageScore: 0,
             bestScore: 0,
-            lastPlayed: new Date().toISOString(), // Use ISO string directly
+            lastPlayed: new Date().toISOString(),
             level: this.calculateLevel(0),
             achievements: [],
-            coins: 50, // Welcome coins
+            coins: 50,
             dailyMissions: getDailyMissions(),
             missionsLastReset: new Date().toISOString().split('T')[0],
         };
-        // Use setDoc to create the new player document
-        await setDoc(playerDocRef, {
-          ...newPlayer,
-          lastPlayed: serverTimestamp() // Use server timestamp on creation
-        });
         
-        // Don't return the serverTimestamp object to the client
-        delete (newPlayer as any).lastPlayed; 
-        newPlayer.lastPlayed = new Date().toISOString();
+        const dataToSave = { ...newPlayer, lastPlayed: serverTimestamp() };
+        delete (dataToSave as any).id;
+        
+        await setDoc(playerDocRef, dataToSave);
         
         return newPlayer;
     }
