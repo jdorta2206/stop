@@ -32,12 +32,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { toast } = useToast();
   
   useEffect(() => {
+    // Cuando el usuario se autentica con éxito, cierra el modal.
     if (user && isOpen) {
+      toast({
+        title: "¡Bienvenido/a!",
+        description: `Has iniciado sesión como ${user.name}.`,
+      });
       onClose();
     }
-  }, [user, isOpen, onClose]);
+  }, [user, isOpen, onClose, toast]);
   
   useEffect(() => {
+    // Muestra un toast si hay un error durante el login.
     if (error) {
        toast({
         title: "Error de inicio de sesión",
