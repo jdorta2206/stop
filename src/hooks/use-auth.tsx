@@ -91,7 +91,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginWithGoogle = useCallback(async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(undefined, {
+        prompt: "select_account"
+      });
     } catch (e) {
        toast({ title: "Error al iniciar sesión con Google", description: (e as Error).message, variant: "destructive" });
     }

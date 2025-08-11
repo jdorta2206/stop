@@ -1,3 +1,4 @@
+
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
@@ -10,8 +11,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- Providers ---
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
+// This was the critical error: The auth instance must be passed to the provider constructors.
+const googleProvider = new GoogleAuthProvider(auth);
+const facebookProvider = new FacebookAuthProvider(auth);
 
 
 export { app, auth, db, googleProvider, facebookProvider };
