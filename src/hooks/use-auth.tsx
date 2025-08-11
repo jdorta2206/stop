@@ -34,17 +34,16 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
-  // Hooks from react-firebase-hooks
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  // App-specific user state
   const [appUser, setAppUser] = useState<User | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const syncUserProfile = useCallback(async (fbUser: FirebaseUser) => {
+      if (isSyncing) return;
       setIsSyncing(true);
       try {
         const playerData = await rankingManager.getPlayerRanking(
@@ -72,16 +71,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         setIsSyncing(false);
       }
-    }, [signOut, toast]);
-
+    }, [isSyncing, signOut, toast]);
 
   useEffect(() => {
-    // This effect handles the initial user load and profile synchronization.
-    // It runs when the Firebase auth state changes.
     if (firebaseUser && !appUser && !isSyncing) {
         syncUserProfile(firebaseUser);
     } else if (!firebaseUser && !authLoading) {
-      // If Firebase user is logged out and we are not in an auth transition, clear the app user.
       if (appUser) {
         setAppUser(null);
       }
@@ -89,20 +84,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [firebaseUser, appUser, authLoading, isSyncing, syncUserProfile]);
 
   const loginWithGoogle = useCallback(async () => {
-    try {
-      await signInWithGoogle();
-    } catch (e) {
-       toast({ title: "Error al iniciar sesión con Google", description: (e as Error).message, variant: "destructive" });
-    }
-  }, [signInWithGoogle, toast]);
+    await signInWithGoogle();
+  }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
-     try {
-      await signInWithFacebook();
-    } catch (e) {
-       toast({ title: "Error al iniciar sesión con Facebook", description: (e as Error).message, variant: "destructive" });
-    }
-  }, [signInWithFacebook, toast]);
+    await signInWithFacebook();
+  }, [signInWithFacebook]);
   
   const logout = useCallback(async () => {
     await signOut();

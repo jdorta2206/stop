@@ -60,14 +60,12 @@ class RankingManager {
             let needsUpdate = false;
             const updates: any = {};
 
-            // Check if missions need to be reset
             if (!playerData.dailyMissions || playerData.missionsLastReset !== today) {
                 updates.dailyMissions = getDailyMissions().map(m => ({...m}));
                 updates.missionsLastReset = today;
                 needsUpdate = true;
             }
 
-            // Check if profile info has changed, only update if it's different and not null
             if (displayName && playerData.playerName !== displayName) {
                 updates.playerName = displayName;
                 needsUpdate = true;
@@ -79,15 +77,12 @@ class RankingManager {
 
             if (needsUpdate) {
                 await updateDoc(playerDocRef, updates);
-                // Return the merged data immediately
                 return { ...playerData, ...updates, id: docSnap.id };
             }
             
-            // Return existing data if no update was needed
             return { ...playerData, id: docSnap.id };
 
         } else {
-            // Document does not exist, so create it
             const newPlayer: PlayerScore = {
                 id: playerId,
                 playerName: displayName || 'Jugador',
@@ -154,7 +149,7 @@ class RankingManager {
       lastPlayed: serverTimestamp(),
       level: updatedPlayerStats.level,
       achievements: updatedAchievements,
-      dailyMissions: updatedMissions.map(m => ({...m})), // Ensure missions are plain objects
+      dailyMissions: updatedMissions.map(m => ({...m})),
       coins: increment(coinsEarned),
     };
 
