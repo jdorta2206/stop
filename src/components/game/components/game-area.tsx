@@ -27,9 +27,9 @@ const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: 
 
 interface ResultsAreaProps {
   roundResults?: RoundResults;
-  playerRoundScore?: number;
-  aiRoundScore?: number;
-  roundWinner?: string;
+  playerRoundScore: number;
+  aiRoundScore: number;
+  roundWinner: string;
   totalPlayerScore: number;
   totalAiScore: number;
   startNextRound: () => void;
@@ -41,7 +41,9 @@ function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner
   const router = useRouter();
   const { user } = useAuth();
   
-  if (!roundResults || typeof playerRoundScore === 'undefined' || typeof aiRoundScore === 'undefined' || !roundWinner || !currentLetter) {
+  const playerName = user?.displayName || translateUi('game.results.labels.you');
+  
+  if (!roundResults || !currentLetter) {
     return (
         <Card className="w-full max-w-lg mx-auto text-center p-8 shadow-xl">
             <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto" />
@@ -74,8 +76,6 @@ function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner
     );
   };
   
-  const playerName = user?.displayName || translateUi('game.results.labels.you');
-
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-xl bg-card/80 p-6" key={`results-area-${currentLetter}`}>
         <div className="text-center mb-6">
@@ -132,9 +132,9 @@ interface GameAreaProps {
   onStop: () => void;
   isLoadingAi: boolean;
   roundResults?: RoundResults;
-  playerRoundScore?: number;
-  aiRoundScore?: number;
-  roundWinner?: string;
+  playerRoundScore: number;
+  aiRoundScore: number;
+  roundWinner: string;
   startNextRound: () => void;
   totalPlayerScore: number;
   totalAiScore: number;
@@ -173,8 +173,6 @@ export function GameArea({
   processingState,
 }: GameAreaProps) {
     
-  const { user } = useAuth();
-  
   if (gameState === "SPINNING") {
     return (
       <RouletteWheel 

@@ -85,21 +85,22 @@ export default function PlaySoloPage() {
     startTimer();
   };
   
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
+    if (timerId) clearInterval(timerId);
     setTimeLeft(ROUND_DURATION);
     const newTimerId = setInterval(() => {
-        setTimeLeft(prev => {
-            if (prev <= 1) {
-                clearInterval(newTimerId);
-                handleStop();
-                return 0;
-            }
-            if (prev <= 11) playSound('timer-tick');
-            return prev - 1;
-        });
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(newTimerId);
+          handleStop();
+          return 0;
+        }
+        if (prev <= 11) playSound('timer-tick');
+        return prev - 1;
+      });
     }, 1000);
     setTimerId(newTimerId);
-  };
+  }, [timerId, playSound, handleStop]);
 
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING') return;
@@ -171,11 +172,13 @@ export default function PlaySoloPage() {
     } catch (error) {
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
       setGameState('PLAYING'); // Revert to playing to allow retry
+      startTimer(); // Restart timer if evaluation fails
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, playerResponses, categories, language, toast, translate, user, timerId, playSound, stopMusic]);
+  }, [gameState, timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic, startTimer]);
+
 
   const countdownWarningText = useMemo(() => {
     if (timeLeft <= 3) return translate('game.time.finalCountdown');
