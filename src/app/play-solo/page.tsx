@@ -67,8 +67,8 @@ export default function PlaySoloPage() {
     setTotalAiScore(0);
     startNewRound();
   };
-
-  const handleStop = useCallback(async () => {
+  
+  const handleStop = async () => {
     if (gameState !== 'PLAYING') return;
 
     setGameState('EVALUATING');
@@ -137,7 +137,7 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
+  };
 
   // Timer logic: Countdown
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function PlaySoloPage() {
     if (timeLeft <= 0 && gameState === 'PLAYING') {
       handleStop();
     }
-  }, [timeLeft, gameState, handleStop]);
+  }, [timeLeft, gameState]);
 
 
   const startNewRound = () => {
