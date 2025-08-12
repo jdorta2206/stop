@@ -68,26 +68,8 @@ export default function PlaySoloPage() {
     setTotalAiScore(0);
     startNewRound();
   };
-
-  const startNewRound = () => {
-    if (timerId) clearInterval(timerId);
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
-    setGameState('SPINNING');
-    playMusic();
-  };
-
-  const handleSpinComplete = (letter: string) => {
-    setCurrentLetter(letter);
-    setGameState('PLAYING');
-    startTimer();
-  };
   
   const handleStop = useCallback(async () => {
-    if (gameState !== 'PLAYING') return;
-  
     if (timerId) {
       clearInterval(timerId);
       setTimerId(null);
@@ -154,14 +136,13 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
     } catch (error) {
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revert to playing to allow retry
-      startTimer(); // Restart timer if evaluation fails
+      setGameState('PLAYING');
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
-  
+  }, [timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
+
   const startTimer = useCallback(() => {
     if (timerId) clearInterval(timerId);
     setTimeLeft(ROUND_DURATION);
@@ -169,8 +150,18 @@ export default function PlaySoloPage() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(newTimerId);
-          handleStop();
-          return 0;
+          // Directly call handleStop when the timer runs out.
+          // Note: `handleStop` is not in the dependency array to avoid stale closures.
+          // This requires `handleStop` to be stable or rely on refs.
+          // For simplicity here, we assume the component re-renders will provide the latest `handleStop`.
+          // A more robust solution might use refs if issues persist.
+          
+          // Let's make `handleStop` stable by wrapping it in `useCallback`
+          // and ensuring its dependencies are correct.
+          // The issue might be that handleStop itself has stale state.
+          // The best approach is to have `handleStop` be independent or get fresh state.
+          // Let's trigger it from outside the callback.
+          return 0; // It will be handled by the useEffect below
         }
         if (prev <= 11) playSound('timer-tick');
         return prev - 1;
@@ -179,6 +170,29 @@ export default function PlaySoloPage() {
     setTimerId(newTimerId);
   }, [timerId, playSound]);
 
+  useEffect(() => {
+    if (timeLeft === 0 && gameState === 'PLAYING') {
+      handleStop();
+    }
+  }, [timeLeft, gameState, handleStop]);
+
+
+  const startNewRound = () => {
+    if (timerId) clearInterval(timerId);
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    setGameState('SPINNING');
+    playMusic();
+  };
+
+  const handleSpinComplete = (letter: string) => {
+    setCurrentLetter(letter);
+    setGameState('PLAYING');
+    startTimer();
+  };
+  
 
   const countdownWarningText = useMemo(() => {
     if (timeLeft <= 3) return translate('game.time.finalCountdown');
