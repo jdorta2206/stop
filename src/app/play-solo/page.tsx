@@ -60,8 +60,8 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-  
-  const handleStop = useCallback(async () => {
+
+  const handleStop = async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -81,6 +81,11 @@ export default function PlaySoloPage() {
         playerResponses: playerPayload,
       });
       setProcessingState('validating');
+      
+      if (!results || !results.results) {
+        throw new Error("Invalid response from AI");
+      }
+
       setRoundResults(results.results);
       
       setProcessingState('scoring');
@@ -118,15 +123,15 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
     } catch (error) {
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revert to playing on error
+      setGameState('PLAYING'); // Revert to playing on error to allow retry
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, user, playSound, stopMusic, toast, translate]);
+  };
 
 
-  // Timer logic: Countdown
+  // Timer countdown logic
   useEffect(() => {
     if (gameState !== 'PLAYING' || timeLeft <= 0) {
       return;
@@ -142,12 +147,12 @@ export default function PlaySoloPage() {
     return () => clearInterval(timerId);
   }, [gameState, timeLeft, playSound]);
 
-  // Timer logic: Stop when time is up
+  // Handle time up
   useEffect(() => {
     if (timeLeft === 0 && gameState === 'PLAYING') {
       handleStop();
     }
-  }, [timeLeft, gameState, handleStop]);
+  }, [timeLeft, gameState]);
 
 
   const startNewRound = () => {
