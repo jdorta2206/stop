@@ -61,13 +61,6 @@ export default function PlaySoloPage() {
     resetGame();
   }, [language]);
 
-  const resetGame = () => {
-    setGameState('IDLE');
-    setTotalPlayerScore(0);
-    setTotalAiScore(0);
-    startNewRound();
-  };
-  
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
@@ -163,6 +156,13 @@ export default function PlaySoloPage() {
     setCurrentLetter(null);
     setGameState('SPINNING');
     playMusic();
+  };
+  
+  const resetGame = () => {
+    setGameState('IDLE');
+    setTotalPlayerScore(0);
+    setTotalAiScore(0);
+    startNewRound();
   };
 
   const handleSpinComplete = (letter: string) => {
