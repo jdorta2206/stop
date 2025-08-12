@@ -84,23 +84,6 @@ export default function PlaySoloPage() {
     setGameState('PLAYING');
     startTimer();
   };
-  
-  const startTimer = useCallback(() => {
-    if (timerId) clearInterval(timerId);
-    setTimeLeft(ROUND_DURATION);
-    const newTimerId = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(newTimerId);
-          handleStop();
-          return 0;
-        }
-        if (prev <= 11) playSound('timer-tick');
-        return prev - 1;
-      });
-    }, 1000);
-    setTimerId(newTimerId);
-  }, [timerId, playSound, handleStop]);
 
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING') return;
@@ -177,7 +160,24 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic, startTimer]);
+  }, [gameState, timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
+  
+  const startTimer = useCallback(() => {
+    if (timerId) clearInterval(timerId);
+    setTimeLeft(ROUND_DURATION);
+    const newTimerId = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(newTimerId);
+          handleStop();
+          return 0;
+        }
+        if (prev <= 11) playSound('timer-tick');
+        return prev - 1;
+      });
+    }, 1000);
+    setTimerId(newTimerId);
+  }, [timerId, playSound, handleStop]);
 
 
   const countdownWarningText = useMemo(() => {
