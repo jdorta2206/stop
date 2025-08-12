@@ -84,7 +84,7 @@ export default function PlaySoloPage() {
     setGameState('PLAYING');
     startTimer();
   };
-
+  
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING') return;
   
@@ -177,7 +177,7 @@ export default function PlaySoloPage() {
       });
     }, 1000);
     setTimerId(newTimerId);
-  }, [timerId, playSound, handleStop]);
+  }, [timerId, playSound]);
 
 
   const countdownWarningText = useMemo(() => {
