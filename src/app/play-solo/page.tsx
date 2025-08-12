@@ -52,7 +52,6 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
-  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [processingState, setProcessingState] = useState<ProcessingState>('idle');
 
@@ -68,12 +67,9 @@ export default function PlaySoloPage() {
     setTotalAiScore(0);
     startNewRound();
   };
-  
+
   const handleStop = useCallback(async () => {
-    if (timerId) {
-      clearInterval(timerId);
-      setTimerId(null);
-    }
+    if (gameState !== 'PLAYING') return;
   
     setIsLoadingAi(true);
     setGameState('EVALUATING');
@@ -136,42 +132,39 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
     } catch (error) {
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING');
+      setGameState('PLAYING'); // Revert to playing on error
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [timerId, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
+  }, [gameState, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
 
-  const startTimer = useCallback(() => {
-    if (timerId) clearInterval(timerId);
-    setTimeLeft(ROUND_DURATION);
-    const newTimerId = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(newTimerId);
-          return 0;
-        }
-        if (prev <= 11) playSound('timer-tick');
-        return prev - 1;
-      });
-    }, 1000);
-    setTimerId(newTimerId);
-  }, [timerId, playSound]);
-
+  // Timer logic
   useEffect(() => {
-    if (timeLeft === 0 && gameState === 'PLAYING') {
-      handleStop();
+    if (gameState !== 'PLAYING' || isLoadingAi) {
+      return;
     }
-  }, [timeLeft, gameState, handleStop]);
+
+    if (timeLeft <= 0) {
+      handleStop();
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+      if (timeLeft <= 11 && timeLeft > 1) { // Play tick from 10 down to 1
+         playSound('timer-tick');
+      }
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [gameState, timeLeft, isLoadingAi, playSound, handleStop]);
 
 
   const startNewRound = () => {
-    if (timerId) clearInterval(timerId);
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
     setGameState('SPINNING');
     playMusic();
   };
@@ -179,10 +172,9 @@ export default function PlaySoloPage() {
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
-    startTimer();
+    setTimeLeft(ROUND_DURATION);
   };
   
-
   const countdownWarningText = useMemo(() => {
     if (timeLeft <= 3) return translate('game.time.finalCountdown');
     if (timeLeft <= 5) return translate('game.time.almostUp');
