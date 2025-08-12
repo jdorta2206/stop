@@ -60,7 +60,7 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-
+  
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
