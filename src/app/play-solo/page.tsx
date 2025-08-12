@@ -68,20 +68,13 @@ export default function PlaySoloPage() {
     startNewRound();
   };
   
-  const handleStop = async () => {
-    if (gameState !== 'PLAYING') return;
+  const handleStop = useCallback(async () => {
+    if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
     setIsLoadingAi(true);
     setProcessingState('thinking');
     stopMusic();
-
-    if (!currentLetter) {
-      toast({ title: "Error", description: "No letter selected.", variant: "destructive" });
-      setIsLoadingAi(false);
-      setGameState('IDLE');
-      return;
-    }
 
     const playerPayload: EvaluateRoundInput['playerResponses'] = categories.map(cat => ({
       category: cat,
@@ -137,7 +130,8 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  };
+  }, [gameState, currentLetter, categories, playerResponses, language, user, playSound, stopMusic, toast, translate]);
+
 
   // Timer logic: Countdown
   useEffect(() => {
@@ -157,10 +151,10 @@ export default function PlaySoloPage() {
 
   // Timer logic: Stop when time is up
   useEffect(() => {
-    if (timeLeft <= 0 && gameState === 'PLAYING') {
+    if (timeLeft === 0 && gameState === 'PLAYING') {
       handleStop();
     }
-  }, [timeLeft, gameState]);
+  }, [timeLeft, gameState, handleStop]);
 
 
   const startNewRound = () => {
