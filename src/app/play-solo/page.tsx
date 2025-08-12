@@ -205,7 +205,7 @@ export default function PlaySoloPage() {
           onInputChange={handleInputChange}
           onStop={handleStop}
           isLoadingAi={isLoadingAi}
-          roundResults={roundResults || undefined}
+          roundResults={roundResults}
           playerRoundScore={playerRoundScore}
           aiRoundScore={aiRoundScore}
           roundWinner={roundWinner}
@@ -224,5 +224,7 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
 
     
