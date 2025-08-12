@@ -150,18 +150,7 @@ export default function PlaySoloPage() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(newTimerId);
-          // Directly call handleStop when the timer runs out.
-          // Note: `handleStop` is not in the dependency array to avoid stale closures.
-          // This requires `handleStop` to be stable or rely on refs.
-          // For simplicity here, we assume the component re-renders will provide the latest `handleStop`.
-          // A more robust solution might use refs if issues persist.
-          
-          // Let's make `handleStop` stable by wrapping it in `useCallback`
-          // and ensuring its dependencies are correct.
-          // The issue might be that handleStop itself has stale state.
-          // The best approach is to have `handleStop` be independent or get fresh state.
-          // Let's trigger it from outside the callback.
-          return 0; // It will be handled by the useEffect below
+          return 0;
         }
         if (prev <= 11) playSound('timer-tick');
         return prev - 1;
