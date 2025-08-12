@@ -70,9 +70,9 @@ export default function PlaySoloPage() {
 
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING') return;
-  
-    setIsLoadingAi(true);
+
     setGameState('EVALUATING');
+    setIsLoadingAi(true);
     setProcessingState('thinking');
     stopMusic();
 
@@ -139,26 +139,28 @@ export default function PlaySoloPage() {
     }
   }, [gameState, currentLetter, playerResponses, categories, language, toast, translate, user, playSound, stopMusic]);
 
-  // Timer logic
+  // Timer logic: Countdown
   useEffect(() => {
-    if (gameState !== 'PLAYING' || isLoadingAi) {
-      return;
-    }
-
-    if (timeLeft <= 0) {
-      handleStop();
+    if (gameState !== 'PLAYING' || timeLeft <= 0) {
       return;
     }
 
     const timerId = setInterval(() => {
       setTimeLeft(prev => prev - 1);
-      if (timeLeft <= 11 && timeLeft > 1) { // Play tick from 10 down to 1
+      if (timeLeft <= 11 && timeLeft > 1) {
          playSound('timer-tick');
       }
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [gameState, timeLeft, isLoadingAi, playSound, handleStop]);
+  }, [gameState, timeLeft, playSound]);
+
+  // Timer logic: Stop when time is up
+  useEffect(() => {
+    if (timeLeft <= 0 && gameState === 'PLAYING') {
+      handleStop();
+    }
+  }, [timeLeft, gameState, handleStop]);
 
 
   const startNewRound = () => {
