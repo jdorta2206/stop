@@ -103,7 +103,7 @@ function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner
             <CardHeader>
               <CardTitle className="text-xl">{translateUi('game.results.labels.ai')}</CardTitle>
                <p className="text-3xl font-bold text-primary">{aiRoundScore} pts</p>
-            </Header>
+            </CardHeader>
             <CardContent className="space-y-2">
                {Object.entries(roundResults).map(([category, result]) => renderCategoryResult(category, result.ai))}
             </CardContent>
