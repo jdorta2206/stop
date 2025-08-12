@@ -37,7 +37,7 @@ interface ResultsAreaProps {
   currentLetter: string | null;
 }
 
-const ResultsArea: React.FC<ResultsAreaProps> = ({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }) => {
+function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }: ResultsAreaProps) {
   const router = useRouter();
   const { user } = useAuth();
   
