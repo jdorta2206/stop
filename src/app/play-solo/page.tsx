@@ -61,7 +61,7 @@ export default function PlaySoloPage() {
     resetGame();
   }, [language]);
 
-  const handleStop = useCallback(async () => {
+  const handleStop = async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -128,7 +128,7 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, user, stopMusic, playSound, toast, translate]);
+  };
 
 
   // Timer countdown logic
@@ -149,14 +149,14 @@ export default function PlaySoloPage() {
       if (timeLeft <= 11 && timeLeft > 1 && gameState === 'PLAYING') {
          playSound('timer-tick');
       }
-  }, [timeLeft, gameState, playSound])
+  }, [timeLeft, gameState, playSound]);
 
   // Handle time up
   useEffect(() => {
     if (timeLeft === 0 && gameState === 'PLAYING') {
       handleStop();
     }
-  }, [timeLeft, gameState, handleStop]);
+  }, [timeLeft, gameState]);
 
 
   const startNewRound = () => {
