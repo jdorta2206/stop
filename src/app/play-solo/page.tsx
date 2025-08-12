@@ -102,11 +102,17 @@ export default function PlaySoloPage() {
   };
 
   const handleStop = useCallback(async () => {
-    if (timerId) clearInterval(timerId);
-    setTimerId(null);
+    if (gameState !== 'PLAYING') return;
+  
+    if (timerId) {
+      clearInterval(timerId);
+      setTimerId(null);
+    }
+  
     setIsLoadingAi(true);
     setGameState('EVALUATING');
     setProcessingState('thinking');
+    stopMusic();
 
     if (!currentLetter) {
       toast({ title: "Error", description: "No letter selected.", variant: "destructive" });
@@ -168,9 +174,8 @@ export default function PlaySoloPage() {
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');
-      stopMusic();
     }
-  }, [currentLetter, playerResponses, categories, language, toast, translate, user, timerId, playSound, stopMusic]);
+  }, [gameState, currentLetter, playerResponses, categories, language, toast, translate, user, timerId, playSound, stopMusic]);
 
   const countdownWarningText = useMemo(() => {
     if (timeLeft <= 3) return translate('game.time.finalCountdown');
