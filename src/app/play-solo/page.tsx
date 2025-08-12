@@ -89,19 +89,19 @@ export default function PlaySoloPage() {
       setRoundResults(results.results);
       
       setProcessingState('scoring');
-      const { playerRoundScore, aiRoundScore } = Object.values(results.results).reduce((acc, res) => {
+      const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
         acc.playerRoundScore += res.player.score;
         acc.aiRoundScore += res.ai.score;
         return acc;
       }, { playerRoundScore: 0, aiRoundScore: 0 });
 
-      setPlayerRoundScore(playerRoundScore);
-      setAiRoundScore(aiRoundScore);
+      setPlayerRoundScore(pScore);
+      setAiRoundScore(aScore);
 
-      setTotalPlayerScore(prev => prev + playerRoundScore);
-      setTotalAiScore(prev => prev + aiRoundScore);
+      setTotalPlayerScore(prev => prev + pScore);
+      setTotalAiScore(prev => prev + aScore);
       
-      const winner = playerRoundScore > aiRoundScore ? user?.displayName || 'Player' : playerRoundScore < aiRoundScore ? 'IA' : 'Tie';
+      const winner = pScore > aScore ? user?.displayName || 'Player' : pScore < aScore ? 'IA' : 'Tie';
       setRoundWinner(winner || 'Player');
 
       if(winner === (user?.displayName || 'Player')) playSound('round-win');
@@ -112,11 +112,11 @@ export default function PlaySoloPage() {
           playerId: user.uid,
           playerName: user.displayName || 'Jugador',
           photoURL: user.photoURL || null,
-          score: playerRoundScore,
+          score: pScore,
           categories: playerResponses,
           letter: currentLetter,
           gameMode: 'solo',
-          won: playerRoundScore > aiRoundScore,
+          won: pScore > aScore,
         });
       }
 
@@ -128,7 +128,7 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, stopMusic, categories, playerResponses, language, user, playSound, toast, translate]);
+  }, [gameState, currentLetter, categories, playerResponses, language, user, stopMusic, playSound, toast, translate]);
 
 
   // Timer countdown logic
