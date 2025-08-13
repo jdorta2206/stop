@@ -9,14 +9,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
 import { rankingManager } from '@/lib/ranking';
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend } from '@/lib/friends-service';
+import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
+import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
+import FriendsInvite from '@/components/social/FriendsInvite';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -25,6 +28,8 @@ export default function LeaderboardPage() {
   const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendsLeaderboard, setFriendsLeaderboard] = useState<PlayerScore[]>([]);
   const [personalStats, setPersonalStats] = useState<PlayerScore | null>(null);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,11 +46,23 @@ export default function LeaderboardPage() {
         
         const historyData = await rankingManager.getGameHistory(userId, 5);
         setGameHistory(historyData);
+        
+        const friendsList = await getFriends(userId);
+        setFriends(friendsList);
+
+        if (friendsList.length > 0) {
+            const friendIds = friendsList.map(f => f.id);
+            const friendRankings = await Promise.all(friendIds.map(id => rankingManager.getPlayerRanking(id)));
+            const validFriendRankings = friendRankings.filter(p => p !== null) as Awaited<ReturnType<typeof rankingManager.getPlayerRanking>>[];
+            setFriendsLeaderboard(validFriendRankings.map((p, index) => ({...p, id: friendIds[index] } as PlayerScore)));
+        } else {
+            setFriendsLeaderboard([]);
+        }
       }
     } catch (error) {
       toast({ 
         title: translate('error'), 
-        description: translate('leaderboards.loadError'), 
+        description: (error as Error).message,
         variant: "destructive" 
       });
     } finally {
@@ -80,6 +97,10 @@ export default function LeaderboardPage() {
       });
     }
   };
+  
+  const onFriendAdded = () => {
+      if(user) fetchData(user.uid);
+  }
 
   const handleChallenge = (player: PlayerScore) => {
     toast({
@@ -119,6 +140,16 @@ export default function LeaderboardPage() {
               translateUi={translate}
               isLoading={isLoading}
             />
+            {user && (
+              <FriendsLeaderboardCard 
+                leaderboardData={friendsLeaderboard}
+                currentUserId={user?.uid}
+                onChallenge={handleChallenge}
+                language={language}
+                translateUi={translate}
+                isLoading={isLoading}
+              />
+            )}
           </div>
           
           <div className="space-y-6">
@@ -127,6 +158,17 @@ export default function LeaderboardPage() {
                 <PersonalHighScoreCard highScore={personalStats.bestScore} translateUi={translate} />
                 <GameHistoryCard gameHistory={gameHistory} translateUi={translate} />
                 <AchievementsCard achievements={personalStats.achievements} translateUi={translate} />
+                 <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserPlus />
+                      Añadir Amigos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FriendsInvite onFriendAdded={onFriendAdded} />
+                  </CardContent>
+                </Card>
               </>
             )}
             {!user && !isLoading && (
