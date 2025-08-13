@@ -62,7 +62,8 @@ const generateRoomId = () => {
 export const createRoom = async (creatorId: string, creatorName?: string | null, creatorAvatar?: string | null): Promise<Room> => {
     const roomId = generateRoomId();
     
-    // Fetch player profile to ensure we have the most up-to-date info.
+    // This is the critical step: get or create the player's profile *before* creating the room.
+    // This ensures the player data is always available.
     const playerProfile = await rankingManager.getPlayerRanking(creatorId, creatorName, creatorAvatar);
 
     const creatorPlayer: Player = {
@@ -137,10 +138,33 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
-    await updateDoc(roomDocRef, {
-        [`players.${playerId}`]: deleteField()
-    });
+    const room = await getRoom(roomId);
+    if (!room) return;
+
+    // Check if the player to be removed is the host
+    if (room.hostId === playerId) {
+        const otherPlayers = Object.keys(room.players).filter(id => id !== playerId);
+        // If there are other players, assign the first one as the new host
+        if (otherPlayers.length > 0) {
+            const newHostId = otherPlayers[0];
+            await updateDoc(roomDocRef, {
+                [`players.${playerId}`]: deleteField(),
+                hostId: newHostId,
+                [`players.${newHostId}.isHost`]: true
+            });
+        } else {
+            // If no other players, the room can be deleted, but for now just remove the player
+            await updateDoc(roomDocRef, {
+                [`players.${playerId}`]: deleteField()
+            });
+        }
+    } else {
+        await updateDoc(roomDocRef, {
+            [`players.${playerId}`]: deleteField()
+        });
+    }
 };
+
 
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);

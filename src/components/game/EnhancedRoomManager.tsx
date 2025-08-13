@@ -16,7 +16,8 @@ import {
   UserX,
   LogOut,
   Play,
-  Loader2
+  Loader2,
+  Crown
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, type Player, type Room } from '@/lib/room-service';
@@ -50,7 +51,7 @@ export default function EnhancedRoomManager({
         setRoom(updatedRoom);
         setPlayers(Object.values(updatedRoom.players || {}));
       } else {
-        toast({ title: 'Error', description: 'La sala ya no existe.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'La sala ya no existe o fue eliminada.', variant: 'destructive' });
         onLeaveRoom();
       }
     });
@@ -59,9 +60,10 @@ export default function EnhancedRoomManager({
   }, [roomId, onLeaveRoom, toast]);
 
   const currentPlayer = players.find(p => p.id === currentUserId);
+  const isHost = room?.hostId === currentUserId;
   const readyPlayersCount = players.filter(p => p.isReady).length;
-  // Game can start if at least 2 players are ready
-  const canStartGame = readyPlayersCount >= 2;
+  // Game can start if host is ready and at least 2 players total are ready
+  const canStartGame = isHost && readyPlayersCount >= 2;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -73,7 +75,10 @@ export default function EnhancedRoomManager({
   };
 
   const handleKickPlayer = async (playerId: string) => {
-    // In a democratic model, maybe a vote is needed. For now, we allow anyone to kick.
+    if (!isHost) {
+      toast({ title: 'Acción no permitida', description: 'Solo el anfitrión puede expulsar jugadores.', variant: 'destructive' });
+      return;
+    }
     try {
       await removePlayerFromRoom(roomId, playerId);
       toast({ title: 'Éxito', description: 'Jugador expulsado de la sala' });
@@ -83,6 +88,10 @@ export default function EnhancedRoomManager({
   };
 
   const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
+    if (!isHost) {
+      toast({ title: 'Acción no permitida', description: 'Solo el anfitrión puede cambiar la configuración.', variant: 'destructive' });
+      return;
+    }
     try {
         await updateRoomSettings(roomId, newSettings);
         toast({ title: 'Éxito', description: 'Configuración de sala actualizada' });
@@ -141,7 +150,7 @@ export default function EnhancedRoomManager({
                 </Dialog>
                 <Dialog open={showSettings} onOpenChange={setShowSettings}>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" disabled={!isHost}>
                       <Settings className="h-5 w-5" />
                     </Button>
                   </DialogTrigger>
@@ -190,13 +199,16 @@ export default function EnhancedRoomManager({
                         <div className="flex items-center gap-3">
                             {getStatusIcon(player.status)}
                             <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
-                            <span className="font-medium">{player.name} {player.id === currentUserId && "(Tú)"}</span>
+                            <span className="font-medium flex items-center gap-2">
+                                {player.name} {player.id === currentUserId && "(Tú)"}
+                                {player.isHost && <Crown className="h-4 w-4 text-yellow-500" title="Anfitrión"/>}
+                            </span>
                         </div>
                         <div className='flex items-center gap-2'>
                         <Badge variant={player.isReady ? "default" : "secondary"} className="text-xs w-20 justify-center">
                             {player.isReady ? "Listo" : "Esperando"}
                         </Badge>
-                        {player.id !== currentUserId && (
+                        {isHost && player.id !== currentUserId && (
                             <Button
                                 variant="ghost"
                                 size="icon"
