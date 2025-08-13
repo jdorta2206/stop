@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
@@ -60,10 +60,10 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-
+  
   const handleStop = async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
-
+    
     setGameState('EVALUATING');
     setIsLoadingAi(true);
     setProcessingState('thinking');
@@ -88,6 +88,7 @@ export default function PlaySoloPage() {
       }
       
       setProcessingState('scoring');
+      
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
           acc.playerRoundScore += res.player?.score || 0;
           acc.aiRoundScore += res.ai?.score || 0;
@@ -222,3 +223,4 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
