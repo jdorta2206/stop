@@ -3,19 +3,19 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { Users, Trophy, BrainCircuit, Lightbulb, Share2 } from 'lucide-react';
+import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useLanguage } from '@/contexts/language-context';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import RoomManager from '@/components/game/RoomManager';
-import FriendsInvite from '@/components/social/FriendsInvite';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
+import { useRouter } from 'next/navigation';
+import { createRoom } from '@/lib/room-service';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -53,8 +53,9 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export function LandingPageContent() {
+  const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [roomModalOpen, setRoomModalOpen] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const { user } = useAuth();
   const { language, translate } = useLanguage();
@@ -85,11 +86,26 @@ export function LandingPageContent() {
     });
   };
   
-  const handlePrivateRoomClick = () => {
-    if (user) {
-      setRoomModalOpen(true);
-    } else {
+  const handlePrivateRoomClick = async () => {
+    if (!user) {
       setAuthModalOpen(true);
+      return;
+    }
+    setIsCreatingRoom(true);
+    try {
+      const newRoom = await createRoom(user.uid);
+      toast({
+        title: translate('rooms.create.title'),
+        description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
+      });
+      router.push(`/multiplayer?roomId=${newRoom.id}`);
+    } catch (error) {
+       toast({
+        title: "Error al crear la sala",
+        description: (error as Error).message,
+        variant: "destructive"
+       });
+       setIsCreatingRoom(false);
     }
   };
 
@@ -116,15 +132,6 @@ export function LandingPageContent() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
       />
-
-      <Dialog open={roomModalOpen} onOpenChange={setRoomModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{translate('landing.privateRoom')}</DialogTitle>
-          </DialogHeader>
-          <RoomManager language={language} />
-        </DialogContent>
-      </Dialog>
       
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
         <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none p-0">
@@ -157,8 +164,10 @@ export function LandingPageContent() {
                 <Button 
                   variant="secondary"
                   onClick={handlePrivateRoomClick}
+                  disabled={isCreatingRoom}
                   className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
                 >
+                  {isCreatingRoom && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {translate('landing.privateRoom')}
                 </Button>
                 

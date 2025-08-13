@@ -10,15 +10,13 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Users, 
   Settings, 
-  Copy, 
   Share2, 
   Lock, 
   Unlock,
   UserX,
-  Timer,
-  Languages,
   LogOut,
-  Play
+  Play,
+  Loader2
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, type Player, type Room } from '@/lib/room-service';
@@ -84,11 +82,6 @@ export default function EnhancedRoomManager({
     }
   };
 
-  const handleCopyRoomCode = () => {
-    navigator.clipboard.writeText(roomId);
-    toast({ title: 'Éxito', description: 'Código de sala copiado al portapapeles' });
-  };
-
   const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
     try {
         await updateRoomSettings(roomId, newSettings);
@@ -111,13 +104,12 @@ export default function EnhancedRoomManager({
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
-  };
-
   if (!room) {
-    return <div>Cargando sala...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
