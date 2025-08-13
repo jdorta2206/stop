@@ -60,10 +60,10 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-  
-  const handleStop = async () => {
+
+  const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
-    
+
     setGameState('EVALUATING');
     setIsLoadingAi(true);
     setProcessingState('thinking');
@@ -129,26 +129,28 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  };
+  }, [gameState, currentLetter, categories, playerResponses, language, stopMusic, user, playSound, toast, translate]);
 
 
   // Timer countdown logic
   useEffect(() => {
-    if (gameState !== 'PLAYING') {
+    if (gameState !== 'PLAYING' || timeLeft <= 0) {
       return;
     }
     
-    if (timeLeft <= 0) {
-      handleStop();
-      return;
-    }
-
     const timerId = setInterval(() => {
       setTimeLeft(prev => prev - 1);
     }, 1000);
 
     return () => clearInterval(timerId);
   }, [gameState, timeLeft]);
+  
+  // Effect to handle end of round when time is up
+  useEffect(() => {
+    if (timeLeft <= 0 && gameState === 'PLAYING') {
+      handleStop();
+    }
+  }, [timeLeft, gameState, handleStop]);
   
   // Sound effect for timer
   useEffect(() => {
@@ -223,4 +225,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
