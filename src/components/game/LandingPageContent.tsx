@@ -70,7 +70,7 @@ export function LandingPageContent() {
   const categories = ['place', 'animal', 'name', 'food', 'color', 'object', 'brand'];
 
   const handleShare = (platform: 'whatsapp' | 'facebook') => {
-    const text = encodeURIComponent("¡Pon a prueba tu agilidad mental! 🧠 Juega a STOP y desafía a tus amigos. ¿Podrás vencerme? 🔥");
+    const text = encodeURIComponent("¡Pon a prueba tu agilidad mental! 🧠 Juega a STOP y desafía a tus amigos. ¿Podrás vencerme? 🔥 ¡Demuéstralo!");
     const url = encodeURIComponent("https://juego-stop.netlify.app/");
     let shareUrl = '';
 
@@ -95,7 +95,10 @@ export function LandingPageContent() {
     
     setIsCreatingRoom(true);
     try {
+      // First, ensure the player has a profile in the database.
       const playerProfile = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
+      
+      // Then, create the room with the guaranteed player data.
       const newRoom = await createRoom(user.uid, playerProfile.playerName, playerProfile.photoURL);
       
       toast({

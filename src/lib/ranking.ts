@@ -1,3 +1,4 @@
+
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -93,12 +94,14 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
       };
       await setDoc(playerDocRef, newPlayer);
-      docSnap = await getDoc(playerDocRef); // Re-fetch the document to get server-generated timestamps
+      // Re-fetch the document to ensure we have the created data, including server-generated timestamps
+      docSnap = await getDoc(playerDocRef);
     }
 
     let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
     const today = new Date().toISOString().split('T')[0];
     
+    // Check if daily missions need to be reset
     if (!playerData.missionsLastReset || playerData.missionsLastReset !== today) {
         const newMissions = getDailyMissions();
         const updatedData = {
