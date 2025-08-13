@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { Users, Trophy, BrainCircuit, Lightbulb } from 'lucide-react';
+import { Users, Trophy, BrainCircuit, Lightbulb, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -15,6 +15,7 @@ import RoomManager from '@/components/game/RoomManager';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import ContactsManager from './ContactsManager';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -126,11 +127,8 @@ export function LandingPageContent() {
       </Dialog>
       
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{translate('social.inviteFriends')}</DialogTitle>
-          </DialogHeader>
-          <FriendsInvite language={language} onFriendAdded={() => {}}/>
+        <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none p-0">
+          <ContactsManager language={language} roomCode="----" onClose={() => setIsInviteModalOpen(false)} />
         </DialogContent>
       </Dialog>
 
@@ -176,7 +174,7 @@ export function LandingPageContent() {
                   className="text-white font-semibold py-3 px-6 text-md rounded-full shadow-lg border-white/30 bg-black/20 hover:bg-white/10 hover:text-white transition-transform hover:scale-105"
                   onClick={handleInviteClick}
                 >
-                  <Users className="w-5 h-5 mr-2" />
+                  <Share2 className="w-5 h-5 mr-2" />
                   {translate('social.inviteFriends')}
                 </Button>
 

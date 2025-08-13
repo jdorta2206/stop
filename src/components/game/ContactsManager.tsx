@@ -20,13 +20,13 @@ interface ContactsManagerProps {
 }
 
 const mockContacts: Contact[] = [
-  { id: '1', name: 'Ana García', phone: '+34600123456', avatarUrl: 'https://i.pravatar.cc/150?img=1' },
-  { id: '2', name: 'Carlos Rodríguez', phone: '+34600789012', avatarUrl: 'https://i.pravatar.cc/150?img=3' },
-  { id: '3', name: 'Elena Martín', phone: '+34600345678', avatarUrl: 'https://i.pravatar.cc/150?img=5' },
-  { id: '4', name: 'Javier López', phone: '+34600901234', avatarUrl: 'https://i.pravatar.cc/150?img=7' },
-  { id: '5', name: 'María Sánchez', phone: '+34600567890', avatarUrl: 'https://i.pravatar.cc/150?img=9' },
+  { id: '1', name: 'Ana García', phone: '+34600123456', avatarUrl: 'https://placehold.co/150x150.png' },
+  { id: '2', name: 'Carlos Rodríguez', phone: '+34600789012', avatarUrl: 'https://placehold.co/150x150.png' },
+  { id: '3', name: 'Elena Martín', phone: '+34600345678', avatarUrl: 'https://placehold.co/150x150.png' },
+  { id: '4', name: 'Javier López', phone: '+34600901234', avatarUrl: 'https://placehold.co/150x150.png' },
+  { id: '5', name: 'María Sánchez', phone: '+34600567890', avatarUrl: 'https://placehold.co/150x150.png' },
   { id: '6', name: 'Pablo Fernández', phone: '+34600112233' },
-  { id: '7', name: 'Sara Díaz', phone: '+34600445566', avatarUrl: 'https://i.pravatar.cc/150?img=10' },
+  { id: '7', name: 'Sara Díaz', phone: '+34600445566', avatarUrl: 'https://placehold.co/150x150.png' },
   { id: '8', name: 'Luis Torres', phone: '+34600778899' }
 ];
 
@@ -195,7 +195,7 @@ export default function ContactsManager({ language, roomCode, onClose }: Contact
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border border-white/20">
                       {contact.avatarUrl ? (
-                        <AvatarImage src={contact.avatarUrl} alt={contact.name} />
+                        <AvatarImage src={contact.avatarUrl} alt={contact.name} data-ai-hint="avatar person" />
                       ) : (
                         <AvatarFallback className="bg-red-700 text-white">
                           {contact.name.charAt(0)}

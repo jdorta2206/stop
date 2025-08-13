@@ -197,7 +197,7 @@ export default function EnhancedRoomManager({
                     <div key={player.id} className="flex items-center justify-between p-3 bg-background/50 dark:bg-card/30 rounded-lg animate-fade-in">
                         <div className="flex items-center gap-3">
                             {getStatusIcon(player.status)}
-                            <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full"/>
+                            <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
                             <span className="font-medium">{player.name} {player.id === currentUserId && "(Tú)"}</span>
                         </div>
                         <div className='flex items-center gap-2'>
