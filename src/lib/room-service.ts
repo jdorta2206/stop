@@ -27,7 +27,8 @@ export interface Player {
     avatar?: string | null;
     isReady: boolean;
     status: 'online' | 'away' | 'offline';
-    joinedAt: any; 
+    joinedAt: any;
+    isHost?: boolean;
 }
 
 export interface Room {
@@ -35,6 +36,7 @@ export interface Room {
     players: Record<string, Player>;
     createdAt: any;
     status: 'waiting' | 'playing' | 'finished';
+    hostId: string;
     settings: {
         maxPlayers: number;
         roundDuration: number;
@@ -57,22 +59,22 @@ const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
-export const createRoom = async (creatorId: string): Promise<Room> => {
+export const createRoom = async (creatorId: string, creatorName?: string | null, creatorAvatar?: string | null): Promise<Room> => {
     const roomId = generateRoomId();
     
-    // Get player profile to ensure we have the latest data
-    const creatorProfile = await rankingManager.getPlayerRanking(creatorId);
-    if (!creatorProfile) {
-        throw new Error("Could not retrieve creator's profile to create room.");
-    }
+    // Use provided data or fetch if needed
+    const finalCreatorName = creatorName || (await rankingManager.getPlayerRanking(creatorId)).playerName;
+    const finalCreatorAvatar = creatorAvatar || (await rankingManager.getPlayerRanking(creatorId)).photoURL;
+
 
     const creatorPlayer: Player = {
         id: creatorId,
-        name: creatorProfile.playerName,
-        avatar: creatorProfile.photoURL,
+        name: finalCreatorName,
+        avatar: finalCreatorAvatar,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),
+        isHost: true,
     };
 
     const newRoom: Room = {
@@ -80,12 +82,13 @@ export const createRoom = async (creatorId: string): Promise<Room> => {
         players: {
             [creatorId]: creatorPlayer,
         },
+        hostId: creatorId,
         createdAt: serverTimestamp(),
         status: 'waiting',
         settings: {
             maxPlayers: 8,
             roundDuration: 60,
-            isPrivate: true, // Rooms are private by default now
+            isPrivate: true,
             language: 'es'
         },
     };

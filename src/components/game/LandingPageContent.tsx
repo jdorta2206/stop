@@ -93,7 +93,7 @@ export function LandingPageContent() {
     }
     setIsCreatingRoom(true);
     try {
-      const newRoom = await createRoom(user.uid);
+      const newRoom = await createRoom(user.uid, user.displayName, user.photoURL);
       toast({
         title: translate('rooms.create.title'),
         description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
@@ -105,7 +105,8 @@ export function LandingPageContent() {
         description: (error as Error).message,
         variant: "destructive"
        });
-       setIsCreatingRoom(false);
+    } finally {
+        setIsCreatingRoom(false);
     }
   };
 
