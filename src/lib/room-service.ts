@@ -62,15 +62,13 @@ const generateRoomId = () => {
 export const createRoom = async (creatorId: string, creatorName?: string | null, creatorAvatar?: string | null): Promise<Room> => {
     const roomId = generateRoomId();
     
-    // Use provided data or fetch if needed
-    const finalCreatorName = creatorName || (await rankingManager.getPlayerRanking(creatorId)).playerName;
-    const finalCreatorAvatar = creatorAvatar || (await rankingManager.getPlayerRanking(creatorId)).photoURL;
-
+    // Fetch player profile to ensure we have the most up-to-date info.
+    const playerProfile = await rankingManager.getPlayerRanking(creatorId, creatorName, creatorAvatar);
 
     const creatorPlayer: Player = {
         id: creatorId,
-        name: finalCreatorName,
-        avatar: finalCreatorAvatar,
+        name: playerProfile.playerName,
+        avatar: playerProfile.photoURL,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),

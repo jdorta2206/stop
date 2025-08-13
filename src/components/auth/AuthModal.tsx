@@ -49,11 +49,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [error, toast]);
 
   const handleLogin = async (loginMethod: () => Promise<any>) => {
-    const firebaseUser = await loginMethod();
-    if (firebaseUser) {
-        // After successful login, ensure the user profile exists in Firestore.
-        await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
-        onClose();
+    try {
+        const firebaseUser = await loginMethod();
+        if (firebaseUser) {
+            // After successful login, ensure the user profile exists in Firestore.
+            await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
+            onClose();
+        }
+    } catch (e: any) {
+        toast({ title: "Error", description: `Error al iniciar sesión: ${e.message}`, variant: 'destructive'});
     }
   }
 
