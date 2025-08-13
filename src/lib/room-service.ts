@@ -57,11 +57,19 @@ const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
-export const createRoom = async (creatorId: string, creatorName: string): Promise<Room> => {
+export const createRoom = async (creatorId: string): Promise<Room> => {
     const roomId = generateRoomId();
+    
+    // Get player profile to ensure we have the latest data
+    const creatorProfile = await rankingManager.getPlayerRanking(creatorId);
+    if (!creatorProfile) {
+        throw new Error("Could not retrieve creator's profile to create room.");
+    }
+
     const creatorPlayer: Player = {
         id: creatorId,
-        name: creatorName,
+        name: creatorProfile.playerName,
+        avatar: creatorProfile.photoURL,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),
@@ -77,7 +85,7 @@ export const createRoom = async (creatorId: string, creatorName: string): Promis
         settings: {
             maxPlayers: 8,
             roundDuration: 60,
-            isPrivate: false,
+            isPrivate: true, // Rooms are private by default now
             language: 'es'
         },
     };

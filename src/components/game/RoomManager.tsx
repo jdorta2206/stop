@@ -28,13 +28,13 @@ export default function RoomManager({ language }: RoomManagerProps) {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   const handleCreateRoom = async () => {
-    if (!user || !user.displayName) {
-        toast({ title: "Acción requerida", description: "Debes iniciar sesión y tener un nombre de usuario para crear una sala.", variant: "destructive"});
+    if (!user) {
+        toast({ title: "Acción requerida", description: "Debes iniciar sesión para crear una sala.", variant: "destructive"});
         return;
     }
     setIsActionLoading(true);
     try {
-      const newRoom = await createRoom(user.uid, user.displayName);
+      const newRoom = await createRoom(user.uid);
       toast({
         title: translate('rooms.create.title'),
         description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
