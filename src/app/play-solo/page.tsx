@@ -62,7 +62,6 @@ export default function PlaySoloPage() {
   }, [language]);
   
   const handleStop = useCallback(async () => {
-    // Evita ejecuciones múltiples
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -81,13 +80,12 @@ export default function PlaySoloPage() {
         language: language as LanguageCode,
         playerResponses: playerPayload,
       });
+      
       setProcessingState('validating');
       
       if (!results || !results.results) {
         throw new Error("Respuesta inválida de la IA");
       }
-      
-      setRoundResults(results.results);
       
       setProcessingState('scoring');
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
@@ -96,14 +94,13 @@ export default function PlaySoloPage() {
           return acc;
       }, { playerRoundScore: 0, aiRoundScore: 0 });
 
+      const winner = pScore > aScore ? user?.displayName || 'Jugador' : pScore < aScore ? 'IA' : 'Empate';
 
+      setRoundResults(results.results);
       setPlayerRoundScore(pScore);
       setAiRoundScore(aScore);
-
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
-      
-      const winner = pScore > aScore ? user?.displayName || 'Jugador' : pScore < aScore ? 'IA' : 'Empate';
       setRoundWinner(winner);
 
       if(pScore > aScore) playSound('round-win');
@@ -126,10 +123,8 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      // Revierte al estado de juego para permitir reintentar o continuar
       setGameState('PLAYING'); 
     } finally {
-      // Asegura que el estado de carga siempre se desactive
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
@@ -151,7 +146,7 @@ export default function PlaySoloPage() {
   
   // Sound effect for timer
   useEffect(() => {
-      if (timeLeft > 1 && timeLeft <= 11 && gameState === 'PLAYING') {
+      if (timeLeft > 0 && timeLeft <= 11 && gameState === 'PLAYING') {
          playSound('timer-tick');
       }
   }, [timeLeft, gameState, playSound]);
