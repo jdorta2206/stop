@@ -95,12 +95,7 @@ export function LandingPageContent() {
     
     setIsCreatingRoom(true);
     try {
-      // Ensure player profile exists before creating a room
       const playerProfile = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-      if (!playerProfile) {
-        throw new Error("No se pudo obtener o crear el perfil del jugador.");
-      }
-      
       const newRoom = await createRoom(user.uid, playerProfile.playerName, playerProfile.photoURL);
       
       toast({

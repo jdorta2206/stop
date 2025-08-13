@@ -69,7 +69,7 @@ class RankingManager {
     playerId: string,
     displayName?: string | null,
     photoURL?: string | null
-  ): Promise<Omit<PlayerScore, 'id'>> {
+  ): Promise<PlayerScore> {
     if (!playerId) {
       throw new Error("getPlayerRanking requiere un playerId válido.");
     }
@@ -94,7 +94,7 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
       };
       await setDoc(playerDocRef, newPlayer);
-      return newPlayer;
+      return { id: playerId, ...newPlayer };
     }
 
     let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
@@ -110,7 +110,7 @@ class RankingManager {
         playerData = { ...playerData, ...updatedData };
     }
     
-    return playerData;
+    return { id: playerId, ...playerData };
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {

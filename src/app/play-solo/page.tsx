@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
-import { evaluateRound, type EvaluateRoundInput, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
+import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
 import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
@@ -69,13 +69,13 @@ export default function PlaySoloPage() {
     setProcessingState('thinking');
     stopMusic();
 
-    const playerPayload: EvaluateRoundInput['playerResponses'] = categories.map(cat => ({
+    const playerPayload = categories.map(cat => ({
       category: cat,
       word: playerResponses[cat] || ""
     }));
 
     try {
-      const results = await evaluateRound({
+      const results: EvaluateRoundOutput = await evaluateRound({
         letter: currentLetter,
         language: language as LanguageCode,
         playerResponses: playerPayload,
