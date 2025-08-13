@@ -60,8 +60,8 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-  
-  const handleStop = useCallback(async () => {
+
+  const handleStop = async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -128,12 +128,17 @@ export default function PlaySoloPage() {
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, user, stopMusic, playSound, toast, translate]);
+  };
 
 
   // Timer countdown logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || timeLeft <= 0) {
+    if (gameState !== 'PLAYING') {
+      return;
+    }
+    
+    if (timeLeft <= 0) {
+      handleStop();
       return;
     }
 
@@ -151,18 +156,11 @@ export default function PlaySoloPage() {
       }
   }, [timeLeft, gameState, playSound]);
 
-  // Handle time up
-  useEffect(() => {
-    if (timeLeft === 0 && gameState === 'PLAYING') {
-      handleStop();
-    }
-  }, [timeLeft, gameState, handleStop]);
-
-
   const startNewRound = () => {
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
     setGameState('SPINNING');
     playMusic();
   };
