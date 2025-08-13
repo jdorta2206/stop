@@ -127,13 +127,6 @@ export default function ContactsManager({ language, roomCode, onClose }: Contact
         <BookUser className="h-20 w-20 text-white/50 mb-4" />
         <h4 className="text-lg font-bold text-white mb-2">{t.featureComingSoon}</h4>
         <p className="text-white/70 max-w-xs">{t.featureDescription}</p>
-         <Button 
-            variant="outline" 
-            className="mt-6 bg-white/20 border-white/40 hover:bg-white/30"
-            onClick={requestContactsPermission}
-          >
-            Solicitar Permiso (Demo)
-          </Button>
       </CardContent>
     </Card>
   );
