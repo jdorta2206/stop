@@ -58,7 +58,7 @@ export function LandingPageContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { language, translate } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
@@ -165,7 +165,7 @@ export function LandingPageContent() {
               </Button>
             </Link>
             
-            {isMounted && (
+            {isMounted && !isAuthLoading && (
               <>
                 <Button 
                   variant="secondary"
