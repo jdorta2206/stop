@@ -199,7 +199,7 @@ export default function PlaySoloPage() {
         <GameArea
           gameState={gameState}
           currentLetter={currentLetter}
-          onSpinComplete={handleSpinComplete}
+          onSpinComplete={onSpinComplete}
           categories={categories}
           alphabet={alphabet}
           playerResponses={playerResponses}
@@ -225,3 +225,4 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
