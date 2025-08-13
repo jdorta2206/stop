@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -75,7 +74,7 @@ class RankingManager {
     }
     const playerDocRef = doc(this.rankingsCollection, playerId);
     
-    const docSnap = await getDoc(playerDocRef);
+    let docSnap = await getDoc(playerDocRef);
 
     if (!docSnap.exists()) {
       const newPlayer: Omit<PlayerScore, 'id'> = {
@@ -94,7 +93,7 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
       };
       await setDoc(playerDocRef, newPlayer);
-      return { id: playerId, ...newPlayer };
+      docSnap = await getDoc(playerDocRef); // Re-fetch the document to get server-generated timestamps
     }
 
     let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
