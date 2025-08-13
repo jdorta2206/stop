@@ -9,7 +9,7 @@ import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundInput, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode } from '@/components/game/types';
+import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
@@ -45,7 +45,7 @@ export default function PlaySoloPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [alphabet, setAlphabet] = useState<string[]>([]);
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
-  const [roundResults, setRoundResults] = useState<EvaluateRoundOutput['results'] | null>(null);
+  const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
   const [aiRoundScore, setAiRoundScore] = useState(0);
   const [roundWinner, setRoundWinner] = useState('');
