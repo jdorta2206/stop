@@ -54,7 +54,8 @@ export default function LeaderboardPage() {
             const friendIds = friendsList.map(f => f.id);
             const friendRankings = await Promise.all(friendIds.map(id => rankingManager.getPlayerRanking(id)));
             const validFriendRankings = friendRankings.filter(p => p !== null) as Awaited<ReturnType<typeof rankingManager.getPlayerRanking>>[];
-            setFriendsLeaderboard(validFriendRankings.map((p, index) => ({...p, id: friendIds[index] } as PlayerScore)));
+            const enrichedFriendRankings = validFriendRankings.map((p, index) => ({...p, id: friendIds[index] } as PlayerScore));
+            setFriendsLeaderboard(enrichedFriendRankings);
         } else {
             setFriendsLeaderboard([]);
         }
@@ -71,7 +72,11 @@ export default function LeaderboardPage() {
   };
 
   useEffect(() => {
-    fetchData(user?.uid);
+    if (user) {
+      fetchData(user.uid);
+    } else {
+      fetchData(); // Fetch global data even if not logged in
+    }
   }, [user]);
 
   const handleAddFriend = async (player: PlayerScore) => {
@@ -109,7 +114,7 @@ export default function LeaderboardPage() {
     });
   };
 
-  if (isAuthLoading) {
+  if (isAuthLoading && isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-16 w-16 animate-spin" />
@@ -153,11 +158,11 @@ export default function LeaderboardPage() {
           </div>
           
           <div className="space-y-6">
-            {user && personalStats && (
+            {user && personalStats ? (
               <>
                 <PersonalHighScoreCard highScore={personalStats.bestScore} translateUi={translate} />
                 <GameHistoryCard gameHistory={gameHistory} translateUi={translate} />
-                <AchievementsCard achievements={personalStats.achievements} translateUi={translate} />
+                <AchievementsCard achievements={personalStats.achievements || []} translateUi={translate} />
                  <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -170,8 +175,7 @@ export default function LeaderboardPage() {
                   </CardContent>
                 </Card>
               </>
-            )}
-            {!user && !isLoading && (
+            ) : !user && !isLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
                 <Button onClick={() => router.push('/')}>

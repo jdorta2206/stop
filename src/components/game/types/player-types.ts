@@ -1,8 +1,6 @@
 
 // src/components/game/types/player-types.ts
 import type { MissionProgress } from "@/lib/missions";
-import type { PlayerScore } from "@/lib/ranking";
-
 
 export interface Player {
   id: string;
@@ -10,7 +8,23 @@ export interface Player {
   avatar?: string | null;
 }
 
-export type { PlayerScore };
+export interface PlayerScore {
+    id: string;
+    playerName: string;
+    photoURL?: string | null;
+    totalScore: number;
+    gamesPlayed: number;
+    gamesWon: number;
+    averageScore: number;
+    bestScore: number;
+    lastPlayed: any;
+    level: string;
+    achievements: string[];
+    coins: number;
+    dailyMissions: MissionProgress[];
+    missionsLastReset: string;
+}
+
 
 export interface GameResult {
     id: string;

@@ -48,7 +48,7 @@ export function FriendsLeaderboardCard({
           currentUserId={currentUserId || ''}
           onChallenge={onChallenge}
           isFriendsLeaderboard={true}
- language={language}
+          language={language}
           isLoading={isLoading}
         />
         {!isLoading && leaderboardData.length === 0 && (
