@@ -60,8 +60,9 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
     resetGame();
   }, [language]);
-
+  
   const handleStop = useCallback(async () => {
+    // Evita ejecuciones múltiples
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -83,17 +84,18 @@ export default function PlaySoloPage() {
       setProcessingState('validating');
       
       if (!results || !results.results) {
-        throw new Error("Invalid response from AI");
+        throw new Error("Respuesta inválida de la IA");
       }
-
+      
       setRoundResults(results.results);
       
       setProcessingState('scoring');
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
-        acc.playerRoundScore += res.player.score;
-        acc.aiRoundScore += res.ai.score;
-        return acc;
+          acc.playerRoundScore += res.player?.score || 0;
+          acc.aiRoundScore += res.ai?.score || 0;
+          return acc;
       }, { playerRoundScore: 0, aiRoundScore: 0 });
+
 
       setPlayerRoundScore(pScore);
       setAiRoundScore(aScore);
@@ -101,10 +103,10 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       
-      const winner = pScore > aScore ? user?.displayName || 'Player' : pScore < aScore ? 'IA' : 'Tie';
-      setRoundWinner(winner || 'Player');
+      const winner = pScore > aScore ? user?.displayName || 'Jugador' : pScore < aScore ? 'IA' : 'Empate';
+      setRoundWinner(winner);
 
-      if(winner === (user?.displayName || 'Player')) playSound('round-win');
+      if(pScore > aScore) playSound('round-win');
       else playSound('round-lose');
 
       if (user) {
@@ -122,9 +124,12 @@ export default function PlaySoloPage() {
 
       setGameState('RESULTS');
     } catch (error) {
+      console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revert to playing on error to allow retry
+      // Revierte al estado de juego para permitir reintentar o continuar
+      setGameState('PLAYING'); 
     } finally {
+      // Asegura que el estado de carga siempre se desactive
       setIsLoadingAi(false);
       setProcessingState('idle');
     }
@@ -146,7 +151,7 @@ export default function PlaySoloPage() {
   
   // Sound effect for timer
   useEffect(() => {
-      if (timeLeft <= 11 && timeLeft > 1 && gameState === 'PLAYING') {
+      if (timeLeft > 1 && timeLeft <= 11 && gameState === 'PLAYING') {
          playSound('timer-tick');
       }
   }, [timeLeft, gameState, playSound]);
