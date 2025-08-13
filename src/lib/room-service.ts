@@ -62,14 +62,10 @@ const generateRoomId = () => {
 export const createRoom = async (creatorId: string, creatorName?: string | null, creatorAvatar?: string | null): Promise<Room> => {
     const roomId = generateRoomId();
     
-    // This is the critical step: get or create the player's profile *before* creating the room.
-    // This ensures the player data is always available.
-    const playerProfile = await rankingManager.getPlayerRanking(creatorId, creatorName, creatorAvatar);
-
     const creatorPlayer: Player = {
         id: creatorId,
-        name: playerProfile.playerName,
-        avatar: playerProfile.photoURL,
+        name: creatorName || 'Anfitrión',
+        avatar: creatorAvatar,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),

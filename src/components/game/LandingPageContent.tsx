@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/room-service';
+import { rankingManager } from '@/lib/ranking';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -93,7 +94,12 @@ export function LandingPageContent() {
     }
     setIsCreatingRoom(true);
     try {
-      const newRoom = await createRoom(user.uid, user.displayName, user.photoURL);
+      // First, ensure the player's profile is up-to-date or created.
+      const playerProfile = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
+      
+      // Then, create the room with the guaranteed profile data.
+      const newRoom = await createRoom(user.uid, playerProfile.playerName, playerProfile.photoURL);
+      
       toast({
         title: translate('rooms.create.title'),
         description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
