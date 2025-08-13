@@ -95,10 +95,7 @@ export function LandingPageContent() {
     
     setIsCreatingRoom(true);
     try {
-      // First, ensure the player's profile is up-to-date or created.
       const playerProfile = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-      
-      // Then, create the room with the guaranteed profile data.
       const newRoom = await createRoom(user.uid, playerProfile.playerName, playerProfile.photoURL);
       
       toast({
