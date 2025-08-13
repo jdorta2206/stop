@@ -59,12 +59,12 @@ const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
-export const createRoom = async (creatorId: string, creatorName?: string | null, creatorAvatar?: string | null): Promise<Room> => {
+export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
     const roomId = generateRoomId();
     
     const creatorPlayer: Player = {
         id: creatorId,
-        name: creatorName || 'Anfitrión',
+        name: creatorName,
         avatar: creatorAvatar,
         isReady: false,
         status: 'online',

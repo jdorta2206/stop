@@ -92,6 +92,7 @@ export function LandingPageContent() {
       setAuthModalOpen(true);
       return;
     }
+    
     setIsCreatingRoom(true);
     try {
       // First, ensure the player's profile is up-to-date or created.
@@ -105,6 +106,7 @@ export function LandingPageContent() {
         description: `Sala creada con ID: ${newRoom.id}. Redirigiendo...`,
       });
       router.push(`/multiplayer?roomId=${newRoom.id}`);
+
     } catch (error) {
        toast({
         title: "Error al crear la sala",
