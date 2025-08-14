@@ -17,14 +17,6 @@ import type { ProcessingState } from '@/app/play-solo/page';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: (key: string) => string }> = ({ processingState, translateUi }) => (
-    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 text-white rounded-lg">
-        <Loader2 className="h-12 w-12 animate-spin mb-4" />
-        <h3 className="text-2xl font-bold">{translateUi(`game.loadingAI.${processingState}`)}</h3>
-        <p className="mt-2 text-muted-foreground">{translateUi('game.loadingAI.description')}</p>
-    </div>
-);
-
 interface ResultsAreaProps {
   roundResults?: RoundResults | null;
   playerRoundScore: number;
@@ -184,16 +176,6 @@ export function GameArea({
       />
     )
   }
-
-  if (gameState === "EVALUATING" || isLoadingAi) {
-     return (
-        <Card className="w-full max-w-lg mx-auto text-center p-8 shadow-xl">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto" />
-            <h2 className="text-2xl font-bold mt-6">{translateUi(`game.loadingAI.${processingState}`)}</h2>
-            <p className="text-muted-foreground mt-2">{translateUi('game.loadingAI.description')}</p>
-        </Card>
-    );
-  }
   
   if (gameState === "RESULTS") {
      return <ResultsArea 
@@ -282,3 +264,4 @@ export function GameArea({
     </div>
   );
 }
+

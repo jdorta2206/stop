@@ -13,6 +13,7 @@ import type { GameState, LanguageCode, RoundResults } from '@/components/game/ty
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
+import { Loader2 } from 'lucide-react';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -64,7 +65,6 @@ export default function PlaySoloPage() {
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
-    setGameState('EVALUATING');
     setIsLoadingAi(true);
     setProcessingState('thinking');
     stopMusic();
@@ -119,7 +119,6 @@ export default function PlaySoloPage() {
           won: pScore > aScore,
         });
       }
-
       setGameState('RESULTS');
     } catch (error) {
       console.error("Error en handleStop:", error);
@@ -188,36 +187,54 @@ export default function PlaySoloPage() {
     setPlayerResponses(prev => ({ ...prev, [category]: value }));
   };
 
+  const renderContent = () => {
+     if (isLoadingAi) {
+      return (
+        <div className="flex flex-col items-center justify-center text-center p-8 text-white">
+          <Loader2 className="h-16 w-16 animate-spin mb-4" />
+          <h2 className="text-2xl font-bold">{translate(`game.loadingAI.${processingState}`)}</h2>
+          <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
+        </div>
+      );
+    }
+    
+    return (
+      <GameArea
+        gameState={gameState}
+        currentLetter={currentLetter}
+        onSpinComplete={handleSpinComplete}
+        categories={categories}
+        alphabet={alphabet}
+        playerResponses={playerResponses}
+        onInputChange={handleInputChange}
+        onStop={handleStop}
+        isLoadingAi={isLoadingAi}
+        roundResults={roundResults}
+        playerRoundScore={playerRoundScore}
+        aiRoundScore={aiRoundScore}
+        roundWinner={roundWinner}
+        startNextRound={startNewRound}
+        totalPlayerScore={totalPlayerScore}
+        totalAiScore={totalAiScore}
+        timeLeft={timeLeft}
+        countdownWarningText={countdownWarningText}
+        translateUi={translate}
+        language={language as LanguageCode}
+        gameMode="solo"
+        processingState={processingState}
+      />
+    );
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
       <AppHeader />
       <main className="flex-grow flex items-center justify-center p-4">
-        <GameArea
-          gameState={gameState}
-          currentLetter={currentLetter}
-          onSpinComplete={handleSpinComplete}
-          categories={categories}
-          alphabet={alphabet}
-          playerResponses={playerResponses}
-          onInputChange={handleInputChange}
-          onStop={handleStop}
-          isLoadingAi={isLoadingAi}
-          roundResults={roundResults}
-          playerRoundScore={playerRoundScore}
-          aiRoundScore={aiRoundScore}
-          roundWinner={roundWinner}
-          startNextRound={startNewRound}
-          totalPlayerScore={totalPlayerScore}
-          totalAiScore={totalAiScore}
-          timeLeft={timeLeft}
-          countdownWarningText={countdownWarningText}
-          translateUi={translate}
-          language={language as LanguageCode}
-          gameMode="solo"
-          processingState={processingState}
-        />
+        {renderContent()}
       </main>
       <AppFooter language={language} />
     </div>
   );
 }
+
