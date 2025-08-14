@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { rankingManager } from '@/lib/ranking';
+import type { User } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="18" height="18" {...props}>
@@ -48,12 +49,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   }, [error, toast]);
 
-  const handleLogin = async (loginMethod: () => Promise<any>) => {
+  const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
     try {
         const firebaseUser = await loginMethod();
-        if (firebaseUser) {
+        if (firebaseUser?.uid) {
             // After successful login, ensure the user profile exists in Firestore.
+            // This is CRITICAL to ensure all subsequent operations have a player profile to work with.
             await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
+            toast({ title: "¡Bienvenido!", description: "Has iniciado sesión correctamente." });
             onClose();
         }
     } catch (e: any) {

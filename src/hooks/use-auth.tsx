@@ -42,11 +42,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
         const userCredential = await loginFunction();
         if (userCredential?.user) {
-           toast({ title: "¡Bienvenido!", description: "Has iniciado sesión correctamente." });
            return userCredential.user;
         }
     } catch (e: any) {
-       toast({ title: "Error de inicio de sesión", description: e.message, variant: 'destructive' });
+       // El error ya se muestra en el modal, no es necesario un toast aquí.
+       console.error("Login failed:", e);
     }
     return undefined;
   };

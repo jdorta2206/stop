@@ -78,9 +78,11 @@ class RankingManager {
     let docSnap = await getDoc(playerDocRef);
 
     if (!docSnap.exists()) {
+      // If displayName is null or undefined (can happen on first login), provide a default.
+      const finalDisplayName = displayName || 'Jugador Anónimo';
       const newPlayer: Omit<PlayerScore, 'id'> = {
-          playerName: displayName || 'Jugador Anónimo',
-          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${displayName || 'player'}`,
+          playerName: finalDisplayName,
+          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalDisplayName || 'player'}`,
           totalScore: 0,
           gamesPlayed: 0,
           gamesWon: 0,
@@ -123,10 +125,11 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
     const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
     
+    // Ensure player profile exists before saving game result
+    const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
+
     const finalGameResult = { ...gameResult, timestamp: serverTimestamp() };
     await addDoc(gameHistoryCollectionRef, finalGameResult);
-
-    const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
     
     const coinsEarned = COINS_PER_GAME * (gameResult.won ? COINS_PER_WIN_MULTIPLIER : 1);
 

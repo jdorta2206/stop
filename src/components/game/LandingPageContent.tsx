@@ -96,6 +96,7 @@ export function LandingPageContent() {
     setIsCreatingRoom(true);
     try {
       // First, ensure the player has a profile in the database.
+      // This is now guaranteed to work because the profile is created/verified on login.
       const playerProfile = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
       
       // Then, create the room with the guaranteed player data.
