@@ -123,7 +123,7 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); 
+      setGameState('PLAYING'); // Revert to playing state on error to allow retry
     } finally {
       setIsLoadingAi(false);
       setProcessingState('idle');

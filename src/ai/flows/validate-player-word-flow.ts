@@ -77,7 +77,7 @@ const evaluateRoundFlow = ai.defineFlow(
     `;
     
     const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
+      model: googleAI.model('gemini-1.5-flash'),
       prompt: prompt,
       output: {
         schema: EvaluateRoundOutputSchema,
