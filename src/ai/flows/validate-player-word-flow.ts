@@ -3,6 +3,7 @@
 
 import { ai } from '@/lib/genkit';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/googleai';
 
 const PlayerResponseSchema = z.object({
   category: z.string(),
