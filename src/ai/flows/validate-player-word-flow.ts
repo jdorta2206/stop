@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/lib/genkit';
@@ -37,7 +38,7 @@ export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
 const evaluateRoundPrompt = ai.definePrompt({
     name: 'evaluateRoundPrompt',
-    model: googleAI.model('gemini-1.5-flash'),
+    model: 'gemini-1.5-flash',
     input: { schema: EvaluateRoundInputSchema },
     output: { schema: EvaluateRoundOutputSchema },
     prompt: `
