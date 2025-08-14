@@ -38,7 +38,7 @@ export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
 const evaluateRoundPrompt = ai.definePrompt({
     name: 'evaluateRoundPrompt',
-    model: 'gemini-1.5-flash',
+    model: 'googleai/gemini-1.5-flash',
     input: { schema: EvaluateRoundInputSchema },
     output: { schema: EvaluateRoundOutputSchema },
     prompt: `
