@@ -135,6 +135,9 @@ export default function PlaySoloPage() {
   // Timer countdown logic
   useEffect(() => {
     if (gameState !== 'PLAYING' || timeLeft <= 0) {
+      if(timeLeft <= 0 && gameState === 'PLAYING') {
+        handleStop();
+      }
       return;
     }
     
@@ -143,14 +146,7 @@ export default function PlaySoloPage() {
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [gameState, timeLeft]);
-  
-  // Effect to handle end of round when time is up
-  useEffect(() => {
-    if (timeLeft <= 0 && gameState === 'PLAYING') {
-      handleStop();
-    }
-  }, [timeLeft, gameState, handleStop]);
+  }, [gameState, timeLeft, handleStop]);
   
   // Sound effect for timer
   useEffect(() => {

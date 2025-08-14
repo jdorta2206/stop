@@ -26,7 +26,7 @@ const LoadingOverlay: React.FC<{ processingState: ProcessingState, translateUi: 
 );
 
 interface ResultsAreaProps {
-  roundResults?: RoundResults;
+  roundResults?: RoundResults | null;
   playerRoundScore: number;
   aiRoundScore: number;
   roundWinner: string;
@@ -131,7 +131,7 @@ interface GameAreaProps {
   onInputChange: (category: string, value: string) => void;
   onStop: () => void;
   isLoadingAi: boolean;
-  roundResults?: RoundResults;
+  roundResults?: RoundResults | null;
   playerRoundScore: number;
   aiRoundScore: number;
   roundWinner: string;
@@ -185,20 +185,13 @@ export function GameArea({
     )
   }
 
-  if (gameState === "EVALUATING") {
-    return (
-        <div className="w-full max-w-2xl mx-auto relative">
-            <Card className="w-full max-w-2xl mx-auto shadow-xl rounded-xl blur-sm">
-                <CardHeader className="text-center">
-                    <CardTitle className="text-5xl font-extrabold">
-                        <span className="text-muted-foreground">{translateUi('game.letterLabel')} </span>
-                        <span className="text-primary tracking-wider">{currentLetter}</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 p-4 md:p-6" />
-            </Card>
-            <LoadingOverlay processingState={processingState} translateUi={translateUi as (key: string) => string} />
-        </div>
+  if (gameState === "EVALUATING" || isLoadingAi) {
+     return (
+        <Card className="w-full max-w-lg mx-auto text-center p-8 shadow-xl">
+            <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto" />
+            <h2 className="text-2xl font-bold mt-6">{translateUi(`game.loadingAI.${processingState}`)}</h2>
+            <p className="text-muted-foreground mt-2">{translateUi('game.loadingAI.description')}</p>
+        </Card>
     );
   }
   
