@@ -1,9 +1,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
-        unoptimized: true
-    },
+    output: 'export',
     webpack: (config, { isServer }) => {
         // Añadir un alias para el paquete 'process' para que funcione en el navegador
         if (!isServer) {
