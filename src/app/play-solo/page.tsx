@@ -65,6 +65,7 @@ export default function PlaySoloPage() {
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
+    setGameState('EVALUATING'); // Detiene el temporizador inmediatamente
     setIsLoadingAi(true);
     setProcessingState('thinking');
     stopMusic();
@@ -133,10 +134,10 @@ export default function PlaySoloPage() {
 
   // Timer countdown logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || timeLeft <= 0) {
-      if(timeLeft <= 0 && gameState === 'PLAYING') {
-        handleStop();
-      }
+    if (gameState !== 'PLAYING') return;
+
+    if (timeLeft <= 0) {
+      handleStop();
       return;
     }
     
@@ -145,7 +146,7 @@ export default function PlaySoloPage() {
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [gameState, timeLeft, handleStop]);
+  }, [gameState, timeLeft]);
   
   // Sound effect for timer
   useEffect(() => {
@@ -188,7 +189,7 @@ export default function PlaySoloPage() {
   };
 
   const renderContent = () => {
-     if (isLoadingAi) {
+     if (gameState === 'EVALUATING' || isLoadingAi) {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 text-white">
           <Loader2 className="h-16 w-16 animate-spin mb-4" />

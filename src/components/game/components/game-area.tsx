@@ -190,6 +190,16 @@ export function GameArea({
         currentLetter={currentLetter}
      />;
   }
+  
+  if (gameState === 'EVALUATING') {
+    return (
+       <div className="flex flex-col items-center justify-center text-center p-8 text-white">
+          <Loader2 className="h-16 w-16 animate-spin mb-4" />
+          <h2 className="text-2xl font-bold">{translateUi(`game.loadingAI.${processingState}`)}</h2>
+          <p className="text-muted-foreground mt-2">{translateUi('game.loadingAI.description')}</p>
+        </div>
+    )
+  }
 
   if (gameState !== "PLAYING" || !currentLetter) {
     return (
@@ -264,4 +274,3 @@ export function GameArea({
     </div>
   );
 }
-
