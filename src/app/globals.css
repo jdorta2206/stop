@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 350 85% 55%; /* Rojo Principal como fondo */
-    --foreground: 0 0% 100%; /* Texto blanco */
+    --background: 350deg 85% 55%; /* Rojo Principal como fondo */
+    --foreground: 0deg 0% 100%; /* Texto blanco */
     
-    --card: 350 85% 48%; /* Un tono de rojo ligeramente más oscuro para las tarjetas */
-    --card-foreground: 0 0% 100%;
+    --card: 350deg 85% 48%; /* Un tono de rojo ligeramente más oscuro para las tarjetas */
+    --card-foreground: 0deg 0% 100%;
 
-    --popover: 350 85% 45%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 350deg 85% 45%;
+    --popover-foreground: 0deg 0% 100%;
     
-    --primary: 0 0% 100%; /* Blanco para elementos primarios como títulos y botones */
-    --primary-foreground: 350 85% 55%; /* Rojo para texto sobre primario */
+    --primary: 0deg 0% 100%; /* Blanco para elementos primarios como títulos y botones */
+    --primary-foreground: 350deg 85% 55%; /* Rojo para texto sobre primario */
     
-    --secondary: 45 90% 55%; /* Amarillo/Dorado para acentos */
-    --secondary-foreground: 350 85% 15%; /* Texto oscuro para acentos */
+    --secondary: 45deg 90% 55%; /* Amarillo/Dorado para acentos */
+    --secondary-foreground: 350deg 85% 15%; /* Texto oscuro para acentos */
     
-    --muted: 350 85% 30%;
-    --muted-foreground: 0 0% 80%;
+    --muted: 350deg 85% 30%;
+    --muted-foreground: 0deg 0% 80%;
     
-    --accent: 45 90% 55%; /* Amarillo para acentos como hovers */
-    --accent-foreground: 350 85% 15%;
+    --accent: 45deg 90% 55%; /* Amarillo para acentos como hovers */
+    --accent-foreground: 350deg 85% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0deg 84.2% 60.2%;
+    --destructive-foreground: 0deg 0% 100%;
     
-    --border: 350 85% 40%;
-    --input: 350 85% 30%;
-    --ring: 45 90% 55%;
+    --border: 350deg 85% 40%;
+    --input: 350deg 85% 30%;
+    --ring: 45deg 90% 55%;
     
     --radius: 0.8rem;
   }
 
   .dark {
-    --background: 350 85% 15%; /* Fondo rojo muy oscuro */
-    --foreground: 0 0% 100%; /* Texto blanco */
+    --background: 350deg 85% 15%; /* Fondo rojo muy oscuro */
+    --foreground: 0deg 0% 100%; /* Texto blanco */
 
-    --card: 350 85% 20%;
-    --card-foreground: 0 0% 100%;
+    --card: 350deg 85% 20%;
+    --card-foreground: 0deg 0% 100%;
 
-    --popover: 350 85% 10%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 350deg 85% 10%;
+    --popover-foreground: 0deg 0% 100%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 350 85% 55%;
+    --primary: 0deg 0% 100%;
+    --primary-foreground: 350deg 85% 55%;
 
-    --secondary: 45 90% 55%;
-    --secondary-foreground: 350 85% 15%;
+    --secondary: 45deg 90% 55%;
+    --secondary-foreground: 350deg 85% 15%;
 
-    --muted: 350 85% 25%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 350deg 85% 25%;
+    --muted-foreground: 0deg 0% 70%;
     
-    --accent: 45 90% 55%;
-    --accent-foreground: 350 85% 15%;
+    --accent: 45deg 90% 55%;
+    --accent-foreground: 350deg 85% 15%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0deg 62.8% 30.6%;
+    --destructive-foreground: 0deg 0% 100%;
 
-    --border: 350 85% 25%;
-    --input: 350 85% 25%;
-    --ring: 45 90% 55%;
+    --border: 350deg 85% 25%;
+    --input: 350deg 85% 25%;
+    --ring: 45deg 90% 55%;
   }
 }
 
