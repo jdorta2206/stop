@@ -10,9 +10,6 @@ const nextConfig = {
             config.resolve.alias['process'] = 'process/browser';
         }
         return config;
-    },
-     env: {
-        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     }
 };
 
