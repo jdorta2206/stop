@@ -8,6 +8,6 @@ import { googleAI } from '@genkit-ai/googleai';
 
 export const ai = genkit({
   plugins: [
-    googleAI({ apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ" })
+    googleAI({ apiKey: "AIzaSyD4AzZg-OXHOGEN_Yzmp_6P3ZWIPMUd5Ac" })
   ],
 });
