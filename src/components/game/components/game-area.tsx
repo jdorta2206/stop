@@ -165,7 +165,7 @@ export function GameArea({
   processingState,
 }: GameAreaProps) {
     
-  if (gameState === "SPINNING") {
+  if (gameState === "SPINNING" || gameState === "IDLE") {
     return (
       <RouletteWheel 
         isSpinning={true}
@@ -218,7 +218,7 @@ export function GameArea({
     return translateUi('game.instructions');
   };
 
-  const allowInput = !localPlayerSubmitted && gameState === 'PLAYING';
+  const allowInput = gameState === 'PLAYING';
 
   return (
     <div className="space-y-6">
@@ -267,7 +267,7 @@ export function GameArea({
         </div>
         <StopButton 
             onClick={onStop} 
-            disabled={isLoadingAi || !allowInput} 
+            disabled={!allowInput} 
             language={language} 
         />
       </div>
