@@ -1,4 +1,3 @@
-
 // IMPORTANT: This file is used to configure Firebase.
 // It is safe to expose this configuration publicly.
 // Security is enforced by Firebase Security Rules.
@@ -12,6 +11,5 @@ export const firebaseConfig = {
   "storageBucket": "global-stop.appspot.com",
   "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
   "authDomain": "global-stop.firebaseapp.com",
-  "messagingSenderId": "902072408470",
-  "measurementId": "G-P41T2BEMKZ"
+  "messagingSenderId": "902072408470"
 };
