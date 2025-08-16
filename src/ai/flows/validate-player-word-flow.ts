@@ -36,29 +36,20 @@ const EvaluateRoundOutputSchema = z.object({
 export type EvaluateRoundInput = z.infer<typeof EvaluateRoundInputSchema>;
 export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
-const evaluateRoundFlow = ai.defineFlow(
-  {
-    name: 'evaluateRoundFlow',
-    inputSchema: EvaluateRoundInputSchema,
-    outputSchema: EvaluateRoundOutputSchema,
-  },
-  async (input: EvaluateRoundInput) => {
-    
+export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
     const playerResponsesText = input.playerResponses
       .map(p => `- Category: ${p.category}, Word: ${p.word || ''}`)
       .join('\n');
 
-    const prompt = `
+    const systemPrompt = `
       You are the expert judge of the game "STOP". Your task is to evaluate the words of a round and generate answers for the AI.
-      You will receive a letter, a language, and the player's responses for various categories.
-
       Follow these rules strictly for EACH category:
       1.  **Validate the player's word**:
-          -   Is it a real and known word in the language '${input.language}'?
+          -   Is it a real and known word in the specified language?
           -   Does it belong to the corresponding category?
-          -   Does it start with the letter '${input.letter}'?
+          -   Does it start with the specified letter?
           -   If any of these conditions are not met, or if the player's 'word' field is empty, the word is invalid (isValid: false). If it is valid, mark isValid: true.
-          -   In the player's 'response' field, return the exact word they gave you.
+          -   In the player's 'response' field, return the exact word they gave.
 
       2.  **Generate a word for the AI**:
           -   Create a valid and creative word for the same category, letter, and language. If possible, different from the player's.
@@ -69,16 +60,23 @@ const evaluateRoundFlow = ai.defineFlow(
           -   If both words are valid and are the same (case-insensitive), the score for both is 5.
           -   If an entry is invalid or not provided, its score is 0.
           -   Assign the corresponding points in each one's 'score' field.
-
-      **Player Input:**
-      ${playerResponsesText}
       
-      Return the validation, words, and scores in the specified JSON format.
+      You MUST return the output in the specified JSON format.
     `;
-    
+
+    const userPrompt = `
+      Letter: '${input.letter}'
+      Language: '${input.language}'
+      Player Input:
+      ${playerResponsesText}
+    `;
+
     const { output } = await ai.generate({
       model: googleAI.model('gemini-1.5-flash'),
-      prompt: prompt,
+      prompt: {
+        system: systemPrompt,
+        user: userPrompt,
+      },
       output: {
         format: 'json',
         schema: EvaluateRoundOutputSchema,
@@ -92,9 +90,4 @@ const evaluateRoundFlow = ai.defineFlow(
       throw new Error("The AI could not process the round evaluation.");
     }
     return output;
-  }
-);
-
-export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
-  return await evaluateRoundFlow(input);
 }
