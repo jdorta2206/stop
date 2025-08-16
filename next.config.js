@@ -1,3 +1,4 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
@@ -10,6 +11,9 @@ const nextConfig = {
         }
         return config;
     },
+     env: {
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    }
 };
 
 export default nextConfig;
