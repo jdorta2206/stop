@@ -10,7 +10,7 @@ import { AppFooter } from '@/components/layout/footer';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { useLanguage } from '@/contexts/language-context';
 
-function MultiplayerLobby() {
+function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, isLoading: authLoading } = useAuth();
@@ -27,13 +27,13 @@ function MultiplayerLobby() {
     }
     
     if (!user) {
-        // Podríamos abrir el modal de login o redirigir
+        // Redirigir si el usuario no está autenticado
         router.push('/');
         return null;
     }
 
     if (!roomId) {
-        // Si no hay roomId, redirigir a la página principal para crear/unirse a una sala
+        // Redirigir si no hay roomId en la URL
         router.push('/');
         return null;
     }
@@ -64,10 +64,15 @@ function MultiplayerLobby() {
     );
 }
 
-export default function MultiplayerPage() {
+function MultiplayerLobby() {
     return (
-        <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
-            <MultiplayerLobby />
-        </Suspense>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+        <MultiplayerLobbyContent />
+      </Suspense>
     );
+}
+
+
+export default function MultiplayerPage() {
+    return <MultiplayerLobby />;
 }
