@@ -19,7 +19,7 @@ import type { GameState, PlayerResponses, RoundResults } from '@/components/game
 import { evaluateRound } from '@/ai/flows/validate-player-word-flow';
 import type { Language } from '@/contexts/language-context';
 import { rankingManager } from './ranking';
-
+import type { ChatMessage } from '@/components/chat/chat-message-item';
 
 export interface Player {
     id: string;
@@ -53,13 +53,6 @@ export interface Room {
     roundStartedAt?: any;
 }
 
-export interface ChatMessage {
-    id: string;
-    userId: string;
-    userName: string;
-    text: string;
-    timestamp: Date;
-}
 const roomsCollection = collection(db, 'rooms');
 
 const generateRoomId = () => {
@@ -327,7 +320,8 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
             const data = doc.data();
             messages.push({
                 id: doc.id,
-                ...data,
+                text: data.text,
+                sender: data.sender,
                 timestamp: data.timestamp?.toDate() || new Date(),
             } as ChatMessage);
         });

@@ -8,9 +8,9 @@ export interface ChatMessage {
   id: string;
   text: string;
   sender: {
-    name: string;
-    avatar?: string; // URL to avatar image
     uid: string; // User ID
+    name: string;
+    avatar?: string | null; // URL to avatar image
   };
   timestamp: Date;
 }
@@ -32,7 +32,7 @@ export function ChatMessageItem({ message, currentUserUid }: ChatMessageItemProp
     >
       {!isSenderCurrentUser && (
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={message.sender.avatar} alt={message.sender.name} data-ai-hint="avatar person" />
+          <AvatarImage src={message.sender.avatar || undefined} alt={message.sender.name} data-ai-hint="avatar person" />
           <AvatarFallback>{message.sender.name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       )}
@@ -61,7 +61,7 @@ export function ChatMessageItem({ message, currentUserUid }: ChatMessageItemProp
       </div>
       {isSenderCurrentUser && (
          <Avatar className="h-8 w-8 shrink-0 ml-3">
-          <AvatarImage src={message.sender.avatar} alt={message.sender.name} data-ai-hint="avatar person"/>
+          <AvatarImage src={message.sender.avatar || undefined} alt={message.sender.name} data-ai-hint="avatar person"/>
           <AvatarFallback>{message.sender.name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
       )}

@@ -5,24 +5,12 @@ import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 import { ChatPanel } from '../chat/chat-panel';
 import { onChatUpdate, sendMessageToRoom } from '@/lib/room-service';
 import { AuthStatus } from '../auth/auth-status';
-
-// Define un tipo unificado para los mensajes del chat
-type UnifiedChatMessage = {
-  id?: string;
-  text: string;
-  sender: {
-    uid: string;
-    name: string;
-    avatar?: string | null;
-  };
-  timestamp?: Date;
-};
+import type { ChatMessage } from '../chat/chat-message-item';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
@@ -30,7 +18,7 @@ export function AppHeader() {
   const { isMuted, toggleMute } = useSound();
   const [isMounted, setIsMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<UnifiedChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [roomId, setRoomId] = useState<string | null>('global');
 
   useEffect(() => {
@@ -40,20 +28,7 @@ export function AppHeader() {
   useEffect(() => {
     if (isChatOpen && roomId) {
       const unsubscribe = onChatUpdate(roomId, (messages) => {
-        // Asegura que los mensajes tengan la estructura correcta
-        const formattedMessages = messages.map(msg => ({
-          ...msg,
-          sender: msg.user ? {
-            uid: msg.user.uid,
-            name: msg.user.name,
-            avatar: msg.user.avatar
-          } : {
-            uid: 'unknown',
-            name: 'Anonymous',
-            avatar: null
-          }
-        }));
-        setChatMessages(formattedMessages);
+        setChatMessages(messages);
       });
       return () => unsubscribe();
     }
@@ -67,7 +42,7 @@ export function AppHeader() {
     if (user && roomId) {
       sendMessageToRoom(roomId, {
         text,
-        user: {
+        sender: {
           uid: user.uid,
           name: user.displayName || 'Anonymous',
           avatar: user.photoURL
