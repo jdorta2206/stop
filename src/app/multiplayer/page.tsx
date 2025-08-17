@@ -15,6 +15,12 @@ function MultiplayerLobbyContent() {
     const searchParams = useSearchParams();
     const { user, isLoading: authLoading } = useAuth();
     const { language } = useLanguage();
+
+    if (!searchParams) {
+        // Redirect if searchParams is null or undefined
+        router.push('/');
+        return null;
+    }
     
     const roomId = searchParams.get('roomId');
 

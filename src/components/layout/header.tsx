@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
@@ -10,8 +9,20 @@ import { useRouter } from 'next/navigation';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 import { ChatPanel } from '../chat/chat-panel';
-import { onChatUpdate, sendMessageToRoom, type ChatMessage } from '@/lib/room-service';
+import { onChatUpdate, sendMessageToRoom } from '@/lib/room-service';
 import { AuthStatus } from '../auth/auth-status';
+
+// Define un tipo unificado para los mensajes del chat
+type UnifiedChatMessage = {
+  id?: string;
+  text: string;
+  sender: {
+    uid: string;
+    name: string;
+    avatar?: string | null;
+  };
+  timestamp?: Date;
+};
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
@@ -19,9 +30,8 @@ export function AppHeader() {
   const { isMuted, toggleMute } = useSound();
   const [isMounted, setIsMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  // Esto debería venir de un contexto o de la URL
-  const [roomId, setRoomId] = useState<string | null>('global'); 
+  const [chatMessages, setChatMessages] = useState<UnifiedChatMessage[]>([]);
+  const [roomId, setRoomId] = useState<string | null>('global');
 
   useEffect(() => {
     setIsMounted(true);
@@ -30,7 +40,20 @@ export function AppHeader() {
   useEffect(() => {
     if (isChatOpen && roomId) {
       const unsubscribe = onChatUpdate(roomId, (messages) => {
-        setChatMessages(messages);
+        // Asegura que los mensajes tengan la estructura correcta
+        const formattedMessages = messages.map(msg => ({
+          ...msg,
+          sender: msg.user ? {
+            uid: msg.user.uid,
+            name: msg.user.name,
+            avatar: msg.user.avatar
+          } : {
+            uid: 'unknown',
+            name: 'Anonymous',
+            avatar: null
+          }
+        }));
+        setChatMessages(formattedMessages);
       });
       return () => unsubscribe();
     }
@@ -44,15 +67,14 @@ export function AppHeader() {
     if (user && roomId) {
       sendMessageToRoom(roomId, {
         text,
-        sender: {
-          name: user.displayName || 'Anonymous',
-          avatar: user.photoURL,
+        user: {
           uid: user.uid,
-        },
+          name: user.displayName || 'Anonymous',
+          avatar: user.photoURL
+        }
       });
     }
   };
-
 
   return (
     <>
@@ -87,17 +109,17 @@ export function AppHeader() {
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
             
-            {isMounted && <AuthStatus /> }
+            {isMounted && <AuthStatus />}
           </div>
         </div>
       </header>
       
       {isMounted && roomId && user && (
-         <ChatPanel 
+        <ChatPanel 
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
           messages={chatMessages}
-          currentUserUid={user?.uid}
+          currentUserUid={user.uid}
           onSendMessage={handleSendMessage}
           translateUi={translate}
           language={language}

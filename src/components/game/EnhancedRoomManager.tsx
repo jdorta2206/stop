@@ -201,7 +201,7 @@ export default function EnhancedRoomManager({
                             <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
                             <span className="font-medium flex items-center gap-2">
                                 {player.name} {player.id === currentUserId && "(Tú)"}
-                                {player.isHost && <Crown className="h-4 w-4 text-yellow-500" title="Anfitrión"/>}
+                                {player.isHost && <Crown className="h-4 w-4 text-yellow-500"/>}
                             </span>
                         </div>
                         <div className='flex items-center gap-2'>
