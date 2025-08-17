@@ -73,10 +73,10 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
 
     const { output } = await ai.generate({
       model: googleAI.model('gemini-1.5-flash'),
-      prompt: {
-        system: systemPrompt,
-        user: userPrompt,
-      },
+      prompt: [
+        { text: systemPrompt },
+        { text: userPrompt },
+      ],
       output: {
         format: 'json',
         schema: EvaluateRoundOutputSchema,
