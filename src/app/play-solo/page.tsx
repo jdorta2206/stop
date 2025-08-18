@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
@@ -14,6 +14,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
 import { Loader2 } from 'lucide-react';
+import { RouletteWheel } from '@/components/game/components/roulette-wheel';
+import { ResultsArea } from '@/components/game/components/results-area';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -122,7 +124,7 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revert to playing state on error to allow retry
+      setGameState('PLAYING');
     } finally {
       setProcessingState('idle');
     }
@@ -174,53 +176,68 @@ export default function PlaySoloPage() {
     setTimeLeft(ROUND_DURATION);
   };
   
-  const countdownWarningText = useMemo(() => {
-    if (timeLeft <= 3) return translate('game.time.finalCountdown');
-    if (timeLeft <= 5) return translate('game.time.almostUp');
-    if (timeLeft <= 10) return translate('game.time.endingSoon');
-    return '';
-  }, [timeLeft, translate]);
-
   const handleInputChange = (category: string, value: string) => {
     setPlayerResponses(prev => ({ ...prev, [category]: value }));
+  };
+
+  const renderContent = () => {
+    switch (gameState) {
+      case 'IDLE':
+      case 'SPINNING':
+        return (
+          <RouletteWheel 
+            isSpinning={true}
+            alphabet={alphabet}
+            language={language}
+            onSpinComplete={handleSpinComplete}
+            className="my-8"
+          />
+        );
+      case 'PLAYING':
+        return (
+          <GameArea
+            currentLetter={currentLetter}
+            categories={categories}
+            playerResponses={playerResponses}
+            onInputChange={handleInputChange}
+            onStop={handleStop}
+            timeLeft={timeLeft}
+            translateUi={translate}
+            language={language as LanguageCode}
+          />
+        );
+      case 'EVALUATING':
+        return (
+          <div className="flex flex-col items-center justify-center text-center p-8 text-white">
+            <Loader2 className="h-16 w-16 animate-spin mb-4" />
+            <h2 className="text-2xl font-bold">{translate(`game.loadingAI.${processingState}`)}</h2>
+            <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
+          </div>
+        );
+      case 'RESULTS':
+        return (
+          <ResultsArea
+            roundResults={roundResults}
+            playerRoundScore={playerRoundScore}
+            aiRoundScore={aiRoundScore}
+            roundWinner={roundWinner}
+            totalPlayerScore={totalPlayerScore}
+            totalAiScore={totalAiScore}
+            startNextRound={startNewRound}
+            translateUi={translate}
+            currentLetter={currentLetter}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
       <AppHeader />
       <main className="flex-grow flex items-center justify-center p-4">
-        {gameState === 'EVALUATING' ? (
-          <div className="flex flex-col items-center justify-center text-center p-8 text-white">
-            <Loader2 className="h-16 w-16 animate-spin mb-4" />
-            <h2 className="text-2xl font-bold">{translate(`game.loadingAI.${processingState}`)}</h2>
-            <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
-          </div>
-        ) : (
-          <GameArea
-            gameState={gameState}
-            currentLetter={currentLetter}
-            onSpinComplete={handleSpinComplete}
-            categories={categories}
-            alphabet={alphabet}
-            playerResponses={playerResponses}
-            onInputChange={handleInputChange}
-            onStop={handleStop}
-            isLoadingAi={false} // This is now controlled by gameState
-            roundResults={roundResults}
-            playerRoundScore={playerRoundScore}
-            aiRoundScore={aiRoundScore}
-            roundWinner={roundWinner}
-            startNextRound={startNewRound}
-            totalPlayerScore={totalPlayerScore}
-            totalAiScore={totalAiScore}
-            timeLeft={timeLeft}
-            countdownWarningText={countdownWarningText}
-            translateUi={translate}
-            language={language as LanguageCode}
-            gameMode="solo"
-            processingState={processingState}
-          />
-        )}
+        {renderContent()}
       </main>
       <AppFooter language={language} />
     </div>
