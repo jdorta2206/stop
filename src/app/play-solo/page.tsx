@@ -126,7 +126,7 @@ export default function PlaySoloPage() {
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
       // NO revertir el estado aquí para evitar el ciclo infinito. El usuario decidirá qué hacer.
     } finally {
-        // Al finalizar, el estado del juego cambia a RESULTS, ya no se necesita el processingState.
+        setProcessingState('idle'); // Restablece el estado de procesamiento al final
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
