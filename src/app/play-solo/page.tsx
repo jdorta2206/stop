@@ -124,7 +124,7 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revert state on error to allow retry
+      // NO revertir el estado aquí para evitar el ciclo infinito. El usuario decidirá qué hacer.
     } finally {
       setProcessingState('idle');
     }
