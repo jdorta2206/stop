@@ -133,7 +133,9 @@ export default function PlaySoloPage() {
 
   // Timer countdown logic
   useEffect(() => {
-    if (gameState !== 'PLAYING') return;
+    if (gameState !== 'PLAYING') {
+      return;
+    }
 
     if (timeLeft <= 0) {
       handleStop();
