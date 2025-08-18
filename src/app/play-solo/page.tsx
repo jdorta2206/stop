@@ -66,7 +66,7 @@ export default function PlaySoloPage() {
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
-    setGameState('EVALUATING'); 
+    setGameState('EVALUATING');
     setProcessingState('thinking');
     stopMusic();
 
@@ -128,7 +128,7 @@ export default function PlaySoloPage() {
     } finally {
       setProcessingState('idle');
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, stopMusic, user, playSound, toast, translate]);
+  }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
 
   // Timer countdown logic
