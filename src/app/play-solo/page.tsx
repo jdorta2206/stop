@@ -124,7 +124,7 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING');
+      setGameState('PLAYING'); // Revert state on error to allow retry
     } finally {
       setProcessingState('idle');
     }
@@ -188,7 +188,7 @@ export default function PlaySoloPage() {
           <RouletteWheel 
             isSpinning={true}
             alphabet={alphabet}
-            language={language}
+            language={language as LanguageCode}
             onSpinComplete={handleSpinComplete}
             className="my-8"
           />
@@ -239,7 +239,7 @@ export default function PlaySoloPage() {
       <main className="flex-grow flex items-center justify-center p-4">
         {renderContent()}
       </main>
-      <AppFooter language={language} />
+      <AppFooter language={language as LanguageCode} />
     </div>
   );
 }
