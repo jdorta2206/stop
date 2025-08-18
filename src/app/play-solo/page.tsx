@@ -19,10 +19,10 @@ import { ResultsArea } from '@/components/game/components/results-area';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
-  es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta o Verdura", "Marca"],
-  en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit or Vegetable", "Brand"],
-  fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit ou Légume", "Marque"],
-  pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta ou Legume", "Marca"],
+  es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
+  en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit", "Brand"],
+  fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit", "Marque"],
+  pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta", "Marca"],
 };
 
 const ALPHABET_BY_LANG: Record<string, string[]> = {
