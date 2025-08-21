@@ -79,7 +79,7 @@ export default function PlaySoloPage() {
       });
       
       if (!results || !results.results) {
-        throw new Error("Respuesta inválida de la IA");
+        throw new Error("Respuesta inválida de la IA. El objeto de resultados está vacío.");
       }
       
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
@@ -115,8 +115,12 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
     } catch (error) {
       console.error("Error en handleStop:", error);
-      toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      setGameState('PLAYING'); // Revertir para que el usuario pueda reintentar
+      toast({ 
+          title: translate('notifications.aiError.title'), 
+          description: `Error al procesar la ronda: ${(error as Error).message}`, 
+          variant: 'destructive' 
+      });
+      // NO revertir el estado a 'PLAYING'. Dejar que el usuario decida qué hacer.
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
@@ -235,5 +239,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
