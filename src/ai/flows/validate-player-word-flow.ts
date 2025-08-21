@@ -3,7 +3,6 @@
 
 import { ai } from '@/lib/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/googleai';
 
 const PlayerResponseSchema = z.object({
   category: z.string(),
@@ -72,11 +71,9 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     `;
 
     const { output } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'),
-      prompt: [
-        { text: systemPrompt },
-        { text: userPrompt },
-      ],
+      model: 'gemini-1.5-flash',
+      system: systemPrompt,
+      prompt: userPrompt,
       output: {
         format: 'json',
         schema: EvaluateRoundOutputSchema,
