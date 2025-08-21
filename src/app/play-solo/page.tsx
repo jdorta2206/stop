@@ -209,6 +209,15 @@ export default function PlaySoloPage() {
           />
         );
       case 'EVALUATING':
+         if (processingState === 'idle') {
+          // This is an error state, should not happen. Let's provide a fallback.
+           return (
+            <div className="flex flex-col items-center justify-center text-center p-8 text-white">
+                <Loader2 className="h-16 w-16 animate-spin mb-4" />
+                <h2 className="text-2xl font-bold">Procesando...</h2>
+            </div>
+           )
+        }
         return (
           <div className="flex flex-col items-center justify-center text-center p-8 text-white">
             <Loader2 className="h-16 w-16 animate-spin mb-4" />
