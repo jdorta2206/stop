@@ -73,7 +73,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     `;
 
     const { output } = await ai.generate({
-      model: 'gemini-1.5-flash',
+      model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       prompt: userPrompt,
       output: {
