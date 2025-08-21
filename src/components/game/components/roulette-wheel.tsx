@@ -44,7 +44,6 @@ const ROULETTE_TEXTS = {
 
 export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
   const [displayLetter, setDisplayLetter] = useState<string>(alphabet[0] || 'A');
-  const [isAnimating, setIsAnimating] = useState(false);
   const spinCountRef = useRef(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { playSound } = useSound();
@@ -62,17 +61,14 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
         playSound('spin-end');
         setDisplayLetter(finalLetter);
         setTimeout(() => {
-          setIsAnimating(false);
           onSpinComplete(finalLetter);
         }, 1000);
     }
   
-    // Only start if isSpinning is true and not already animating
-    if (isSpinning && !isAnimating) {
-      if (alphabet.length === 0) return;
+    if (isSpinning) {
+      if (alphabet.length === 0 || intervalRef.current) return;
 
       playSound('spin-start');
-      setIsAnimating(true);
       const maxSpins = 25 + Math.floor(Math.random() * 15);
       spinCountRef.current = 0;
 
@@ -92,7 +88,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
           clearInterval(intervalRef.current);
       }
     };
-  }, [isSpinning, isAnimating, alphabet, onSpinComplete, playSound]);
+  }, [isSpinning, alphabet, onSpinComplete, playSound]);
 
   return (
     <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card rounded-lg", className)}>
@@ -114,7 +110,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
           <div className="absolute inset-0 rounded-full bg-primary/10 border-4 border-primary/20"></div>
 
           {/* Spinning Dashed Border */}
-          {isAnimating && (
+          {isSpinning && (
             <div className="absolute inset-2 rounded-full border-4 border-dashed border-secondary animate-spin-slow"></div>
           )}
           
@@ -126,7 +122,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
           </div>
         </div>
 
-        {isAnimating && (
+        {isSpinning && (
           <p className="text-primary mt-4 font-semibold">
             {translate('spinningStatus')}
           </p>
