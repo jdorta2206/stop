@@ -120,7 +120,8 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      // NO revertir el estado a 'PLAYING'. Dejar que el usuario decida qué hacer.
+      // Mantenemos el estado en EVALUATING para que el usuario vea que algo falló.
+      // Podría añadir un botón para reintentar o volver.
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
