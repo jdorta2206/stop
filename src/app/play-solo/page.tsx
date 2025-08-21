@@ -41,7 +41,7 @@ export default function PlaySoloPage() {
   const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [gameState, setGameState] = useState<GameState>('SPINNING');
+  const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [alphabet, setAlphabet] = useState<string[]>([]);
@@ -53,6 +53,12 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    setGameState('SPINNING');
+  }, []);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -60,7 +66,7 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
-    if (gameState === 'SPINNING') {
+    if (gameState === 'PLAYING') {
         playMusic();
     }
   }, [gameState, playMusic]);
@@ -135,7 +141,7 @@ export default function PlaySoloPage() {
       });
       setGameState('IDLE'); 
     }
-  }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  }, [gameState, currentLetter, stopMusic, categories, playerResponses, language, toast, translate, user, playSound]);
 
 
   // Timer countdown logic
@@ -163,12 +169,6 @@ export default function PlaySoloPage() {
       }
   }, [timeLeft, gameState, playSound]);
   
-  const resetGame = () => {
-    setTotalPlayerScore(0);
-    setTotalAiScore(0);
-    startNewRound();
-  };
-
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
@@ -180,12 +180,19 @@ export default function PlaySoloPage() {
   };
 
   const renderContent = () => {
+    if (!isMounted || gameState === 'IDLE') {
+        return (
+          <div className="flex h-screen items-center justify-center bg-background">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          </div>
+        );
+    }
+    
     switch (gameState) {
-      case 'IDLE':
       case 'SPINNING':
         return (
           <RouletteWheel 
-            isSpinning={gameState === 'SPINNING'}
+            isSpinning={true}
             alphabet={alphabet}
             language={language as LanguageCode}
             onSpinComplete={handleSpinComplete}

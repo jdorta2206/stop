@@ -53,21 +53,24 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
     return ROULETTE_TEXTS[textKey][language] || ROULETTE_TEXTS[textKey]['en'];
   };
   
-  const stopSpinning = (finalLetter: string) => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      playSound('spin-end');
-      setDisplayLetter(finalLetter);
-      setTimeout(() => {
-        setIsAnimating(false);
-        onSpinComplete(finalLetter);
-      }, 1000);
-  }
-
   useEffect(() => {
-    if (isSpinning) {
+    const stopSpinning = (finalLetter: string) => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        playSound('spin-end');
+        setDisplayLetter(finalLetter);
+        setTimeout(() => {
+          setIsAnimating(false);
+          onSpinComplete(finalLetter);
+        }, 1000);
+    }
+  
+    // Only start if isSpinning is true and not already animating
+    if (isSpinning && !isAnimating) {
+      if (alphabet.length === 0) return;
+
       playSound('spin-start');
       setIsAnimating(true);
       const maxSpins = 25 + Math.floor(Math.random() * 15);
@@ -82,14 +85,14 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
            stopSpinning(finalLetter);
         }
       }, 80);
-
-      return () => {
-        if(intervalRef.current) {
-            clearInterval(intervalRef.current);
-        }
-      };
     }
-  }, [isSpinning, alphabet, language, onSpinComplete, playSound]);
+
+    return () => {
+      if(intervalRef.current) {
+          clearInterval(intervalRef.current);
+      }
+    };
+  }, [isSpinning, isAnimating, alphabet, onSpinComplete, playSound]);
 
   return (
     <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card rounded-lg", className)}>
