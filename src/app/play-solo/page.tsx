@@ -57,12 +57,21 @@ export default function PlaySoloPage() {
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-    // Start the first round only once when component mounts and language is set
-    if (gameState === 'IDLE') {
-        startNewRound();
-    }
   }, [language]);
 
+  // Start the game only once on mount
+  useEffect(() => {
+    startNewRound();
+  }, []);
+
+  const startNewRound = () => {
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    setGameState('SPINNING');
+    playMusic();
+  };
 
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
@@ -124,7 +133,8 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); // Go to a safe state on error
+      // Fallback to a safe state, but don't restart the round automatically
+      setGameState('IDLE'); 
     }
   }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
@@ -153,15 +163,6 @@ export default function PlaySoloPage() {
          playSound('timer-tick');
       }
   }, [timeLeft, gameState, playSound]);
-
-  const startNewRound = () => {
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
-    setGameState('SPINNING');
-    playMusic();
-  };
   
   const resetGame = () => {
     setTotalPlayerScore(0);
@@ -185,7 +186,7 @@ export default function PlaySoloPage() {
       case 'SPINNING':
         return (
           <RouletteWheel 
-            isSpinning={true}
+            isSpinning={gameState === 'SPINNING'}
             alphabet={alphabet}
             language={language as LanguageCode}
             onSpinComplete={handleSpinComplete}
@@ -228,7 +229,11 @@ export default function PlaySoloPage() {
           />
         );
       default:
-        return null;
+         return (
+          <div className="flex h-screen items-center justify-center bg-background">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          </div>
+        );
     }
   };
 
