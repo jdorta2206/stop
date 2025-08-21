@@ -34,8 +34,6 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 
 const ROUND_DURATION = 60; // seconds
 
-export type ProcessingState = 'idle' | 'thinking' | 'validating' | 'scoring';
-
 export default function PlaySoloPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
@@ -55,7 +53,6 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
-  const [processingState, setProcessingState] = useState<ProcessingState>('idle');
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -67,7 +64,6 @@ export default function PlaySoloPage() {
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
-    setProcessingState('thinking');
     stopMusic();
 
     const playerPayload = categories.map(cat => ({
@@ -82,13 +78,9 @@ export default function PlaySoloPage() {
         playerResponses: playerPayload,
       });
       
-      setProcessingState('validating');
-      
       if (!results || !results.results) {
         throw new Error("Respuesta inválida de la IA");
       }
-      
-      setProcessingState('scoring');
       
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
           acc.playerRoundScore += res.player?.score || 0;
@@ -125,8 +117,8 @@ export default function PlaySoloPage() {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
       // NO revertir el estado aquí para evitar el ciclo infinito. El usuario decidirá qué hacer.
-    } finally {
-        setProcessingState('idle'); // Restablece el estado de procesamiento al final
+      // Para permitir que el usuario reintente, podríamos resetear el estado o mostrar un botón de reintentar.
+      // Por ahora, lo dejamos en EVALUATING para que sea claro que algo falló.
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
@@ -209,19 +201,10 @@ export default function PlaySoloPage() {
           />
         );
       case 'EVALUATING':
-         if (processingState === 'idle') {
-          // This is an error state, should not happen. Let's provide a fallback.
-           return (
-            <div className="flex flex-col items-center justify-center text-center p-8 text-white">
-                <Loader2 className="h-16 w-16 animate-spin mb-4" />
-                <h2 className="text-2xl font-bold">Procesando...</h2>
-            </div>
-           )
-        }
         return (
           <div className="flex flex-col items-center justify-center text-center p-8 text-white">
             <Loader2 className="h-16 w-16 animate-spin mb-4" />
-            <h2 className="text-2xl font-bold">{translate(`game.loadingAI.${processingState}`)}</h2>
+            <h2 className="text-2xl font-bold">Procesando...</h2>
             <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
           </div>
         );
@@ -254,3 +237,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
