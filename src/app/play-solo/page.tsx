@@ -41,7 +41,7 @@ export default function PlaySoloPage() {
   const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [gameState, setGameState] = useState<GameState>('IDLE');
+  const [gameState, setGameState] = useState<GameState>('SPINNING');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [alphabet, setAlphabet] = useState<string[]>([]);
@@ -58,11 +58,12 @@ export default function PlaySoloPage() {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
-
-  // Start the game only once on mount
+  
   useEffect(() => {
-    startNewRound();
-  }, []);
+    if (gameState === 'SPINNING') {
+        playMusic();
+    }
+  }, [gameState, playMusic]);
 
   const startNewRound = () => {
     setPlayerResponses({});
@@ -70,7 +71,6 @@ export default function PlaySoloPage() {
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
     setGameState('SPINNING');
-    playMusic();
   };
 
   const handleStop = useCallback(async () => {
@@ -133,7 +133,6 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      // Fallback to a safe state, but don't restart the round automatically
       setGameState('IDLE'); 
     }
   }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
