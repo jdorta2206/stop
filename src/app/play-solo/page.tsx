@@ -116,9 +116,7 @@ export default function PlaySoloPage() {
     } catch (error) {
       console.error("Error en handleStop:", error);
       toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive' });
-      // NO revertir el estado aquí para evitar el ciclo infinito. El usuario decidirá qué hacer.
-      // Para permitir que el usuario reintente, podríamos resetear el estado o mostrar un botón de reintentar.
-      // Por ahora, lo dejamos en EVALUATING para que sea claro que algo falló.
+      setGameState('PLAYING'); // Revertir para que el usuario pueda reintentar
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
