@@ -57,8 +57,9 @@ export default function PlaySoloPage() {
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-    resetGame();
+    startNewRound(); // Start the first round when language loads
   }, [language]);
+
 
   const handleStop = useCallback(async () => {
     if (gameState !== 'PLAYING' || !currentLetter) return;
@@ -124,7 +125,7 @@ export default function PlaySoloPage() {
       // Se puede añadir un botón para reintentar o volver al menú.
       setGameState('IDLE');
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
+  }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
 
   // Timer countdown logic
