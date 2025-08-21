@@ -120,7 +120,9 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); // Back to a safe state on error
+      // NO volvemos a 'PLAYING' para que el usuario vea el error.
+      // Se puede añadir un botón para reintentar o volver al menú.
+      setGameState('IDLE');
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 

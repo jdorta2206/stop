@@ -37,30 +37,32 @@ export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
     const playerResponsesText = input.playerResponses
-      .map(p => `- Category: ${p.category}, Word: ${p.word || ''}`)
+      .map(p => `- Category: ${p.category}, Word: ${p.word || 'EMPTY'}`)
       .join('\n');
 
     const systemPrompt = `
       You are the expert judge of the game "STOP". Your task is to evaluate the words of a round and generate answers for the AI.
-      Follow these rules strictly for EACH category:
+      Follow these rules strictly for EACH category provided by the user:
       1.  **Validate the player's word**:
-          -   Is it a real and known word in the specified language?
-          -   Does it belong to the corresponding category?
-          -   Does it start with the specified letter?
-          -   If any of these conditions are not met, or if the player's 'word' field is empty, the word is invalid (isValid: false). If it is valid, mark isValid: true.
-          -   In the player's 'response' field, return the exact word they gave.
+          -   Check if the word is real and known in the specified language.
+          -   Check if it belongs to the corresponding category.
+          -   Check if it starts with the specified letter (case-insensitive).
+          -   If any of these conditions are not met, or if the player's word is 'EMPTY', the word is invalid (isValid: false).
+          -   If it is valid, mark isValid: true.
+          -   In the player's 'response' field, return the exact word they gave (or an empty string if it was 'EMPTY').
 
       2.  **Generate a word for the AI**:
-          -   Create a valid and creative word for the same category, letter, and language. If possible, different from the player's.
-          -   If you can't think of one, leave the AI's 'response' field empty and mark 'isValid' as false. If you generate one, mark it as 'isValid: true'.
+          -   Create a valid and creative word for the same category, letter, and language.
+          -   If possible, make it different from the player's valid word.
+          -   If you can't think of a valid word, leave the AI's 'response' field as an empty string and mark 'isValid' as false. If you generate one, mark it as 'isValid: true'.
       
-      3.  **Score Calculation**:
-          -   If the player's word is valid and the AI's is not (or is different), the player's score is 10.
-          -   If both words are valid and are the same (case-insensitive), the score for both is 5.
-          -   If an entry is invalid or not provided, its score is 0.
-          -   Assign the corresponding points in each one's 'score' field.
+      3.  **Score Calculation (for both player and AI)**:
+          -   If a word is invalid or not provided, its score is 0.
+          -   If a word is valid AND the other party's word is invalid or different, the score is 10.
+          -   If both words are valid AND are the same (case-insensitive), the score for both is 5.
+          -   Assign the calculated points in the 'score' field for both player and AI.
       
-      You MUST return the output in the specified JSON format.
+      You MUST return the output in the specified JSON format, with a key for every category the user sent.
     `;
 
     const userPrompt = `
