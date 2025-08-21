@@ -206,7 +206,7 @@ export default function PlaySoloPage() {
         return (
           <div className="flex flex-col items-center justify-center text-center p-8 text-white">
             <Loader2 className="h-16 w-16 animate-spin mb-4" />
-            <h2 className="text-2xl font-bold">Procesando...</h2>
+            <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
             <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
           </div>
         );
