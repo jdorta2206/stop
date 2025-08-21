@@ -57,7 +57,10 @@ export default function PlaySoloPage() {
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-    startNewRound(); // Start the first round when language loads
+    // Start the first round only once when component mounts and language is set
+    if (gameState === 'IDLE') {
+        startNewRound();
+    }
   }, [language]);
 
 
@@ -121,9 +124,7 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      // NO volvemos a 'PLAYING' para que el usuario vea el error.
-      // Se puede añadir un botón para reintentar o volver al menú.
-      setGameState('IDLE');
+      setGameState('IDLE'); // Go to a safe state on error
     }
   }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
@@ -163,7 +164,6 @@ export default function PlaySoloPage() {
   };
   
   const resetGame = () => {
-    setGameState('IDLE');
     setTotalPlayerScore(0);
     setTotalAiScore(0);
     startNewRound();
