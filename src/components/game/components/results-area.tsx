@@ -61,7 +61,7 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-xl bg-card/80 p-6" key={`results-area-${currentLetter}`}>
+    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-xl bg-card/80 p-6 animate-fade-in" key={`results-area-${currentLetter}`}>
         <div className="text-center mb-6">
             <h2 className="text-3xl font-bold text-primary">{translateUi('game.results.title')}</h2>
             <p className="text-muted-foreground mt-1">

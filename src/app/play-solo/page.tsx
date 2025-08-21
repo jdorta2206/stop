@@ -120,7 +120,7 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}`, 
           variant: 'destructive' 
       });
-      setGameState('PLAYING');
+      setGameState('IDLE'); // Back to a safe state on error
     }
   }, [gameState, currentLetter, categories, playerResponses, language, user, toast, translate, stopMusic, playSound]);
 
