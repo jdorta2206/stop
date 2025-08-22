@@ -42,6 +42,7 @@ const ROULETTE_TEXTS = {
 
 export function RouletteWheel({ onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
   const [isAnimating, setIsAnimating] = useState(true);
+  const [displayLetter, setDisplayLetter] = useState<string>('?');
   const wheelRef = useRef<HTMLDivElement>(null);
   const { playSound } = useSound();
 
@@ -67,17 +68,30 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
         const finalLetter = alphabet[targetIndex];
 
         const segmentAngle = 360 / alphabet.length;
-        // Calculate the angle to point the pointer at the middle of the segment
         const targetAngle = 360 * 5 - (targetIndex * segmentAngle + segmentAngle / 2);
 
         wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.2, 1)';
         wheel.style.transform = `rotate(${targetAngle}deg)`;
 
+        // Animate letters in the center
+        const letterAnimationInterval = setInterval(() => {
+            const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+            setDisplayLetter(randomLetter);
+        }, 80);
+
+
         setTimeout(() => {
+            clearInterval(letterAnimationInterval);
             playSound('spin-end');
-            setIsAnimating(false);
-            onSpinComplete(finalLetter);
-        }, 4500); // Wait for animation + a small buffer
+            setDisplayLetter(finalLetter);
+            
+            // Wait a moment on the final letter before completing
+            setTimeout(() => {
+              setIsAnimating(false);
+              onSpinComplete(finalLetter);
+            }, 1000);
+            
+        }, 4000); // Stop letter animation at the same time the wheel stops
     }
   }, [alphabet, onSpinComplete, playSound]);
 
@@ -138,6 +152,13 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
                     </div>
                 )
              })}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-background/50 backdrop-blur-sm w-24 h-24 rounded-full flex items-center justify-center">
+                  <span className="text-white text-6xl font-bold transition-all duration-100" style={{
+                    textShadow: '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary))'
+                  }}>{displayLetter}</span>
+              </div>
           </div>
         </div>
 
