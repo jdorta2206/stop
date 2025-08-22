@@ -149,7 +149,6 @@ export default function PlaySoloPage() {
               description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
               variant: 'destructive' 
           });
-          // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
           setGameState('PLAYING'); 
         } finally {
             stopPromiseRef.current = null;
@@ -262,3 +261,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    

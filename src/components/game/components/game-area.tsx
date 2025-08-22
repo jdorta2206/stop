@@ -60,6 +60,7 @@ export function GameArea({
                 </label>
                 <Input
                   id={`${category}-solo`}
+                  key={`${category}-${currentLetter}`}
                   value={playerResponses[category] || ''}
                   onChange={(e) => onInputChange(category, e.target.value)}
                   placeholder={`${translateUi('game.inputPlaceholder')} ${category.toLowerCase()}...`}
@@ -89,3 +90,5 @@ export function GameArea({
     </div>
   );
 }
+
+    
