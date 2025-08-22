@@ -238,6 +238,18 @@ export function LandingPageContent() {
                 </div>
               ))}
             </div>
+             <div className="mt-12 flex justify-center items-center gap-4">
+                <Button variant="ghost" onClick={() => handleShare('whatsapp')} className="p-2 h-auto rounded-full bg-white/10 hover:bg-white/20">
+                    <WhatsappIcon />
+                </Button>
+                <Button variant="ghost" onClick={() => handleShare('facebook')} className="p-2 h-auto rounded-full bg-white/10 hover:bg-white/20">
+                    <FacebookIcon />
+                </Button>
+                <Button variant="outline" onClick={handleInviteClick} className="rounded-full bg-transparent border-white text-white hover:bg-white hover:text-black">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    {translate('social.inviteFriends')}
+                </Button>
+            </div>
           </div>
         </section>
       </main>

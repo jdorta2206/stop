@@ -41,7 +41,7 @@ const ROULETTE_TEXTS = {
 };
 
 export function RouletteWheel({ onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(true);
   const wheelRef = useRef<HTMLDivElement>(null);
   const { playSound } = useSound();
 
@@ -50,8 +50,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
   };
   
   useEffect(() => {
-    if (alphabet.length > 0 && !isAnimating) {
-        setIsAnimating(true);
+    if (alphabet.length > 0 && isAnimating) {
         playSound('spin-start');
 
         const wheel = wheelRef.current;
@@ -76,6 +75,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
 
         setTimeout(() => {
             playSound('spin-end');
+            setIsAnimating(false);
             onSpinComplete(finalLetter);
         }, 4500); // Wait for animation + a small buffer
     }
