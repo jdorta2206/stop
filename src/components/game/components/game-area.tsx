@@ -15,7 +15,7 @@ interface GameAreaProps {
   onInputChange: (category: string, value: string) => void;
   onStop: () => void;
   timeLeft: number;
-  translateUi: (key: string, replacements?: Record<string, string>) => void;
+  translateUi: (key: string, replacements?: Record<string, string>) => string;
   language: LanguageCode;
 }
 
@@ -90,5 +90,7 @@ export function GameArea({
     </div>
   );
 }
+
+    
 
     
