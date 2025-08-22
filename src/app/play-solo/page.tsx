@@ -111,7 +111,7 @@ export default function PlaySoloPage() {
           const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
           const adaptedResults: RoundResults = {};
-          for (const category in results.results) {
+          for (const category of categories) {
               adaptedResults[category] = {
                   player: results.results[category],
                   ai: { response: '', isValid: false, score: 0 } // No AI response

@@ -54,7 +54,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return the output in the specified JSON format, with a key for every category the user sent. If all words are invalid, you must still return the object with all categories, isValid set to false and score set to 0 for each.
+      You MUST return the output in the specified JSON format, with a key for every category the user sent. If all words are invalid, you must still return the object with all categories, isValid set to false and score set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
     `;
 
     const userPrompt = `
@@ -81,7 +81,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     }
     
     // Ensure every category has an entry, even if the AI misses one. This is critical.
-    input.playerResponses.forEach(p => {
+    for (const p of input.playerResponses) {
         if (!output.results[p.category]) {
             output.results[p.category] = {
                 response: p.word || '',
@@ -89,7 +89,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
                 score: 0
             };
         }
-    });
+    }
 
     return output;
 }

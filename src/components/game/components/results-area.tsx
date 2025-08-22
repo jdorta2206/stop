@@ -38,9 +38,18 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
 
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
-    const aiResult = roundResults[category]?.ai;
     
-    if (!playerResult) return null; // Safety check
+    if (!playerResult) {
+      // This can happen if the AI fails to return a category. Render a fallback.
+      return (
+        <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
+          <td className="p-3 font-semibold">{category}</td>
+          <td className="p-3 text-white/60" colSpan={4}>Error al procesar esta categoría.</td>
+        </tr>
+      );
+    }
+    
+    const aiResult = roundResults[category]?.ai;
 
     const pRes = playerResult || { response: '-', score: 0, isValid: false };
     const aRes = aiResult || { response: '-', score: 0, isValid: false };
