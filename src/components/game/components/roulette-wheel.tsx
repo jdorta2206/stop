@@ -53,21 +53,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
   };
   
   useEffect(() => {
-    const stopSpinning = (finalLetter: string) => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        playSound('spin-end');
-        setDisplayLetter(finalLetter);
-        setTimeout(() => {
-          onSpinComplete(finalLetter);
-        }, 1000);
-    }
-  
-    if (isSpinning) {
-      if (alphabet.length === 0 || intervalRef.current) return;
-
+    if (isSpinning && alphabet.length > 0 && !intervalRef.current) {
       playSound('spin-start');
       const maxSpins = 25 + Math.floor(Math.random() * 15);
       spinCountRef.current = 0;
@@ -78,14 +64,22 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
         
         if (spinCountRef.current >= maxSpins) {
            const finalLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
-           stopSpinning(finalLetter);
+           if (intervalRef.current) {
+             clearInterval(intervalRef.current);
+             intervalRef.current = null;
+           }
+           playSound('spin-end');
+           setDisplayLetter(finalLetter);
+           setTimeout(() => {
+             onSpinComplete(finalLetter);
+           }, 1000);
         }
       }, 80);
     }
 
     return () => {
-      if(intervalRef.current) {
-          clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
       }
     };
   }, [isSpinning, alphabet, onSpinComplete, playSound]);
