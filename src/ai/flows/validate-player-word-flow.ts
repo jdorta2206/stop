@@ -54,7 +54,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return the output in the specified JSON format, with a key for every category the user sent.
+      You MUST return the output in the specified JSON format, with a key for every category the user sent. If all words are invalid, you must still return the object with all categories, isValid set to false and score set to 0 for each.
     `;
 
     const userPrompt = `
@@ -93,3 +93,5 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
 
     return output;
 }
+
+    

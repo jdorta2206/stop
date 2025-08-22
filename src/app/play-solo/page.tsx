@@ -16,6 +16,8 @@ import { useSound } from '@/hooks/use-sound';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '@/components/game/components/roulette-wheel';
 import { ResultsArea } from '@/components/game/components/results-area';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -104,7 +106,7 @@ export default function PlaySoloPage() {
           }
           
           const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
-          const aScore = 0;
+          const aScore = 0; // AI score is 0 in solo mode focused on player validation
 
           const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -112,7 +114,7 @@ export default function PlaySoloPage() {
           for (const category in results.results) {
               adaptedResults[category] = {
                   player: results.results[category],
-                  ai: { response: '', isValid: false, score: 0 }
+                  ai: { response: '', isValid: false, score: 0 } // No AI response
               };
           }
 
@@ -123,7 +125,7 @@ export default function PlaySoloPage() {
           setTotalAiScore(prev => prev + aScore);
           setRoundWinner(winner);
 
-          if(pScore > aScore) playSound('round-win');
+          if(pScore > 0) playSound('round-win');
           else playSound('round-lose');
 
           if (user) {
@@ -146,7 +148,7 @@ export default function PlaySoloPage() {
               description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
               variant: 'destructive' 
           });
-          setGameState('PLAYING'); 
+          setGameState('PLAYING'); // Revert to playing state on error
         } finally {
             stopPromiseRef.current = null;
         }
@@ -185,7 +187,6 @@ export default function PlaySoloPage() {
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
-    setTimeLeft(ROUND_DURATION);
     startTimer();
   };
   
@@ -206,17 +207,29 @@ export default function PlaySoloPage() {
         );
       case 'PLAYING':
         return (
-          <GameArea
-            key={currentLetter}
-            currentLetter={currentLetter}
-            categories={categories}
-            playerResponses={playerResponses}
-            onInputChange={handleInputChange}
-            onStop={handleStop}
-            timeLeft={timeLeft}
-            translateUi={translate}
-            language={language as LanguageCode}
-          />
+          <div className="w-full max-w-3xl mx-auto">
+            <GameArea
+              currentLetter={currentLetter}
+              categories={categories}
+              playerResponses={playerResponses}
+              onInputChange={handleInputChange}
+              translateUi={translate}
+            />
+            <div className="flex flex-col items-center gap-4 mt-6">
+              <div className="w-full max-w-2xl space-y-2 text-white">
+                  <div className="flex justify-between items-center text-sm font-medium px-1">
+                      <span>{translate('game.time.left')}</span>
+                      <span className={timeLeft <= 10 ? "text-destructive font-bold" : ""}>
+                          {timeLeft}s
+                      </span>
+                  </div>
+                  <Progress value={(timeLeft / ROUND_DURATION) * 100} className="h-2" />
+              </div>
+              <Button onClick={handleStop} variant="secondary" size="lg" className="mt-4 w-full max-w-xs text-xl py-6 rounded-lg shadow-lg">
+                  STOP
+              </Button>
+            </div>
+          </div>
         );
       case 'EVALUATING':
         return (
