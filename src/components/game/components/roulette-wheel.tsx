@@ -50,7 +50,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
   };
   
   useEffect(() => {
-    if (alphabet.length > 0 && isAnimating) {
+    if (alphabet.length > 0) {
         playSound('spin-start');
 
         const wheel = wheelRef.current;
@@ -79,7 +79,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
             onSpinComplete(finalLetter);
         }, 4500); // Wait for animation + a small buffer
     }
-  }, [alphabet, onSpinComplete, playSound, isAnimating]);
+  }, [alphabet, onSpinComplete, playSound]);
 
   return (
     <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card/50 backdrop-blur-sm border-white/20 text-white rounded-2xl", className)}>
@@ -104,18 +104,37 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
               borderRight: '15px solid transparent',
               borderTop: '30px solid hsl(var(--destructive))'
           }}></div>
-          <div ref={wheelRef} className="roulette-wheel relative w-full h-full rounded-full border-8 border-[hsl(var(--card))] shadow-lg">
+          <div ref={wheelRef} className="roulette-wheel relative w-full h-full rounded-full border-8 border-[hsl(var(--card))] shadow-lg bg-white/10">
              {alphabet.map((letter, index) => {
                 const angle = (360 / alphabet.length) * index;
-                const segmentStyle = {
-                  transform: `rotate(${angle}deg)`,
-                  backgroundColor: index % 2 === 0 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+                const segmentStyle: React.CSSProperties = {
+                    transform: `rotate(${angle}deg) skewY(-${90 - (360 / alphabet.length)}deg)`,
+                    position: 'absolute',
+                    width: '50%',
+                    height: '50%',
+                    transformOrigin: '100% 100%',
+                    top: 0,
+                    left: 0,
+                    backgroundColor: index % 2 === 0 ? 'hsla(var(--primary-foreground), 0.1)' : 'hsla(var(--primary-foreground), 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                 };
+                const letterStyle: React.CSSProperties = {
+                    transform: `skewY(${90 - (360 / alphabet.length)}deg) rotate(${(360 / alphabet.length) / 2}deg)`,
+                    position: 'absolute',
+                    left: '-50%',
+                    width: '100%',
+                    textAlign: 'center',
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                    color: 'hsl(var(--foreground))',
+                }
                 return (
-                    <div key={index} className="absolute w-1/2 h-full origin-right top-0 left-0" style={segmentStyle}>
-                        <span className="absolute left-[70%] top-1/2 -translate-y-1/2 text-2xl font-bold text-white">
+                    <div key={index} style={segmentStyle}>
+                        <div style={letterStyle}>
                             {letter}
-                        </span>
+                        </div>
                     </div>
                 )
              })}
