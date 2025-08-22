@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { useSound } from '@/hooks/use-sound';
 
 interface RouletteWheelProps {
-  isSpinning: boolean;
   onSpinComplete: (letter: string) => void;
   alphabet: string[];
   language: Language;
@@ -42,9 +41,9 @@ const ROULETTE_TEXTS = {
   }
 };
 
-export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
+export function RouletteWheel({ onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
   const [displayLetter, setDisplayLetter] = useState<string>(alphabet[0] || 'A');
-  const spinCountRef = useRef(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { playSound } = useSound();
 
@@ -53,16 +52,17 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
   };
   
   useEffect(() => {
-    if (isSpinning && alphabet.length > 0 && !intervalRef.current) {
+    if (alphabet.length > 0 && !isAnimating) {
+      setIsAnimating(true);
       playSound('spin-start');
       const maxSpins = 25 + Math.floor(Math.random() * 15);
-      spinCountRef.current = 0;
+      let spinCount = 0;
 
       intervalRef.current = setInterval(() => {
         setDisplayLetter(alphabet[Math.floor(Math.random() * alphabet.length)]);
-        spinCountRef.current++;
+        spinCount++;
         
-        if (spinCountRef.current >= maxSpins) {
+        if (spinCount >= maxSpins) {
            const finalLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
            if (intervalRef.current) {
              clearInterval(intervalRef.current);
@@ -82,7 +82,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
         clearInterval(intervalRef.current);
       }
     };
-  }, [isSpinning, alphabet, onSpinComplete, playSound]);
+  }, [alphabet, onSpinComplete, playSound]);
 
   return (
     <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card rounded-lg", className)}>
@@ -98,13 +98,13 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
         <div 
           className="relative my-4 w-48 h-48 md:w-56 md:h-56 flex items-center justify-center mx-auto"
           aria-label={translate('ariaLabel')}
-          aria-busy={isSpinning}
+          aria-busy={isAnimating}
         >
           {/* Static Outer Circle */}
           <div className="absolute inset-0 rounded-full bg-primary/10 border-4 border-primary/20"></div>
 
           {/* Spinning Dashed Border */}
-          {isSpinning && (
+          {isAnimating && (
             <div className="absolute inset-2 rounded-full border-4 border-dashed border-secondary animate-spin-slow"></div>
           )}
           
@@ -116,7 +116,7 @@ export function RouletteWheel({ isSpinning, onSpinComplete, alphabet, language, 
           </div>
         </div>
 
-        {isSpinning && (
+        {isAnimating && (
           <p className="text-primary mt-4 font-semibold">
             {translate('spinningStatus')}
           </p>

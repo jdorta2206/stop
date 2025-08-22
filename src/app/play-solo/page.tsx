@@ -41,7 +41,7 @@ export default function PlaySoloPage() {
   const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [gameState, setGameState] = useState<GameState>('IDLE');
+  const [gameState, setGameState] = useState<GameState>('SPINNING');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [alphabet, setAlphabet] = useState<string[]>([]);
@@ -53,12 +53,6 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    setGameState('SPINNING');
-  }, []);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -180,19 +174,10 @@ export default function PlaySoloPage() {
   };
 
   const renderContent = () => {
-    if (!isMounted || gameState === 'IDLE') {
-        return (
-          <div className="flex h-screen items-center justify-center bg-background">
-              <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          </div>
-        );
-    }
-    
     switch (gameState) {
       case 'SPINNING':
         return (
           <RouletteWheel 
-            isSpinning={true}
             alphabet={alphabet}
             language={language as LanguageCode}
             onSpinComplete={handleSpinComplete}
