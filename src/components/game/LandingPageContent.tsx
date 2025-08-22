@@ -190,6 +190,14 @@ export function LandingPageContent() {
                   {isCreatingRoom && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {translate('landing.privateRoom')}
                 </Button>
+                <Link href="/leaderboard">
+                  <Button 
+                    variant="secondary"
+                    className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
+                  >
+                    {translate('landing.ranking')}
+                  </Button>
+                </Link>
               </>
             )}
           </div>
