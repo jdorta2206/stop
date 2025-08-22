@@ -3,7 +3,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { RoundResults } from '../types';
@@ -48,11 +47,17 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     }
 
     return (
-      <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0">
+      <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
         <td className="p-3 font-semibold">{category}</td>
-        <td className={`p-3 ${!pRes.isValid && pRes.response !== '-' ? 'line-through text-white/60' : ''}`}>{pRes.response}</td>
+        <td className={`p-3 flex items-center gap-2 ${!pRes.isValid && pRes.response && pRes.response !== '-' ? 'line-through text-white/60' : ''}`}>
+           {pRes.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : (pRes.response && pRes.response !== '-') ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+           <span>{pRes.response || '-'}</span>
+        </td>
         <td className={`p-3 font-bold ${getScoreClass(pRes.score)}`}>{pRes.score} pts</td>
-        <td className={`p-3 ${!aRes.isValid && aRes.response !== '-' ? 'line-through text-white/60' : ''}`}>{aRes.response}</td>
+        <td className={`p-3 flex items-center gap-2 ${!aRes.isValid && aRes.response && aRes.response !== '-' ? 'line-through text-white/60' : ''}`}>
+           {aRes.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : (aRes.response && aRes.response !== '-') ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+           <span>{aRes.response || '-'}</span>
+        </td>
         <td className={`p-3 font-bold ${getScoreClass(aRes.score)}`}>{aRes.score} pts</td>
       </tr>
     )
@@ -69,25 +74,27 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
         
         <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-black/20 p-4 rounded-lg text-center">
+                <div className="bg-black/20 p-4 rounded-lg text-center border border-white/10">
                     <h3 className="text-lg font-semibold">{playerName}</h3>
                     <p className="text-4xl font-bold text-green-400">{playerRoundScore} pts</p>
+                    <p className="text-xs text-white/60">Total: {totalPlayerScore} pts</p>
                 </div>
-                 <div className="bg-black/20 p-4 rounded-lg text-center">
+                 <div className="bg-black/20 p-4 rounded-lg text-center border border-white/10">
                     <h3 className="text-lg font-semibold">{translateUi('game.results.labels.ai')}</h3>
                     <p className="text-4xl font-bold text-red-400">{aiRoundScore} pts</p>
+                    <p className="text-xs text-white/60">Total: {totalAiScore} pts</p>
                 </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead className="border-b-2 border-white/20">
-                        <tr>
-                            <th className="p-3 text-left">Categoría</th>
-                            <th className="p-3 text-left">{playerName}</th>
-                            <th className="p-3 text-left">Puntos</th>
-                            <th className="p-3 text-left">IA</th>
-                            <th className="p-3 text-left">Puntos</th>
+            <div className="overflow-x-auto rounded-lg border border-white/10 bg-black/10">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="border-b-2 border-white/20">
+                            <th className="p-3 text-sm font-semibold tracking-wider">Categoría</th>
+                            <th className="p-3 text-sm font-semibold tracking-wider">{playerName}</th>
+                            <th className="p-3 text-sm font-semibold tracking-wider">Puntos</th>
+                            <th className="p-3 text-sm font-semibold tracking-wider">IA</th>
+                            <th className="p-3 text-sm font-semibold tracking-wider">Puntos</th>
                         </tr>
                     </thead>
                     <tbody>
