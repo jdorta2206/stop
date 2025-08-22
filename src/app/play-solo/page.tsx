@@ -150,10 +150,10 @@ export default function PlaySoloPage() {
       console.error("Error detallado en handleStop:", error);
       toast({ 
           title: translate('notifications.aiError.title'), 
-          description: `Error al procesar la ronda: ${(error as Error).message}. Volviendo al inicio.`, 
+          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
           variant: 'destructive' 
       });
-      router.push('/');
+      setGameState('PLAYING'); // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
     }
   }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, router, stopMusic]);
 
