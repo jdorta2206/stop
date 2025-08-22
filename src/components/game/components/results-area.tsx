@@ -36,7 +36,12 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     );
   }
 
-  const renderResultRow = (category: string, playerResult: any, aiResult: any) => {
+  const renderResultRow = (category: string) => {
+    const playerResult = roundResults[category]?.player;
+    const aiResult = roundResults[category]?.ai;
+    
+    if (!playerResult) return null; // Safety check
+
     const pRes = playerResult || { response: '-', score: 0, isValid: false };
     const aRes = aiResult || { response: '-', score: 0, isValid: false };
     
@@ -64,7 +69,7 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-2xl bg-white/10 backdrop-blur-md p-6 animate-fade-in text-white" key={`results-area-${currentLetter}`}>
+    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-2xl bg-white/10 backdrop-blur-md p-6 animate-fade-in text-white">
         <CardHeader className="text-center mb-4">
             <CardTitle className="text-3xl font-bold">{translateUi('game.results.title')}</CardTitle>
             <CardDescription className="text-white/80 mt-1">
@@ -99,7 +104,7 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
                     </thead>
                     <tbody>
                         {Object.keys(roundResults).map((category) => 
-                            renderResultRow(category, roundResults[category].player, roundResults[category].ai)
+                            renderResultRow(category)
                         )}
                     </tbody>
                 </table>
@@ -115,5 +120,3 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     </Card>
   );
 };
-
-    

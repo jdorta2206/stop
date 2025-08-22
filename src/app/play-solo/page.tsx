@@ -209,6 +209,7 @@ export default function PlaySoloPage() {
         return (
           <div className="w-full max-w-3xl mx-auto">
             <GameArea
+              key={currentLetter}
               currentLetter={currentLetter}
               categories={categories}
               playerResponses={playerResponses}
@@ -242,6 +243,7 @@ export default function PlaySoloPage() {
       case 'RESULTS':
         return (
           <ResultsArea
+            key={`results-${currentLetter}`}
             roundResults={roundResults}
             playerRoundScore={playerRoundScore}
             aiRoundScore={aiRoundScore}
@@ -272,5 +274,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
