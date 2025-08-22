@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
@@ -54,133 +54,143 @@ export default function PlaySoloPage() {
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   const [isMounted, setIsMounted] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const stopPromiseRef = useRef<Promise<void> | null>(null);
+
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
+    // Carga inicial de categorías y alfabeto según el idioma.
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
   
   useEffect(() => {
+      // Inicia el juego una vez que el componente se ha montado.
       if (isMounted) {
           startNewRound();
       }
   }, [isMounted]);
+
+  useEffect(() => {
+    // Limpia el temporizador si el componente se desmonta.
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
   
   const handleStop = useCallback(async () => {
-    // Prevenir ejecuciones múltiples
-    if (gameState !== 'PLAYING' || !currentLetter) return;
-
+    if (gameState !== 'PLAYING' || !currentLetter || stopPromiseRef.current) return;
+    
+    if (timerRef.current) clearInterval(timerRef.current);
+    
     setGameState('EVALUATING');
     stopMusic();
 
-    const playerPayload = categories.map(cat => ({
-      category: cat,
-      word: playerResponses[cat] || ""
-    }));
+    const promise = (async () => {
+        const playerPayload = categories.map(cat => ({
+          category: cat,
+          word: playerResponses[cat] || ""
+        }));
 
-    try {
-      const results: EvaluateRoundOutput = await evaluateRound({
-        letter: currentLetter,
-        language: language as LanguageCode,
-        playerResponses: playerPayload,
-      });
-      
-      if (!results || !results.results) {
-        throw new Error("La IA no devolvió un formato de resultados válido.");
-      }
-      
-      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
-      const aScore = 0; // AI no juega en modo solo por ahora
+        try {
+          const results: EvaluateRoundOutput = await evaluateRound({
+            letter: currentLetter,
+            language: language as LanguageCode,
+            playerResponses: playerPayload,
+          });
+          
+          if (!results || !results.results) {
+            throw new Error("La IA no devolvió un formato de resultados válido.");
+          }
+          
+          const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
+          const aScore = 0; // AI no juega en modo solo
 
-      const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
+          const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
-      const adaptedResults: RoundResults = {};
-      for (const category in results.results) {
-          adaptedResults[category] = {
-              player: results.results[category],
-              ai: { response: '', isValid: false, score: 0 } // AI no juega
-          };
-      }
+          const adaptedResults: RoundResults = {};
+          for (const category in results.results) {
+              adaptedResults[category] = {
+                  player: results.results[category],
+                  ai: { response: '', isValid: false, score: 0 } // AI no juega
+              };
+          }
 
-      setRoundResults(adaptedResults);
-      setPlayerRoundScore(pScore);
-      setAiRoundScore(aScore);
-      setTotalPlayerScore(prev => prev + pScore);
-      setTotalAiScore(prev => prev + aScore);
-      setRoundWinner(winner);
+          setRoundResults(adaptedResults);
+          setPlayerRoundScore(pScore);
+          setAiRoundScore(aScore);
+          setTotalPlayerScore(prev => prev + pScore);
+          setTotalAiScore(prev => prev + aScore);
+          setRoundWinner(winner);
 
-      if(pScore > aScore) playSound('round-win');
-      else playSound('round-lose');
+          if(pScore > aScore) playSound('round-win');
+          else playSound('round-lose');
 
-      if (user) {
-        await rankingManager.saveGameResult({
-          playerId: user.uid,
-          playerName: user.displayName || 'Jugador',
-          photoURL: user.photoURL || null,
-          score: pScore,
-          categories: playerResponses,
-          letter: currentLetter,
-          gameMode: 'solo',
-          won: pScore > aScore,
-        });
-      }
-      setGameState('RESULTS');
-    } catch (error) {
-      console.error("Error detallado en handleStop:", error);
-      toast({ 
-          title: translate('notifications.aiError.title'), 
-          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
-          variant: 'destructive' 
-      });
-      // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
-      setGameState('PLAYING'); 
-    }
+          if (user) {
+            await rankingManager.saveGameResult({
+              playerId: user.uid,
+              playerName: user.displayName || 'Jugador',
+              photoURL: user.photoURL || null,
+              score: pScore,
+              categories: playerResponses,
+              letter: currentLetter,
+              gameMode: 'solo',
+              won: pScore > aScore,
+            });
+          }
+          setGameState('RESULTS');
+        } catch (error) {
+          console.error("Error detallado en handleStop:", error);
+          toast({ 
+              title: translate('notifications.aiError.title'), 
+              description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
+              variant: 'destructive' 
+          });
+          // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
+          setGameState('PLAYING'); 
+        } finally {
+            stopPromiseRef.current = null;
+        }
+    })();
+    stopPromiseRef.current = promise;
+
   }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic]);
 
 
-  // Timer countdown and music logic
-  useEffect(() => {
-    let timerId: NodeJS.Timeout | null = null;
-    
-    if (gameState === 'PLAYING' && timeLeft > 0) {
+  const startTimer = () => {
+      if (timerRef.current) clearInterval(timerRef.current);
       playMusic();
-      timerId = setInterval(() => {
-        setTimeLeft(prev => {
-          const newTime = prev - 1;
-          if (newTime <= 10 && newTime > 0) playSound('timer-tick');
-          if (newTime <= 0) {
-            if (timerId) clearInterval(timerId);
-            handleStop();
-            return 0;
-          }
-          return newTime;
-        });
+      timerRef.current = setInterval(() => {
+          setTimeLeft(prev => {
+              if (prev <= 1) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  handleStop();
+                  return 0;
+              }
+              if (prev <= 11) playSound('timer-tick');
+              return prev - 1;
+          });
       }, 1000);
-    } else {
-      stopMusic();
-    }
-
-    return () => {
-      if (timerId) clearInterval(timerId);
-    };
-  }, [gameState, timeLeft, handleStop, playMusic, stopMusic, playSound]);
+  };
 
   const startNewRound = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    stopMusic();
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
     setGameState('SPINNING');
+    setTimeLeft(ROUND_DURATION);
   };
   
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
-    setTimeLeft(ROUND_DURATION);
     setGameState('PLAYING');
+    setTimeLeft(ROUND_DURATION);
+    startTimer();
   };
   
   const handleInputChange = (category: string, value: string) => {
@@ -252,3 +262,4 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
