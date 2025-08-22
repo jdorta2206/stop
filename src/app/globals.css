@@ -22,7 +22,7 @@
     --muted: 0 84% 30%;
     --muted-foreground: 0 0% 80%;
 
-    --accent: 25 95% 53%; /* Naranja para el degradado */
+    --accent: 0 84% 60%; /* Rojo puro, igual que el fondo */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
