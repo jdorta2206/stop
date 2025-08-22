@@ -102,13 +102,17 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
               height: 0,
               borderLeft: '15px solid transparent',
               borderRight: '15px solid transparent',
-              borderTop: '30px solid hsl(var(--secondary))'
+              borderTop: '30px solid hsl(var(--destructive))'
           }}></div>
           <div ref={wheelRef} className="roulette-wheel relative w-full h-full rounded-full border-8 border-[hsl(var(--card))] shadow-lg">
              {alphabet.map((letter, index) => {
                 const angle = (360 / alphabet.length) * index;
+                const segmentStyle = {
+                  transform: `rotate(${angle}deg)`,
+                  backgroundColor: index % 2 === 0 ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'
+                };
                 return (
-                    <div key={index} className="absolute w-1/2 h-full origin-right top-0 left-0" style={{ transform: `rotate(${angle}deg)`}}>
+                    <div key={index} className="absolute w-1/2 h-full origin-right top-0 left-0" style={segmentStyle}>
                         <span className="absolute left-[70%] top-1/2 -translate-y-1/2 text-2xl font-bold text-white">
                             {letter}
                         </span>
