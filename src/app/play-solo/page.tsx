@@ -60,20 +60,17 @@ export default function PlaySoloPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Carga inicial de categorías y alfabeto según el idioma.
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
   
   useEffect(() => {
-      // Inicia el juego una vez que el componente se ha montado.
       if (isMounted) {
           startNewRound();
       }
   }, [isMounted]);
 
   useEffect(() => {
-    // Limpia el temporizador si el componente se desmonta.
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -107,7 +104,7 @@ export default function PlaySoloPage() {
           }
           
           const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
-          const aScore = 0; // AI no juega en modo solo
+          const aScore = 0;
 
           const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -115,7 +112,7 @@ export default function PlaySoloPage() {
           for (const category in results.results) {
               adaptedResults[category] = {
                   player: results.results[category],
-                  ai: { response: '', isValid: false, score: 0 } // AI no juega
+                  ai: { response: '', isValid: false, score: 0 }
               };
           }
 
@@ -210,6 +207,7 @@ export default function PlaySoloPage() {
       case 'PLAYING':
         return (
           <GameArea
+            key={currentLetter}
             currentLetter={currentLetter}
             categories={categories}
             playerResponses={playerResponses}
