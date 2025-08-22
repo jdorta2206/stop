@@ -115,3 +115,5 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     </Card>
   );
 };
+
+    

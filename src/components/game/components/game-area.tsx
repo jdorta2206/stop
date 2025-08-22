@@ -25,7 +25,7 @@ export function GameArea({
   }
 
   return (
-    <Card className="w-full mx-auto shadow-xl rounded-2xl bg-white text-gray-800">
+    <Card className="w-full mx-auto shadow-xl rounded-2xl bg-white text-gray-800" key={currentLetter}>
       <CardHeader className="text-center bg-primary-foreground/10 rounded-t-2xl py-4">
         <CardDescription className="text-2xl">{translateUi('game.letterLabel')} </CardDescription>
         <CardTitle className="text-7xl font-extrabold text-primary-foreground tracking-wider">
