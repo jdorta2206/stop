@@ -18,10 +18,9 @@ const EvaluateRoundInputSchema = z.object({
 const ResultDetailSchema = z.object({
   response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10 o 0).")
+  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida, 0 si no lo es).")
 });
 
-// The AI will no longer generate its own words, only evaluate the player's.
 const EvaluateRoundOutputSchema = z.object({
   results: z.record(
     z.string(), // Category name
@@ -48,7 +47,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
           -   If all three conditions are met, the word is valid.
       2.  **Determine Score**:
           -   If the word is valid, the score is 10.
-          -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY', the score is 0.
+          -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY' or not provided, the score is 0.
       3.  **Output Format**:
           -   For each category, you MUST return an object with:
               - 'response': The exact word the player provided, or an empty string if they provided none.
@@ -77,31 +76,20 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       }
     });
 
-    if (!output) {
-      throw new Error("The AI could not process the round evaluation.");
+    if (!output || !output.results) {
+      throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
-
-    // Adapt the AI output to the expected structure with a placeholder for AI results
-    const finalOutput = {
-        results: {} as Record<string, { player: ResultDetail; ai: ResultDetail }>
-    };
-
-    for (const category in output.results) {
-        finalOutput.results[category] = {
-            player: output.results[category],
-            ai: { response: '', isValid: false, score: 0 } // AI doesn't play in solo, so its score is always 0.
-        };
-    }
-
-    // This part is just a safety net to ensure every category has an entry.
+    
+    // Ensure every category has an entry, even if the AI misses one.
     input.playerResponses.forEach(p => {
-        if (!finalOutput.results[p.category]) {
-            finalOutput.results[p.category] = {
-                player: { response: p.word || '', isValid: false, score: 0 },
-                ai: { response: '', isValid: false, score: 0 }
-            }
+        if (!output.results[p.category]) {
+            output.results[p.category] = {
+                response: p.word || '',
+                isValid: false,
+                score: 0
+            };
         }
     });
 
-    return finalOutput as any; // Cast because the internal structure is slightly different now
+    return output;
 }
