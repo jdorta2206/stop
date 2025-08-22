@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --background: 350deg 85% 55%; /* Rojo Principal como fondo */
-    --foreground: 0deg 0% 100%; /* Texto blanco */
-    
-    --card: 350deg 85% 48%; /* Un tono de rojo ligeramente más oscuro para las tarjetas */
-    --card-foreground: 0deg 0% 100%;
+    --background: 257 87% 49%; /* Gradiente Púrpura/Azul */
+    --foreground: 0 0% 100%;
 
-    --popover: 350deg 85% 45%;
-    --popover-foreground: 0deg 0% 100%;
-    
-    --primary: 0deg 0% 100%; /* Blanco para elementos primarios como títulos y botones */
-    --primary-foreground: 350deg 85% 55%; /* Rojo para texto sobre primario */
-    
-    --secondary: 45deg 90% 55%; /* Amarillo/Dorado para acentos */
-    --secondary-foreground: 350deg 85% 15%; /* Texto oscuro para acentos */
-    
-    --muted: 350deg 85% 30%;
-    --muted-foreground: 0deg 0% 80%;
-    
-    --accent: 45deg 90% 55%; /* Amarillo para acentos como hovers */
-    --accent-foreground: 350deg 85% 15%;
+    --card: 262 100% 44%; /* Morado oscuro para tarjetas */
+    --card-foreground: 0 0% 100%;
 
-    --destructive: 0deg 84.2% 60.2%;
-    --destructive-foreground: 0deg 0% 100%;
-    
-    --border: 350deg 85% 40%;
-    --input: 350deg 85% 30%;
-    --ring: 45deg 90% 55%;
-    
+    --popover: 262 100% 35%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%; /* Blanco para elementos primarios */
+    --primary-foreground: 262 100% 44%;
+
+    --secondary: 345 100% 60%; /* Rosa/Rojo para acentos */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 262 100% 30%;
+    --muted-foreground: 0 0% 80%;
+
+    --accent: 221 96% 57%; /* Azul para acentos */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 345 100% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 262 100% 55%;
+    --input: 262 100% 95%; /* Un fondo claro para inputs */
+    --ring: 221 96% 57%;
+
     --radius: 0.8rem;
   }
 
   .dark {
-    --background: 350deg 85% 15%; /* Fondo rojo muy oscuro */
-    --foreground: 0deg 0% 100%; /* Texto blanco */
+    --background: 257 87% 10%;
+    --foreground: 0 0% 100%;
 
-    --card: 350deg 85% 20%;
-    --card-foreground: 0deg 0% 100%;
+    --card: 262 100% 15%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 350deg 85% 10%;
-    --popover-foreground: 0deg 0% 100%;
+    --popover: 262 100% 10%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 0deg 0% 100%;
-    --primary-foreground: 350deg 85% 55%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 262 100% 44%;
 
-    --secondary: 45deg 90% 55%;
-    --secondary-foreground: 350deg 85% 15%;
+    --secondary: 345 100% 60%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 350deg 85% 25%;
-    --muted-foreground: 0deg 0% 70%;
-    
-    --accent: 45deg 90% 55%;
-    --accent-foreground: 350deg 85% 15%;
+    --muted: 262 100% 20%;
+    --muted-foreground: 0 0% 70%;
 
-    --destructive: 0deg 62.8% 30.6%;
-    --destructive-foreground: 0deg 0% 100%;
+    --accent: 221 96% 57%;
+    --accent-foreground: 0 0% 100%;
 
-    --border: 350deg 85% 25%;
-    --input: 350deg 85% 25%;
-    --ring: 45deg 90% 55%;
+    --destructive: 345 100% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 262 100% 25%;
+    --input: 262 100% 20%;
+    --ring: 221 96% 57%;
   }
 }
 
@@ -72,5 +72,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--accent)) 100%);
   }
 }

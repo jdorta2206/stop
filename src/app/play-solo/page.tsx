@@ -199,10 +199,10 @@ export default function PlaySoloPage() {
         );
       case 'EVALUATING':
         return (
-          <div className="flex flex-col items-center justify-center text-center p-8 text-white">
+          <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
             <Loader2 className="h-16 w-16 animate-spin mb-4" />
             <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
-            <p className="text-muted-foreground mt-2">{translate('game.loadingAI.description')}</p>
+            <p className="text-white/80 mt-2">{translate('game.loadingAI.description')}</p>
           </div>
         );
       case 'RESULTS':
@@ -221,7 +221,7 @@ export default function PlaySoloPage() {
         );
       default:
          return (
-          <div className="flex h-screen items-center justify-center bg-background">
+          <div className="flex h-screen items-center justify-center">
               <Loader2 className="h-16 w-16 animate-spin text-primary" />
           </div>
         );
@@ -229,7 +229,7 @@ export default function PlaySoloPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
+    <div className="flex flex-col min-h-screen text-foreground">
       <AppHeader />
       <main className="flex-grow flex items-center justify-center p-4">
         {renderContent()}

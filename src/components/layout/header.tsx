@@ -53,7 +53,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="py-4 px-4 md:px-8 bg-black/10">
+      <header className="py-4 px-4 md:px-8 bg-transparent absolute top-0 left-0 right-0 z-10">
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity" aria-label={translate('game.title')}>
             <img
@@ -80,7 +80,7 @@ export function AppHeader() {
               ))}
             </div>
             
-            <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-black">
+            <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
             

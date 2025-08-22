@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
@@ -43,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#ef4444', // Rojo Principal
+  themeColor: '#4a00e0', 
   initialScale: 1,
   width: 'device-width'
 };
@@ -62,7 +61,7 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Juego Stop" />
           <meta name="mobile-web-app-capable" content="yes" />
-          <meta name="msapplication-TileColor" content="#ef4444" />
+          <meta name="msapplication-TileColor" content="#4a00e0" />
           <meta name="msapplication-TileImage" content="/ms-touch-icon-144x144.png" />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">

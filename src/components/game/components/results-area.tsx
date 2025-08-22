@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,74 +29,79 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   
   if (!roundResults || !currentLetter) {
     return (
-        <Card className="w-full max-w-lg mx-auto text-center p-8 shadow-xl">
-            <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto" />
-            <h2 className="text-2xl font-bold mt-6">{translateUi('game.loadingAI.title')}</h2>
-            <p className="text-muted-foreground mt-2">{translateUi('game.loadingAI.description')}</p>
-        </Card>
+        <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+            <Loader2 className="h-16 w-16 animate-spin mb-4" />
+            <h2 className="text-2xl font-bold">{translateUi('game.loadingAI.title')}</h2>
+            <p className="text-white/80 mt-2">{translateUi('game.loadingAI.description')}</p>
+        </div>
     );
   }
 
-  const renderCategoryResult = (category: string, resultDetail?: { response: string; isValid: boolean; score: number }) => {
-    const isValid = resultDetail?.isValid ?? false;
-    const score = resultDetail?.score ?? 0;
-    const response = resultDetail?.response || '-';
+  const renderResultRow = (category: string, playerResult: any, aiResult: any) => {
+    const pRes = playerResult || { response: '-', score: 0, isValid: false };
+    const aRes = aiResult || { response: '-', score: 0, isValid: false };
+    
+    const getScoreClass = (score: number) => {
+        if (score === 10) return 'text-green-400';
+        if (score === 5) return 'text-yellow-400';
+        return 'text-red-400';
+    }
 
     return (
-      <div key={category} className="flex justify-between items-center text-sm py-2 px-3 rounded-md bg-background/50">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-            {isValid ? <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" /> : <XCircle className="h-4 w-4 text-destructive shrink-0" />}
-            <div className='flex flex-col min-w-0'>
-                <span className={`capitalize font-medium`}>
-                    {category}
-                </span>
-                 <span className={`truncate text-muted-foreground text-xs ${!isValid && response !== '-' ? 'text-destructive line-through' : ''}`}>
-                    {response}
-                </span>
-            </div>
-        </div>
-        <Badge variant={score > 5 ? 'secondary' : score > 0 ? 'default' : 'destructive'}>{score} pts</Badge>
-      </div>
-    );
+      <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0">
+        <td className="p-3 font-semibold">{category}</td>
+        <td className={`p-3 ${!pRes.isValid && pRes.response !== '-' ? 'line-through text-white/60' : ''}`}>{pRes.response}</td>
+        <td className={`p-3 font-bold ${getScoreClass(pRes.score)}`}>{pRes.score} pts</td>
+        <td className={`p-3 ${!aRes.isValid && aRes.response !== '-' ? 'line-through text-white/60' : ''}`}>{aRes.response}</td>
+        <td className={`p-3 font-bold ${getScoreClass(aRes.score)}`}>{aRes.score} pts</td>
+      </tr>
+    )
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-xl bg-card/80 p-6 animate-fade-in" key={`results-area-${currentLetter}`}>
-        <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-primary">{translateUi('game.results.title')}</h2>
-            <p className="text-muted-foreground mt-1">
-              {translateUi('game.results.winner.label', { winner: roundWinner })}
-            </p>
-            <p className="text-muted-foreground text-sm">
-                {translateUi('game.letterLabel')} <span className="font-bold text-secondary">{currentLetter}</span>
-            </p>
-        </div>
+    <Card className="w-full max-w-4xl mx-auto shadow-xl rounded-2xl bg-white/10 backdrop-blur-md p-6 animate-fade-in text-white" key={`results-area-${currentLetter}`}>
+        <CardHeader className="text-center mb-4">
+            <CardTitle className="text-3xl font-bold">{translateUi('game.results.title')}</CardTitle>
+            <CardDescription className="text-white/80 mt-1">
+              {translateUi('game.results.winner.label', { winner: roundWinner })} con la letra <span className="font-bold text-secondary">{currentLetter}</span>
+            </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <h3 className="text-lg font-semibold">{playerName}</h3>
+                    <p className="text-4xl font-bold text-green-400">{playerRoundScore} pts</p>
+                </div>
+                 <div className="bg-black/20 p-4 rounded-lg text-center">
+                    <h3 className="text-lg font-semibold">{translateUi('game.results.labels.ai')}</h3>
+                    <p className="text-4xl font-bold text-red-400">{aiRoundScore} pts</p>
+                </div>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-background/40">
-            <CardHeader>
-              <CardTitle className="text-xl">{playerName}</CardTitle>
-              <p className="text-3xl font-bold text-primary">{playerRoundScore} pts</p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-               {Object.entries(roundResults).map(([category, result]) => renderCategoryResult(category, result.player))}
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-background/40">
-            <CardHeader>
-              <CardTitle className="text-xl">{translateUi('game.results.labels.ai')}</CardTitle>
-               <p className="text-3xl font-bold text-primary">{aiRoundScore} pts</p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-               {Object.entries(roundResults).map(([category, result]) => renderCategoryResult(category, result.ai))}
-            </CardContent>
-          </Card>
-        </div>
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="border-b-2 border-white/20">
+                        <tr>
+                            <th className="p-3 text-left">Categoría</th>
+                            <th className="p-3 text-left">{playerName}</th>
+                            <th className="p-3 text-left">Puntos</th>
+                            <th className="p-3 text-left">IA</th>
+                            <th className="p-3 text-left">Puntos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.keys(roundResults).map((category) => 
+                            renderResultRow(category, roundResults[category].player, roundResults[category].ai)
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </CardContent>
         
         <div className="mt-8 flex justify-center gap-4">
              <Button onClick={startNextRound} size="lg">{translateUi?.('game.buttons.nextRound')}</Button>
-             <Button onClick={() => router.push('/')} variant="outline" size="lg">
+             <Button onClick={() => router.push('/')} variant="outline" size="lg" className="bg-transparent hover:bg-white/10">
                  {translateUi?.('home')}
             </Button>
         </div>
