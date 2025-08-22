@@ -79,10 +79,6 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
             onSpinComplete(finalLetter);
         }, 4500); // Wait for animation + a small buffer
     }
-
-    return () => {
-      // Cleanup if needed
-    };
   }, [alphabet, onSpinComplete, playSound, isAnimating]);
 
   return (

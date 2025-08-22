@@ -41,7 +41,7 @@ export default function PlaySoloPage() {
   const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [gameState, setGameState] = useState<GameState>('SPINNING');
+  const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [alphabet, setAlphabet] = useState<string[]>([]);
@@ -53,11 +53,22 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
+  
+  useEffect(() => {
+      if (isMounted) {
+          startNewRound();
+      }
+  }, [isMounted]);
   
   useEffect(() => {
     if (gameState === 'PLAYING') {
