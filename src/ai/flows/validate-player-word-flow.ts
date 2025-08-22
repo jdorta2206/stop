@@ -51,8 +51,8 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       3.  **Output Format**:
           -   For each category, you MUST return an object with:
               - 'response': The exact word the player provided, or an empty string if they provided none.
-              - 'isValid': A boolean (true if valid, false otherwise).
-              - 'score': A number (10 for a valid word, 0 otherwise).
+              - 'isValid': a boolean (true if valid, false otherwise).
+              - 'score': a number (10 for a valid word, 0 otherwise).
       
       You MUST return the output in the specified JSON format, with a key for every category the user sent.
     `;
