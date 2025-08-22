@@ -16,19 +16,17 @@ const EvaluateRoundInputSchema = z.object({
 });
 
 const ResultDetailSchema = z.object({
-  response: z.string().describe("La palabra que se evaluó o generó. Debe ser una cadena vacía si no se proporcionó o generó ninguna palabra."),
+  response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10, 5, o 0).")
+  score: z.number().describe("La puntuación obtenida para esta palabra (10 o 0).")
 });
 
+// The AI will no longer generate its own words, only evaluate the player's.
 const EvaluateRoundOutputSchema = z.object({
   results: z.record(
-    z.string(), 
-    z.object({
-      player: ResultDetailSchema,
-      ai: ResultDetailSchema,
-    })
-  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados del jugador y la IA."),
+    z.string(), // Category name
+    ResultDetailSchema
+  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación del jugador."),
 });
 
 
@@ -41,33 +39,27 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       .join('\n');
 
     const systemPrompt = `
-      You are the expert judge of the game "STOP". Your task is to evaluate the words of a round and generate answers for the AI.
+      You are the expert judge of the game "STOP". Your task is to evaluate the words of a round based on a given letter and language.
       Follow these rules strictly for EACH category provided by the user:
       1.  **Validate the player's word**:
-          -   Check if the word is real and known in the specified language.
+          -   Check if the word is a real and known word in the specified language ('${input.language}').
           -   Check if it belongs to the corresponding category.
-          -   Check if it starts with the specified letter (case-insensitive).
-          -   If any of these conditions are not met, or if the player's word is 'EMPTY', the word is invalid (isValid: false).
-          -   If it is valid, mark isValid: true.
-          -   In the player's 'response' field, return the exact word they gave (or an empty string if it was 'EMPTY').
-
-      2.  **Generate a word for the AI**:
-          -   Create a valid and creative word for the same category, letter, and language.
-          -   If possible, make it different from the player's valid word.
-          -   If you can't think of a valid word, leave the AI's 'response' field as an empty string and mark 'isValid' as false. If you generate one, mark it as 'isValid: true'.
-      
-      3.  **Score Calculation (for both player and AI)**:
-          -   If a word is invalid or not provided, its score is 0.
-          -   If a word is valid AND the other party's word is invalid or different, the score is 10.
-          -   If both words are valid AND are the same (case-insensitive), the score for both is 5.
-          -   Assign the calculated points in the 'score' field for both player and AI.
+          -   Check if it starts with the specified letter ('${input.letter}'), case-insensitively.
+          -   If all three conditions are met, the word is valid.
+      2.  **Determine Score**:
+          -   If the word is valid, the score is 10.
+          -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY', the score is 0.
+      3.  **Output Format**:
+          -   For each category, you MUST return an object with:
+              - 'response': The exact word the player provided, or an empty string if they provided none.
+              - 'isValid': A boolean (true if valid, false otherwise).
+              - 'score': A number (10 for a valid word, 0 otherwise).
       
       You MUST return the output in the specified JSON format, with a key for every category the user sent.
     `;
 
     const userPrompt = `
-      Letter: '${input.letter}'
-      Language: '${input.language}'
+      Evaluate the following words for the letter '${input.letter}' in language '${input.language}'.
       Player Input:
       ${playerResponsesText}
     `;
@@ -81,12 +73,35 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         schema: EvaluateRoundOutputSchema,
       },
       config: {
-          timeout: 30000 // Timeout de 30 segundos
+          timeout: 45000 // Increased timeout to 45 seconds
       }
     });
 
     if (!output) {
       throw new Error("The AI could not process the round evaluation.");
     }
-    return output;
+
+    // Adapt the AI output to the expected structure with a placeholder for AI results
+    const finalOutput = {
+        results: {} as Record<string, { player: ResultDetail; ai: ResultDetail }>
+    };
+
+    for (const category in output.results) {
+        finalOutput.results[category] = {
+            player: output.results[category],
+            ai: { response: '', isValid: false, score: 0 } // AI doesn't play in solo, so its score is always 0.
+        };
+    }
+
+    // This part is just a safety net to ensure every category has an entry.
+    input.playerResponses.forEach(p => {
+        if (!finalOutput.results[p.category]) {
+            finalOutput.results[p.category] = {
+                player: { response: p.word || '', isValid: false, score: 0 },
+                ai: { response: '', isValid: false, score: 0 }
+            }
+        }
+    });
+
+    return finalOutput as any; // Cast because the internal structure is slightly different now
 }

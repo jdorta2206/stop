@@ -102,17 +102,19 @@ export default function PlaySoloPage() {
         playerResponses: playerPayload,
       });
       
+      // CRITICAL FIX: Ensure results and results.results exist before processing.
       if (!results || !results.results) {
-        throw new Error("Respuesta inválida de la IA. El objeto de resultados está vacío.");
+        throw new Error("La IA no devolvió un formato de resultados válido.");
       }
       
       const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
+          // The AI score is now always 0 in solo mode based on the simplified flow
           acc.playerRoundScore += res.player?.score || 0;
           acc.aiRoundScore += res.ai?.score || 0;
           return acc;
       }, { playerRoundScore: 0, aiRoundScore: 0 });
 
-      const winner = pScore > aScore ? user?.displayName || 'Jugador' : pScore < aScore ? 'IA' : 'Empate';
+      const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
       setRoundResults(results.results);
       setPlayerRoundScore(pScore);
@@ -141,10 +143,11 @@ export default function PlaySoloPage() {
       console.error("Error en handleStop:", error);
       toast({ 
           title: translate('notifications.aiError.title'), 
-          description: `Error al procesar la ronda: ${(error as Error).message}`, 
+          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); 
+      // Go back to playing phase to allow user to retry or change words.
+      setGameState('PLAYING'); 
     }
   }, [gameState, currentLetter, stopMusic, categories, playerResponses, language, toast, translate, user, playSound]);
 
