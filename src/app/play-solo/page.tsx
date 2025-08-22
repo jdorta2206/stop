@@ -70,23 +70,8 @@ export default function PlaySoloPage() {
       }
   }, [isMounted]);
   
-  useEffect(() => {
-    if (gameState === 'PLAYING') {
-        playMusic();
-    } else {
-        stopMusic();
-    }
-  }, [gameState, playMusic, stopMusic]);
-
-  const startNewRound = () => {
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
-    setGameState('SPINNING');
-  };
-
   const handleStop = useCallback(async () => {
+    // Prevenir ejecuciones múltiples
     if (gameState !== 'PLAYING' || !currentLetter) return;
 
     setGameState('EVALUATING');
@@ -108,10 +93,8 @@ export default function PlaySoloPage() {
         throw new Error("La IA no devolvió un formato de resultados válido.");
       }
       
-      const { playerRoundScore: pScore, aiRoundScore: aScore } = Object.values(results.results).reduce((acc, res) => {
-          acc.playerRoundScore += res.score || 0;
-          return acc;
-      }, { playerRoundScore: 0, aiRoundScore: 0 });
+      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
+      const aScore = 0; // AI no juega en modo solo por ahora
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -119,13 +102,13 @@ export default function PlaySoloPage() {
       for (const category in results.results) {
           adaptedResults[category] = {
               player: results.results[category],
-              ai: { response: '', isValid: false, score: 0 } // AI doesn't play in solo
+              ai: { response: '', isValid: false, score: 0 } // AI no juega
           };
       }
 
       setRoundResults(adaptedResults);
       setPlayerRoundScore(pScore);
-      setAiRoundScore(aScore); // AI score is always 0 now
+      setAiRoundScore(aScore);
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
@@ -153,43 +136,51 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('PLAYING'); // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
+      // Vuelve al estado de juego para que el usuario pueda intentar de nuevo o cambiar algo
+      setGameState('PLAYING'); 
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, router, stopMusic]);
+  }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic]);
 
 
-  // Timer countdown logic
+  // Timer countdown and music logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || timeLeft <= 0) {
-      return;
-    }
+    let timerId: NodeJS.Timeout | null = null;
     
-    const timerId = setInterval(() => {
+    if (gameState === 'PLAYING' && timeLeft > 0) {
+      playMusic();
+      timerId = setInterval(() => {
         setTimeLeft(prev => {
-            const newTime = prev - 1;
-            if (newTime <= 0) {
-                clearInterval(timerId);
-                handleStop();
-                return 0;
-            }
-            return newTime;
+          const newTime = prev - 1;
+          if (newTime <= 10 && newTime > 0) playSound('timer-tick');
+          if (newTime <= 0) {
+            if (timerId) clearInterval(timerId);
+            handleStop();
+            return 0;
+          }
+          return newTime;
         });
-    }, 1000);
+      }, 1000);
+    } else {
+      stopMusic();
+    }
 
-    return () => clearInterval(timerId);
-  }, [gameState, timeLeft, handleStop]);
-  
-  // Sound effect for timer
-  useEffect(() => {
-      if (timeLeft > 0 && timeLeft <= 11 && gameState === 'PLAYING') {
-         playSound('timer-tick');
-      }
-  }, [timeLeft, gameState, playSound]);
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [gameState, timeLeft, handleStop, playMusic, stopMusic, playSound]);
+
+  const startNewRound = () => {
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    setGameState('SPINNING');
+  };
   
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
+    setTimeLeft(ROUND_DURATION);
     setGameState('PLAYING');
-    setTimeLeft(ROUND_DURATION); // CRITICAL: Reset timer here ensures it starts correctly
   };
   
   const handleInputChange = (category: string, value: string) => {
