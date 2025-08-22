@@ -182,7 +182,7 @@ export function LandingPageContent() {
             {isMounted && !isAuthLoading && (
               <>
                 <Button 
-                  variant="secondary"
+                  variant="outline"
                   onClick={handlePrivateRoomClick}
                   disabled={isCreatingRoom}
                   className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
@@ -192,9 +192,9 @@ export function LandingPageContent() {
                 </Button>
                 <Link href="/leaderboard">
                   <Button 
-                    variant="secondary"
-                    className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
+                    className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105 bg-yellow-500 hover:bg-yellow-600 text-black"
                   >
+                    <Trophy className="mr-2 h-4 w-4" />
                     {translate('landing.ranking')}
                   </Button>
                 </Link>
