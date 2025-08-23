@@ -77,26 +77,6 @@ export default function PlaySoloPage() {
   }, [language]);
 
 
-  const startTimer = useCallback(() => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      
-      playMusic();
-      
-      timerRef.current = setInterval(() => {
-          setTimeLeft(prev => {
-              if (prev <= 1) {
-                  if (timerRef.current) clearInterval(timerRef.current);
-                  // Use a timeout to ensure state update doesn't conflict
-                  setTimeout(() => handleStop(), 0);
-                  return 0;
-              }
-              if (prev <= 11) playSound('timer-tick');
-              return prev - 1;
-          });
-      }, 1000);
-  }, [playMusic, playSound, handleStop]);
-
-
   const handleStop = useCallback(async () => {
     if (stopPromiseRef.current || gameState !== 'PLAYING') return;
     
@@ -170,6 +150,26 @@ export default function PlaySoloPage() {
         stopPromiseRef.current = false;
     }
   }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic, stopPromiseRef]);
+
+  const startTimer = useCallback(() => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      
+      playMusic();
+      
+      timerRef.current = setInterval(() => {
+          setTimeLeft(prev => {
+              if (prev <= 1) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  // Use a timeout to ensure state update doesn't conflict
+                  setTimeout(() => handleStop(), 0);
+                  return 0;
+              }
+              if (prev <= 11) playSound('timer-tick');
+              return prev - 1;
+          });
+      }, 1000);
+  }, [playMusic, playSound, handleStop]);
+
 
   const startNewRound = () => {
     if (timerRef.current) clearInterval(timerRef.current);
