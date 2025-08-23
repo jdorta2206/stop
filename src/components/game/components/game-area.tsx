@@ -32,6 +32,8 @@ export function GameArea({
     return null;
   }
 
+  const progressValue = roundDuration > 0 ? (timeLeft / roundDuration) * 100 : 0;
+
   return (
     <div className="w-full max-w-3xl mx-auto">
         <Card className="w-full mx-auto shadow-xl rounded-2xl bg-white text-gray-800">
@@ -70,7 +72,7 @@ export function GameArea({
                         {timeLeft}s
                     </span>
                 </div>
-                <Progress value={(timeLeft / roundDuration) * 100} className="h-2" />
+                <Progress value={Math.max(0, progressValue)} className="h-2" />
             </div>
             <Button onClick={onStop} variant="secondary" size="lg" className="mt-4 w-full max-w-xs text-xl py-6 rounded-lg shadow-lg">
                 STOP

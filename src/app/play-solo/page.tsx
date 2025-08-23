@@ -72,7 +72,7 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    if (isEvaluatingRef.current) return;
+    if (isEvaluatingRef.current || !currentLetter) return;
     isEvaluatingRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
