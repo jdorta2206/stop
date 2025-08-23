@@ -69,6 +69,7 @@ export default function PlaySoloPage() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      stopMusic();
     };
   }, []);
 
@@ -115,7 +116,7 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
-
+      
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
 
@@ -147,6 +148,7 @@ export default function PlaySoloPage() {
 
   const startTimer = useCallback(() => {
       if (timerRef.current) clearInterval(timerRef.current);
+      setTimeLeft(ROUND_DURATION);
       playMusic();
       timerRef.current = setInterval(() => {
           setTimeLeft(prev => {
