@@ -9,12 +9,6 @@ const PlayerResponseSchema = z.object({
   word: z.string().optional(),
 });
 
-const EvaluateRoundInputSchema = z.object({
-  letter: z.string().length(1),
-  language: z.enum(['es', 'en', 'fr', 'pt']),
-  playerResponses: z.array(PlayerResponseSchema),
-});
-
 const ResultDetailSchema = z.object({
   response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
@@ -26,13 +20,20 @@ const EvaluateRoundOutputSchema = z.object({
     z.string(), // Category name
     ResultDetailSchema
   ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación del jugador."),
+  totalScore: z.number().describe("La puntuación total del jugador para la ronda.")
 });
 
 
-export type EvaluateRoundInput = z.infer<typeof EvaluateRoundInputSchema>;
+export type EvaluateRoundInput = z.infer<typeof typeof PlayerResponseSchema>;
 export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
-export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
+const evaluateRoundInput = z.object({
+  letter: z.string().length(1),
+  language: z.enum(['es', 'en', 'fr', 'pt']),
+  playerResponses: z.array(PlayerResponseSchema),
+});
+
+export async function evaluateRound(input: z.infer<typeof evaluateRoundInput>): Promise<EvaluateRoundOutput> {
     const playerResponsesText = input.playerResponses
       .map(p => `- Category: ${p.category}, Word: ${p.word || 'EMPTY'}`)
       .join('\n');
@@ -48,23 +49,26 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       2.  **Determine Score**:
           -   If the word is valid, the score is 10.
           -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY' or not provided, the score is 0.
-      3.  **Output Format**:
+      3.  **Calculate Total Score**:
+          - Sum up all the scores from the individual categories to get a 'totalScore'.
+      4.  **Output Format**:
           -   You MUST return a JSON object.
-          -   The JSON object must have a 'results' key.
+          -   The JSON object must have a 'results' key and a 'totalScore' key.
           -   The value of 'results' must be an object where each key is a category name from the user's input.
           -   For each category, you MUST return an object with:
               - 'response': The exact word the player provided, or an empty string if they provided none.
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return the output in the specified JSON format, with a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
+      You MUST return the output in the specified JSON format, with a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each, and a 'totalScore' of 0. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
 
       Example for user input "Category: Animal, Word: Tigre" and "Category: Color, Word: EMPTY":
       {
         "results": {
           "Animal": { "response": "Tigre", "isValid": true, "score": 10 },
           "Color": { "response": "", "isValid": false, "score": 0 }
-        }
+        },
+        "totalScore": 10
       }
     `;
 
@@ -105,5 +109,3 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
 
     return output;
 }
-
-    

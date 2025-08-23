@@ -29,7 +29,6 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
     
-    // Fallback for safety, though the main page logic should prevent this
     if (!playerResult) {
       return (
         <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
@@ -41,7 +40,7 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     
     const aiResult = roundResults[category]?.ai;
 
-    const pRes = playerResult || { response: '-', score: 0, isValid: false };
+    const pRes = playerResult;
     const aRes = aiResult || { response: '-', score: 0, isValid: false };
     
     const getScoreClass = (score: number) => {

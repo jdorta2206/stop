@@ -48,7 +48,7 @@ export default function PlaySoloPage() {
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0); // For now, AI score is 0
   const [roundWinner, setRoundWinner] = useState('');
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
@@ -65,11 +65,10 @@ export default function PlaySoloPage() {
   useEffect(() => {
     startNewRound();
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
       stopMusic();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStop = useCallback(async () => {
@@ -86,25 +85,25 @@ export default function PlaySoloPage() {
         word: playerResponses[cat] || ""
       }));
       
-      const results: EvaluateRoundOutput = await evaluateRound({
+      const aiOutput: EvaluateRoundOutput = await evaluateRound({
         letter: currentLetter!,
         language: language as LanguageCode,
         playerResponses: playerPayload,
       });
       
-      if (!results || !results.results) {
+      if (!aiOutput || !aiOutput.results) {
         throw new Error("La IA no devolvió un formato de resultados válido.");
       }
       
-      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res?.score || 0), 0);
+      const pScore = aiOutput.totalScore;
       const aScore = 0; // AI score is 0 in solo mode for now
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
       const adaptedResults: RoundResults = {};
-      for (const category of categories) {
+      for (const category in aiOutput.results) {
           adaptedResults[category] = {
-              player: results.results[category],
+              player: aiOutput.results[category],
               ai: { response: '', isValid: false, score: 0 } // Mock AI response
           };
       }
@@ -115,6 +114,7 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
+      setGameState('RESULTS');
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -131,7 +131,7 @@ export default function PlaySoloPage() {
           won: pScore > aScore,
         });
       }
-      setGameState('RESULTS');
+
     } catch (error) {
       console.error("Error detallado en handleStop:", error);
       toast({ 
@@ -219,7 +219,6 @@ export default function PlaySoloPage() {
         );
       case 'RESULTS':
          if (!roundResults) {
-            // This should not happen if logic is correct, but as a fallback
              return (
                  <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
                     <Loader2 className="h-16 w-16 animate-spin mb-4" />
