@@ -56,33 +56,27 @@ export default function PlaySoloPage() {
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const stopPromiseRef = useRef<boolean>(false);
-  const isMounted = useRef<boolean>(false);
 
   useEffect(() => {
-    isMounted.current = true;
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-    
-    // Start the game only on initial mount
-    if (gameState === 'IDLE') {
-        startNewRound();
-    }
-    
+  }, [language]);
+  
+  // Start game on initial mount
+  useEffect(() => {
+    startNewRound();
     return () => {
-      isMounted.current = false;
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [language]);
-
+  }, []);
 
   const handleStop = useCallback(async () => {
-    if (stopPromiseRef.current || gameState !== 'PLAYING') return;
-    
+    if (stopPromiseRef.current) return;
     stopPromiseRef.current = true;
-    if (timerRef.current) clearInterval(timerRef.current);
     
+    if (timerRef.current) clearInterval(timerRef.current);
     setGameState('EVALUATING');
     stopMusic();
 
@@ -103,7 +97,7 @@ export default function PlaySoloPage() {
       }
       
       const pScore = Object.values(results.results).reduce((acc, res) => acc + res.score, 0);
-      const aScore = 0; // AI score is 0 in solo mode focused on player validation
+      const aScore = 0; // AI score is 0 in solo mode
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -149,19 +143,16 @@ export default function PlaySoloPage() {
     } finally {
         stopPromiseRef.current = false;
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic, stopPromiseRef]);
+  }, [categories, playerResponses, currentLetter, language, user, playSound, stopMusic, toast, translate]);
 
   const startTimer = useCallback(() => {
       if (timerRef.current) clearInterval(timerRef.current);
-      
       playMusic();
-      
       timerRef.current = setInterval(() => {
           setTimeLeft(prev => {
               if (prev <= 1) {
                   if (timerRef.current) clearInterval(timerRef.current);
-                  // Use a timeout to ensure state update doesn't conflict
-                  setTimeout(() => handleStop(), 0);
+                  handleStop();
                   return 0;
               }
               if (prev <= 11) playSound('timer-tick');
@@ -183,7 +174,6 @@ export default function PlaySoloPage() {
   };
   
   const handleSpinComplete = useCallback((letter: string) => {
-    if(!isMounted.current) return;
     setCurrentLetter(letter);
     setGameState('PLAYING');
     startTimer();
@@ -207,7 +197,7 @@ export default function PlaySoloPage() {
       case 'PLAYING':
         return (
           <GameArea
-            key={currentLetter} // Force re-render on new round
+            key={currentLetter}
             currentLetter={currentLetter}
             categories={categories}
             playerResponses={playerResponses}
