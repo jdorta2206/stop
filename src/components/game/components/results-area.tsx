@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { RoundResults } from '../types';
+import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
 interface ResultsAreaProps {

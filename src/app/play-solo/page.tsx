@@ -57,8 +57,7 @@ export default function PlaySoloPage() {
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   const [isMounted, setIsMounted] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const stopPromiseRef = useRef<Promise<void> | null>(null);
-
+  const stopPromiseRef = useRef<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -81,80 +80,79 @@ export default function PlaySoloPage() {
   }, []);
   
   const handleStop = useCallback(async () => {
-    if (gameState !== 'PLAYING' || !currentLetter || stopPromiseRef.current) return;
+    if (stopPromiseRef.current || gameState !== 'PLAYING') return;
+    stopPromiseRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
     
     setGameState('EVALUATING');
     stopMusic();
 
-    const promise = (async () => {
-        const playerPayload = categories.map(cat => ({
-          category: cat,
-          word: playerResponses[cat] || ""
-        }));
+    const playerPayload = categories.map(cat => ({
+      category: cat,
+      word: playerResponses[cat] || ""
+    }));
 
-        try {
-          const results: EvaluateRoundOutput = await evaluateRound({
-            letter: currentLetter,
-            language: language as LanguageCode,
-            playerResponses: playerPayload,
-          });
-          
-          if (!results || !results.results) {
-            throw new Error("La IA no devolvió un formato de resultados válido.");
-          }
-          
-          const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
-          const aScore = 0; // AI score is 0 in solo mode focused on player validation
+    try {
+      const results: EvaluateRoundOutput = await evaluateRound({
+        letter: currentLetter!,
+        language: language as LanguageCode,
+        playerResponses: playerPayload,
+      });
+      
+      if (!results || !results.results) {
+        throw new Error("La IA no devolvió un formato de resultados válido.");
+      }
+      
+      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
+      const aScore = 0; // AI score is 0 in solo mode focused on player validation
 
-          const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
+      const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
-          const adaptedResults: RoundResults = {};
-          for (const category of categories) {
-              adaptedResults[category] = {
-                  player: results.results[category],
-                  ai: { response: '', isValid: false, score: 0 } // No AI response
-              };
-          }
+      const adaptedResults: RoundResults = {};
+      for (const category of categories) {
+          adaptedResults[category] = {
+              player: results.results[category],
+              ai: { response: '', isValid: false, score: 0 } // No AI response
+          };
+      }
 
-          setRoundResults(adaptedResults);
-          setPlayerRoundScore(pScore);
-          setAiRoundScore(aScore);
-          setTotalPlayerScore(prev => prev + pScore);
-          setTotalAiScore(prev => prev + aScore);
-          setRoundWinner(winner);
+      setRoundResults(adaptedResults);
+      setPlayerRoundScore(pScore);
+      setAiRoundScore(aScore);
+      setTotalPlayerScore(prev => prev + pScore);
+      setTotalAiScore(prev => prev + aScore);
+      setRoundWinner(winner);
 
-          if(pScore > 0) playSound('round-win');
-          else playSound('round-lose');
+      if(pScore > 0) playSound('round-win');
+      else playSound('round-lose');
 
-          if (user) {
-            await rankingManager.saveGameResult({
-              playerId: user.uid,
-              playerName: user.displayName || 'Jugador',
-              photoURL: user.photoURL || null,
-              score: pScore,
-              categories: playerResponses,
-              letter: currentLetter,
-              gameMode: 'solo',
-              won: pScore > aScore,
-            });
-          }
-          setGameState('RESULTS');
-        } catch (error) {
-          console.error("Error detallado en handleStop:", error);
-          toast({ 
-              title: translate('notifications.aiError.title'), 
-              description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
-              variant: 'destructive' 
-          });
-          setGameState('PLAYING'); // Revert to playing state on error
-        } finally {
-            stopPromiseRef.current = null;
-        }
-    })();
-    stopPromiseRef.current = promise;
-
+      if (user) {
+        await rankingManager.saveGameResult({
+          playerId: user.uid,
+          playerName: user.displayName || 'Jugador',
+          photoURL: user.photoURL || null,
+          score: pScore,
+          categories: playerResponses,
+          letter: currentLetter!,
+          gameMode: 'solo',
+          won: pScore > aScore,
+        });
+      }
+      setGameState('RESULTS');
+    } catch (error) {
+      console.error("Error detallado en handleStop:", error);
+      toast({ 
+          title: translate('notifications.aiError.title'), 
+          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
+          variant: 'destructive' 
+      });
+      // Revert to a safe state without restarting the round automatically
+      setGameState('IDLE'); 
+      startNewRound();
+    } finally {
+        stopPromiseRef.current = false;
+    }
   }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic]);
 
 

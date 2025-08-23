@@ -80,7 +80,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
     
-    // Ensure every category has an entry, even if the AI misses one. This is critical.
+    // GUARANTEE: Ensure every category has an entry, even if the AI misses one. This is critical.
     for (const p of input.playerResponses) {
         if (!output.results[p.category]) {
             output.results[p.category] = {
