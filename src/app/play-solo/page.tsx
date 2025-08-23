@@ -55,7 +55,7 @@ export default function PlaySoloPage() {
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const stopPromiseRef = useRef<boolean>(false);
+  const isEvaluatingRef = useRef<boolean>(false);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -73,8 +73,8 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    if (stopPromiseRef.current) return;
-    stopPromiseRef.current = true;
+    if (isEvaluatingRef.current) return;
+    isEvaluatingRef.current = true;
     
     if (timerRef.current) clearInterval(timerRef.current);
     setGameState('EVALUATING');
@@ -97,7 +97,7 @@ export default function PlaySoloPage() {
       }
       
       const pScore = Object.values(results.results).reduce((acc, res) => acc + (res?.score || 0), 0);
-      const aScore = 0;
+      const aScore = 0; // AI score is 0 in solo mode for now
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -105,7 +105,7 @@ export default function PlaySoloPage() {
       for (const category of categories) {
           adaptedResults[category] = {
               player: results.results[category],
-              ai: { response: '', isValid: false, score: 0 }
+              ai: { response: '', isValid: false, score: 0 } // Mock AI response
           };
       }
       
@@ -115,7 +115,6 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
-      setGameState('RESULTS');
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -132,16 +131,17 @@ export default function PlaySoloPage() {
           won: pScore > aScore,
         });
       }
+      setGameState('RESULTS');
     } catch (error) {
       console.error("Error detallado en handleStop:", error);
       toast({ 
           title: translate('notifications.aiError.title'), 
-          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
+          description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE');
+      setGameState('IDLE'); // Go back to a safe state on error
     } finally {
-        stopPromiseRef.current = false;
+        isEvaluatingRef.current = false;
     }
   }, [categories, playerResponses, currentLetter, language, user, playSound, stopMusic, toast, translate]);
   
@@ -171,7 +171,7 @@ export default function PlaySoloPage() {
     setCurrentLetter(null);
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
-    stopPromiseRef.current = false;
+    isEvaluatingRef.current = false;
   };
   
   const handleSpinComplete = useCallback((letter: string) => {
@@ -219,11 +219,11 @@ export default function PlaySoloPage() {
         );
       case 'RESULTS':
          if (!roundResults) {
+            // This should not happen if logic is correct, but as a fallback
              return (
                  <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
                     <Loader2 className="h-16 w-16 animate-spin mb-4" />
-                    <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
-                    <p className="text-white/80 mt-2">Cargando resultados...</p>
+                    <h2 className="text-2xl font-bold">Cargando resultados...</h2>
                  </div>
              );
          }
