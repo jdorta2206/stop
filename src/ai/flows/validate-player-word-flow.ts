@@ -49,12 +49,23 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
           -   If the word is valid, the score is 10.
           -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY' or not provided, the score is 0.
       3.  **Output Format**:
+          -   You MUST return a JSON object.
+          -   The JSON object must have a 'results' key.
+          -   The value of 'results' must be an object where each key is a category name from the user's input.
           -   For each category, you MUST return an object with:
               - 'response': The exact word the player provided, or an empty string if they provided none.
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return the output in the specified JSON format, with a key for every category the user sent. If all words are invalid, you must still return the object with all categories, isValid set to false and score set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
+      You MUST return the output in the specified JSON format, with a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
+
+      Example for user input "Category: Animal, Word: Tigre" and "Category: Color, Word: EMPTY":
+      {
+        "results": {
+          "Animal": { "response": "Tigre", "isValid": true, "score": 10 },
+          "Color": { "response": "", "isValid": false, "score": 0 }
+        }
+      }
     `;
 
     const userPrompt = `
@@ -75,7 +86,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
           timeout: 45000 // Increased timeout to 45 seconds
       }
     });
-
+    
     if (!output || !output.results) {
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
@@ -83,6 +94,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     // GUARANTEE: Ensure every category has an entry, even if the AI misses one. This is critical.
     for (const p of input.playerResponses) {
         if (!output.results[p.category]) {
+            console.warn(`AI did not return result for category: ${p.category}. Creating default.`);
             output.results[p.category] = {
                 response: p.word || '',
                 isValid: false,

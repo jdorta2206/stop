@@ -29,8 +29,8 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
     
+    // Fallback for safety, though the main page logic should prevent this
     if (!playerResult) {
-      // This can happen if the AI fails to return a category. Render a fallback.
       return (
         <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
           <td className="p-3 font-semibold">{category}</td>

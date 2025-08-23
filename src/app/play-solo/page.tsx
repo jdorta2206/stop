@@ -53,45 +53,65 @@ export default function PlaySoloPage() {
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
-  const [isMounted, setIsMounted] = useState(false);
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const stopPromiseRef = useRef<boolean>(false);
+  const isMounted = useRef<boolean>(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    isMounted.current = true;
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-  }, [language]);
-  
-  useEffect(() => {
-      if (isMounted) {
-          startNewRound();
-      }
-  }, [isMounted]);
-
-  useEffect(() => {
+    
+    // Start the game only on initial mount
+    if (gameState === 'IDLE') {
+        startNewRound();
+    }
+    
     return () => {
+      isMounted.current = false;
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, []);
-  
+  }, [language]);
+
+
+  const startTimer = useCallback(() => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      
+      playMusic();
+      
+      timerRef.current = setInterval(() => {
+          setTimeLeft(prev => {
+              if (prev <= 1) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  // Use a timeout to ensure state update doesn't conflict
+                  setTimeout(() => handleStop(), 0);
+                  return 0;
+              }
+              if (prev <= 11) playSound('timer-tick');
+              return prev - 1;
+          });
+      }, 1000);
+  }, [playMusic, playSound, handleStop]);
+
+
   const handleStop = useCallback(async () => {
     if (stopPromiseRef.current || gameState !== 'PLAYING') return;
-    stopPromiseRef.current = true;
     
+    stopPromiseRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
     
     setGameState('EVALUATING');
     stopMusic();
 
-    const playerPayload = categories.map(cat => ({
-      category: cat,
-      word: playerResponses[cat] || ""
-    }));
-
     try {
+      const playerPayload = categories.map(cat => ({
+        category: cat,
+        word: playerResponses[cat] || ""
+      }));
+      
       const results: EvaluateRoundOutput = await evaluateRound({
         letter: currentLetter!,
         language: language as LanguageCode,
@@ -102,7 +122,7 @@ export default function PlaySoloPage() {
         throw new Error("La IA no devolvió un formato de resultados válido.");
       }
       
-      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res.score || 0), 0);
+      const pScore = Object.values(results.results).reduce((acc, res) => acc + res.score, 0);
       const aScore = 0; // AI score is 0 in solo mode focused on player validation
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
@@ -114,7 +134,7 @@ export default function PlaySoloPage() {
               ai: { response: '', isValid: false, score: 0 } // No AI response
           };
       }
-
+      
       setRoundResults(adaptedResults);
       setPlayerRoundScore(pScore);
       setAiRoundScore(aScore);
@@ -145,28 +165,11 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); 
+      setGameState('IDLE'); // Go to a safe state on error
     } finally {
         stopPromiseRef.current = false;
     }
-  }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic]);
-
-
-  const startTimer = () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      playMusic();
-      timerRef.current = setInterval(() => {
-          setTimeLeft(prev => {
-              if (prev <= 1) {
-                  if (timerRef.current) clearInterval(timerRef.current);
-                  handleStop();
-                  return 0;
-              }
-              if (prev <= 11) playSound('timer-tick');
-              return prev - 1;
-          });
-      }, 1000);
-  };
+  }, [gameState, currentLetter, categories, playerResponses, language, toast, translate, user, playSound, stopMusic, stopPromiseRef]);
 
   const startNewRound = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -176,13 +179,15 @@ export default function PlaySoloPage() {
     setCurrentLetter(null);
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
+    stopPromiseRef.current = false;
   };
   
-  const handleSpinComplete = (letter: string) => {
+  const handleSpinComplete = useCallback((letter: string) => {
+    if(!isMounted.current) return;
     setCurrentLetter(letter);
     setGameState('PLAYING');
     startTimer();
-  };
+  }, [startTimer]);
   
   const handleInputChange = (category: string, value: string) => {
     setPlayerResponses(prev => ({ ...prev, [category]: value }));
@@ -202,6 +207,7 @@ export default function PlaySoloPage() {
       case 'PLAYING':
         return (
           <GameArea
+            key={currentLetter} // Force re-render on new round
             currentLetter={currentLetter}
             categories={categories}
             playerResponses={playerResponses}
@@ -244,6 +250,7 @@ export default function PlaySoloPage() {
             currentLetter={currentLetter}
           />
         );
+      case 'IDLE':
       default:
          return (
           <div className="flex h-screen items-center justify-center">
