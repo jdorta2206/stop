@@ -62,7 +62,6 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
   
-  // Start game on initial mount
   useEffect(() => {
     startNewRound();
     return () => {
@@ -98,7 +97,7 @@ export default function PlaySoloPage() {
       }
       
       const pScore = Object.values(results.results).reduce((acc, res) => acc + (res?.score || 0), 0);
-      const aScore = 0; // AI score is 0 in solo mode
+      const aScore = 0;
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -106,7 +105,7 @@ export default function PlaySoloPage() {
       for (const category of categories) {
           adaptedResults[category] = {
               player: results.results[category],
-              ai: { response: '', isValid: false, score: 0 } // No AI response
+              ai: { response: '', isValid: false, score: 0 }
           };
       }
       
@@ -116,6 +115,7 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
+      setGameState('RESULTS');
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -132,7 +132,6 @@ export default function PlaySoloPage() {
           won: pScore > aScore,
         });
       }
-      setGameState('RESULTS');
     } catch (error) {
       console.error("Error detallado en handleStop:", error);
       toast({ 
@@ -140,12 +139,12 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); // Go to a safe state on error
+      setGameState('IDLE');
     } finally {
         stopPromiseRef.current = false;
     }
   }, [categories, playerResponses, currentLetter, language, user, playSound, stopMusic, toast, translate]);
-
+  
   const startTimer = useCallback(() => {
       if (timerRef.current) clearInterval(timerRef.current);
       setTimeLeft(ROUND_DURATION);
