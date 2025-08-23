@@ -110,7 +110,6 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
       setRoundWinner(winner);
-      setGameState('RESULTS');
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -127,6 +126,8 @@ export default function PlaySoloPage() {
           won: pScore > aScore,
         });
       }
+      
+      setGameState('RESULTS');
 
     } catch (error) {
       console.error("Error detallado en handleStop:", error);
