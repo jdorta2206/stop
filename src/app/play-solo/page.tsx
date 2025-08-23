@@ -91,10 +91,6 @@ export default function PlaySoloPage() {
         playerResponses: playerPayload,
       });
       
-      if (!aiOutput || !aiOutput.results) {
-        throw new Error("La IA no devolvió un formato de resultados válido.");
-      }
-      
       const pScore = aiOutput.totalScore;
       const aScore = 0; // AI score is 0 in solo mode for now
 
@@ -260,5 +256,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
