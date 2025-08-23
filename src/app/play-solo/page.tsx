@@ -16,8 +16,6 @@ import { useSound } from '@/hooks/use-sound';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '@/components/game/components/roulette-wheel';
 import { ResultsArea } from '@/components/game/components/results-area';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -147,7 +145,6 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intentalo de nuevo.`, 
           variant: 'destructive' 
       });
-      // Revert to a safe state without restarting the round automatically
       setGameState('IDLE'); 
     } finally {
         stopPromiseRef.current = false;
@@ -204,30 +201,16 @@ export default function PlaySoloPage() {
         );
       case 'PLAYING':
         return (
-          <div className="w-full max-w-3xl mx-auto">
-            <GameArea
-              key={currentLetter}
-              currentLetter={currentLetter}
-              categories={categories}
-              playerResponses={playerResponses}
-              onInputChange={handleInputChange}
-              translateUi={translate}
-            />
-            <div className="flex flex-col items-center gap-4 mt-6">
-              <div className="w-full max-w-2xl space-y-2 text-white">
-                  <div className="flex justify-between items-center text-sm font-medium px-1">
-                      <span>{translate('game.time.left')}</span>
-                      <span className={timeLeft <= 10 ? "text-destructive font-bold" : ""}>
-                          {timeLeft}s
-                      </span>
-                  </div>
-                  <Progress value={(timeLeft / ROUND_DURATION) * 100} className="h-2" />
-              </div>
-              <Button onClick={handleStop} variant="secondary" size="lg" className="mt-4 w-full max-w-xs text-xl py-6 rounded-lg shadow-lg">
-                  STOP
-              </Button>
-            </div>
-          </div>
+          <GameArea
+            currentLetter={currentLetter}
+            categories={categories}
+            playerResponses={playerResponses}
+            onInputChange={handleInputChange}
+            translateUi={translate}
+            onStop={handleStop}
+            timeLeft={timeLeft}
+            roundDuration={ROUND_DURATION}
+          />
         );
       case 'EVALUATING':
         return (
@@ -238,6 +221,15 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
+         if (!roundResults) {
+             return (
+                 <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+                    <Loader2 className="h-16 w-16 animate-spin mb-4" />
+                    <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
+                    <p className="text-white/80 mt-2">Cargando resultados...</p>
+                 </div>
+             );
+         }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}

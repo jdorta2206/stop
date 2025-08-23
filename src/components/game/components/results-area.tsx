@@ -2,14 +2,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
 interface ResultsAreaProps {
-  roundResults?: RoundResults | null;
+  roundResults: RoundResults;
   playerRoundScore: number;
   aiRoundScore: number;
   roundWinner: string;
@@ -26,16 +26,6 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   
   const playerName = user?.displayName || translateUi('game.results.labels.you');
   
-  if (!roundResults || !currentLetter) {
-    return (
-        <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-            <Loader2 className="h-16 w-16 animate-spin mb-4" />
-            <h2 className="text-2xl font-bold">{translateUi('game.loadingAI.title')}</h2>
-            <p className="text-white/80 mt-2">{translateUi('game.loadingAI.description')}</p>
-        </div>
-    );
-  }
-
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
     
