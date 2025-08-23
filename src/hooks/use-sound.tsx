@@ -30,7 +30,7 @@ const SoundContext = createContext<SoundContextType | undefined>(undefined);
 let musicPlayer: HTMLAudioElement | null = null;
 
 export function SoundProvider({ children }: { children: ReactNode }) {
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // Sounds are ON by default now
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

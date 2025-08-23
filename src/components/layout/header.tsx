@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
@@ -80,7 +81,7 @@ export function AppHeader() {
               ))}
             </div>
             
-            <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
+            <Button withSound variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
             
