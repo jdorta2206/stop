@@ -96,7 +96,7 @@ export default function PlaySoloPage() {
         throw new Error("La IA no devolvió un formato de resultados válido.");
       }
       
-      const pScore = Object.values(results.results).reduce((acc, res) => acc + res.score, 0);
+      const pScore = Object.values(results.results).reduce((acc, res) => acc + (res?.score || 0), 0);
       const aScore = 0; // AI score is 0 in solo mode
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
