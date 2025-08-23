@@ -149,7 +149,6 @@ export default function PlaySoloPage() {
       });
       // Revert to a safe state without restarting the round automatically
       setGameState('IDLE'); 
-      startNewRound();
     } finally {
         stopPromiseRef.current = false;
     }
