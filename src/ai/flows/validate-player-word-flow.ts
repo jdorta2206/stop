@@ -23,17 +23,16 @@ const EvaluateRoundOutputSchema = z.object({
   totalScore: z.number().describe("La puntuación total del jugador para la ronda.")
 });
 
-
-export type EvaluateRoundInput = z.infer<typeof typeof PlayerResponseSchema>;
-export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
-
-const evaluateRoundInput = z.object({
+const evaluateRoundInputSchema = z.object({
   letter: z.string().length(1),
   language: z.enum(['es', 'en', 'fr', 'pt']),
   playerResponses: z.array(PlayerResponseSchema),
 });
 
-export async function evaluateRound(input: z.infer<typeof evaluateRoundInput>): Promise<EvaluateRoundOutput> {
+export type EvaluateRoundInput = z.infer<typeof evaluateRoundInputSchema>;
+export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
+
+export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
     const playerResponsesText = input.playerResponses
       .map(p => `- Category: ${p.category}, Word: ${p.word || 'EMPTY'}`)
       .join('\n');
