@@ -100,7 +100,7 @@ export default function PlaySoloPage() {
       for (const category in aiOutput.results) {
           adaptedResults[category] = {
               player: aiOutput.results[category],
-              ai: { response: '', isValid: false, score: 0 } // Mock AI response
+              ai: { response: '-', isValid: false, score: 0 } // Mock AI response
           };
       }
       
