@@ -69,7 +69,7 @@ export default function PlaySoloPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  const handleStop = async () => {
+   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
 
     isEvaluatingRef.current = true;
@@ -137,22 +137,25 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  };
+  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, totalAiScore]);
   
   // Timer logic
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (gameState === 'PLAYING' && timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
+    if (gameState !== 'PLAYING' || timeLeft <= 0) return;
+
+    const timer = setTimeout(() => {
+        setTimeLeft(t => t - 1);
         if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
-      }, 1000);
-    } else if (gameState === 'PLAYING' && timeLeft === 0) {
-      handleStop();
-    }
+    }, 1000);
+
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, timeLeft]);
+  }, [gameState, timeLeft, playSound]);
+
+  useEffect(() => {
+      if (gameState === 'PLAYING' && timeLeft === 0) {
+          handleStop();
+      }
+  }, [gameState, timeLeft, handleStop]);
 
 
   const startNewRound = () => {
@@ -210,14 +213,6 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
-        if (!roundResults) {
-            return (
-                <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-                  <Loader2 className="h-16 w-16 animate-spin mb-4" />
-                  <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-                </div>
-            );
-        }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}
