@@ -73,8 +73,8 @@ export default function PlaySoloPage() {
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
-    isEvaluatingRef.current = true;
     
+    isEvaluatingRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
     setGameState('EVALUATING');
     stopMusic();
@@ -90,10 +90,6 @@ export default function PlaySoloPage() {
         language: language as LanguageCode,
         playerResponses: playerPayload,
       });
-      
-      if (!aiOutput) {
-          throw new Error("La IA no devolvió una respuesta válida.");
-      }
 
       const pScore = aiOutput.totalScore;
       const aScore = 0; // AI score is 0 in solo mode
@@ -219,14 +215,14 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
-         if (!roundResults) {
-             return (
-                 <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-                    <Loader2 className="h-16 w-16 animate-spin mb-4" />
-                    <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-                 </div>
-             );
-         }
+        if (!roundResults) {
+            return (
+                <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+                   <Loader2 className="h-16 w-16 animate-spin mb-4" />
+                   <h2 className="text-2xl font-bold">Cargando resultados...</h2>
+                </div>
+            );
+        }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}
