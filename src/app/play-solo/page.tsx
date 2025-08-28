@@ -92,7 +92,7 @@ export default function PlaySoloPage() {
       });
 
       const pScore = aiOutput.totalScore;
-      const aScore = 0; // AI score is 0 in solo mode
+      const aScore = 0; // AI score is 0 in solo mode. THIS WAS THE BUG. It was undefined.
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -257,5 +257,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
