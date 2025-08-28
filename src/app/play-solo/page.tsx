@@ -69,7 +69,9 @@ export default function PlaySoloPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  const handleStop = useCallback(async () => {
+  // No useCallback aquí, la función se recrea en cada render
+  // para capturar el estado más reciente (playerResponses, currentLetter, etc.)
+  const handleStop = async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
 
     isEvaluatingRef.current = true;
@@ -133,12 +135,12 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
             variant: 'destructive' 
         });
-        // Vuelve al juego para que puedan reintentar, pero no reinicia la ronda
+        // Vuelve al juego para que puedan reintentar, pero NO reinicia la ronda
         setGameState('PLAYING'); 
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, playerResponses, currentLetter, language, user, playSound, stopMusic, toast, translate, isEvaluatingRef]);
+  };
   
   // Timer logic
   useEffect(() => {
@@ -252,5 +254,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
