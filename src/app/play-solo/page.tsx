@@ -92,7 +92,7 @@ export default function PlaySoloPage() {
       });
 
       const pScore = aiOutput.totalScore;
-      const aScore = 0;
+      const aScore = 0; // AI doesn't play in solo mode
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -100,7 +100,7 @@ export default function PlaySoloPage() {
       for (const category in aiOutput.results) {
           adaptedResults[category] = {
               player: aiOutput.results[category],
-              ai: { response: '-', isValid: false, score: 0 }
+              ai: { response: '-', isValid: false, score: 0 } // AI doesn't respond in solo mode
           };
       }
       
@@ -136,7 +136,7 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE');
+      setGameState('IDLE'); // Go back to a safe state on error
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -215,14 +215,6 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
-        if (!roundResults) {
-            return (
-                <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-                   <Loader2 className="h-16 w-16 animate-spin mb-4" />
-                   <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-                </div>
-            );
-        }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}
