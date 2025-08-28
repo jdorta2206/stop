@@ -9,7 +9,7 @@ import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
 interface ResultsAreaProps {
-  roundResults: RoundResults | null; // Can be null initially
+  roundResults: RoundResults;
   playerRoundScore: number;
   aiRoundScore: number;
   roundWinner: string;
@@ -25,16 +25,6 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
   const { user } = useAuth();
   
   const playerName = user?.displayName || translateUi('game.results.labels.you');
-
-  // If results are not ready yet, show a loading state. This is a safeguard.
-  if (!roundResults) {
-    return (
-        <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-           <Loader2 className="h-16 w-16 animate-spin mb-4" />
-           <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-        </div>
-    );
-  }
   
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
