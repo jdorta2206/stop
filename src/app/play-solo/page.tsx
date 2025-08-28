@@ -69,8 +69,6 @@ export default function PlaySoloPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  // No useCallback aquí, la función se recrea en cada render
-  // para capturar el estado más reciente (playerResponses, currentLetter, etc.)
   const handleStop = async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
 
@@ -154,7 +152,8 @@ export default function PlaySoloPage() {
       handleStop();
     }
     return () => clearTimeout(timer);
-  }, [gameState, timeLeft, handleStop, playSound]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState, timeLeft, playSound]);
 
 
   const startNewRound = () => {
@@ -254,3 +253,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
