@@ -91,13 +91,13 @@ export default function PlaySoloPage() {
         const pScore = aiOutput.totalScore;
         const aScore = 0; // IA no juega en modo solo
 
-        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0) ? 'Nadie' : 'Empate';
+        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
 
         const adaptedResults: RoundResults = {};
         for (const category in aiOutput.results) {
             adaptedResults[category] = {
                 player: aiOutput.results[category],
-                ai: { response: '-', isValid: false, score: 0 } // AI no responde en modo solo
+                ai: { response: '-', isValid: false, score: 0 }
             };
         }
         
