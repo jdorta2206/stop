@@ -109,6 +109,7 @@ export default function PlaySoloPage() {
       setRoundWinner(winner);
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
+      setRoundResults(adaptedResults);
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -126,7 +127,6 @@ export default function PlaySoloPage() {
         });
       }
       
-      setRoundResults(adaptedResults);
       setGameState('RESULTS');
 
     } catch (error) {
