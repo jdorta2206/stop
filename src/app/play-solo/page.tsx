@@ -48,7 +48,7 @@ export default function PlaySoloPage() {
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0); // For now, AI score is 0
+  const [aiRoundScore, setAiRoundScore] = useState(0);
   const [roundWinner, setRoundWinner] = useState('');
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
