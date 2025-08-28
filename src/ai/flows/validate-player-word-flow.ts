@@ -86,7 +86,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         schema: EvaluateRoundOutputSchema,
       },
       config: {
-          timeout: 45000 // Increased timeout to 45 seconds
+          timeout: 45000 
       }
     });
     
@@ -94,7 +94,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
     
-    // GUARANTEE: Ensure every category has an entry, even if the AI misses one. This is critical.
+    // GUARANTEE: Ensure every category has an entry, even if the AI misses one.
     for (const p of input.playerResponses) {
         if (!output.results[p.category]) {
             console.warn(`AI did not return result for category: ${p.category}. Creating default.`);
