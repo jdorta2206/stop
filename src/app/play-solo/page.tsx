@@ -91,7 +91,7 @@ export default function PlaySoloPage() {
         const pScore = aiOutput.totalScore;
         const aScore = 0; // IA no juega en modo solo
 
-        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : 'Empate';
+        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0) ? 'Nadie' : 'Empate';
 
         const adaptedResults: RoundResults = {};
         for (const category in aiOutput.results) {
@@ -133,7 +133,6 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
             variant: 'destructive' 
         });
-        // NO reiniciar la ronda aquí. Dejar que el usuario decida.
         setGameState('PLAYING'); // Vuelve al juego para que puedan reintentar.
     } finally {
         isEvaluatingRef.current = false;
@@ -142,20 +141,15 @@ export default function PlaySoloPage() {
   
   // Timer logic
   useEffect(() => {
-    if (gameState !== 'PLAYING') {
-      return;
+    let timer: NodeJS.Timeout;
+    if (gameState === 'PLAYING' && timeLeft > 0) {
+      timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+        if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
+      }, 1000);
+    } else if (gameState === 'PLAYING' && timeLeft === 0) {
+      handleStop();
     }
-    
-    if (timeLeft <= 0) {
-        handleStop();
-        return;
-    }
-
-    const timer = setTimeout(() => {
-      setTimeLeft(timeLeft - 1);
-      if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
-    }, 1000);
-
     return () => clearTimeout(timer);
   }, [gameState, timeLeft, handleStop, playSound]);
 
@@ -173,6 +167,7 @@ export default function PlaySoloPage() {
   const handleSpinComplete = useCallback((letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
+    setTimeLeft(ROUND_DURATION);
     playMusic();
   }, [playMusic]);
   
