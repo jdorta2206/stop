@@ -92,7 +92,7 @@ export default function PlaySoloPage() {
       });
 
       const pScore = aiOutput.totalScore;
-      const aScore = 0; 
+      const aScore = 0; // IA no juega en modo solo, su puntuación es 0.
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
@@ -104,12 +104,11 @@ export default function PlaySoloPage() {
           };
       }
       
-      setRoundResults(adaptedResults);
       setPlayerRoundScore(pScore);
       setAiRoundScore(aScore);
+      setRoundWinner(winner);
       setTotalPlayerScore(prev => prev + pScore);
       setTotalAiScore(prev => prev + aScore);
-      setRoundWinner(winner);
       
       if(pScore > 0) playSound('round-win');
       else playSound('round-lose');
@@ -127,6 +126,7 @@ export default function PlaySoloPage() {
         });
       }
       
+      setRoundResults(adaptedResults);
       setGameState('RESULTS');
 
     } catch (error) {
