@@ -90,6 +90,10 @@ export default function PlaySoloPage() {
         language: language as LanguageCode,
         playerResponses: playerPayload,
       });
+      
+      if (!aiOutput) {
+          throw new Error("La IA no devolvió una respuesta válida.");
+      }
 
       const pScore = aiOutput.totalScore;
       const aScore = 0; // AI score is 0 in solo mode
@@ -136,7 +140,7 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
           variant: 'destructive' 
       });
-      setGameState('IDLE'); 
+      setGameState('IDLE'); // Return to a safe state on error
     } finally {
         isEvaluatingRef.current = false;
     }
