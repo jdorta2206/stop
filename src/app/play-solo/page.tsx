@@ -133,7 +133,6 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
             variant: 'destructive' 
         });
-        // Vuelve al juego para que puedan reintentar, pero NO reinicia la ronda
         setGameState('PLAYING'); 
     } finally {
         isEvaluatingRef.current = false;
@@ -153,7 +152,7 @@ export default function PlaySoloPage() {
     }
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState, timeLeft, playSound]);
+  }, [gameState, timeLeft]);
 
 
   const startNewRound = () => {
@@ -253,5 +252,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
