@@ -48,7 +48,7 @@ export default function PlaySoloPage() {
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0); // For now, AI score is 0
   const [roundWinner, setRoundWinner] = useState('');
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
   const [totalAiScore, setTotalAiScore] = useState(0);
@@ -91,16 +91,21 @@ export default function PlaySoloPage() {
         playerResponses: playerPayload,
       });
       
+      if (!aiOutput) {
+        throw new Error("La IA no devolvió una respuesta válida.");
+      }
+
       const pScore = aiOutput.totalScore;
       const aScore = 0; // AI score is 0 in solo mode for now
 
       const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore < aScore ? 'IA' : 'Empate');
 
+      // Adapt the AI output to the structure expected by ResultsArea
       const adaptedResults: RoundResults = {};
       for (const category in aiOutput.results) {
           adaptedResults[category] = {
               player: aiOutput.results[category],
-              ai: { response: '-', isValid: false, score: 0 } // Mock AI response
+              ai: { response: '-', isValid: false, score: 0 } // Mock AI response for solo mode
           };
       }
       
@@ -136,6 +141,7 @@ export default function PlaySoloPage() {
           description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
           variant: 'destructive' 
       });
+      // Do not reset the game, let the user decide. Maybe go back to 'PLAYING' or 'IDLE'
       setGameState('IDLE'); // Go back to a safe state on error
     } finally {
         isEvaluatingRef.current = false;
