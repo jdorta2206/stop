@@ -133,7 +133,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
             variant: 'destructive' 
         });
-        startNewRound(); // Reset on error to avoid getting stuck
+        // NO reiniciar la ronda aquí. Dejar que el usuario decida.
+        setGameState('PLAYING'); // Vuelve al juego para que puedan reintentar.
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -141,11 +142,13 @@ export default function PlaySoloPage() {
   
   // Timer logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || timeLeft <= 0) {
-      if (timeLeft <= 0) {
-        handleStop();
-      }
+    if (gameState !== 'PLAYING') {
       return;
+    }
+    
+    if (timeLeft <= 0) {
+        handleStop();
+        return;
     }
 
     const timer = setTimeout(() => {
@@ -211,7 +214,15 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
-        return roundResults ? (
+        if (!roundResults) {
+            return (
+                <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+                  <Loader2 className="h-16 w-16 animate-spin mb-4" />
+                  <h2 className="text-2xl font-bold">Cargando resultados...</h2>
+                </div>
+            );
+        }
+        return (
           <ResultsArea
             key={`results-${currentLetter}`}
             roundResults={roundResults}
@@ -224,11 +235,6 @@ export default function PlaySoloPage() {
             translateUi={translate}
             currentLetter={currentLetter}
           />
-        ) : (
-            <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-              <Loader2 className="h-16 w-16 animate-spin mb-4" />
-              <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-            </div>
         );
       case 'IDLE':
       default:
