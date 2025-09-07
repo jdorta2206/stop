@@ -166,12 +166,12 @@ export default function PlaySoloPage() {
     isEvaluatingRef.current = false;
   };
   
-  const handleSpinComplete = useCallback((letter: string) => {
+  const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
     setTimeLeft(ROUND_DURATION);
     playMusic();
-  }, [playMusic]);
+  };
   
   const handleInputChange = (category: string, value: string) => {
     setPlayerResponses(prev => ({ ...prev, [category]: value }));
