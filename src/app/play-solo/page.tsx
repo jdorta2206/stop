@@ -63,7 +63,6 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
-    // Iniciar el juego en cuanto el componente se monte
     startNewRound();
   }, []);
 
@@ -72,7 +71,6 @@ export default function PlaySoloPage() {
     
     isEvaluatingRef.current = true;
     
-    // Detener el temporizador INMEDIATAMENTE
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -110,7 +108,7 @@ export default function PlaySoloPage() {
                 pScore += result.score;
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 } // AI no juega en solo
+                    ai: { response: '-', isValid: false, score: 0 }
                 };
             } else {
                  adaptedResults[category] = {
@@ -120,7 +118,7 @@ export default function PlaySoloPage() {
             }
         }
         
-        const aScore = 0; // IA no juega en modo solo
+        const aScore = 0;
         const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
         
         setPlayerRoundScore(pScore);
@@ -153,13 +151,12 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('IDLE'); // Revertir a un estado seguro en caso de error
+        setGameState('IDLE');
     } finally {
         isEvaluatingRef.current = false;
     }
   }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, gameState]);
 
-  // Efecto para el temporizador, solo depende de gameState
   useEffect(() => {
     if (gameState === 'PLAYING') {
       timerRef.current = setInterval(() => {
@@ -185,7 +182,6 @@ export default function PlaySoloPage() {
   }, [gameState, playSound]);
 
 
-  // Efecto para manejar cuando el tiempo se agota
   useEffect(() => {
     if (gameState === 'PLAYING' && timeLeft <= 0) {
       handleStop();
@@ -206,7 +202,7 @@ export default function PlaySoloPage() {
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
-    setTimeLeft(ROUND_DURATION); // Reiniciar el contador aquí
+    setTimeLeft(ROUND_DURATION);
     playMusic();
   };
   
@@ -282,5 +278,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    

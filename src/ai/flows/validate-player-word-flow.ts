@@ -12,16 +12,14 @@ const PlayerResponseSchema = z.object({
 const ResultDetailSchema = z.object({
   response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida y única, 5 si es válida pero no única, 0 si no lo es).")
+  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida, 0 si no lo es).")
 });
 
-// Este es el schema que la IA DEBE devolver.
 const AIOutputSchema = z.record(
     z.string(), // Category name
     ResultDetailSchema
-  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación del jugador.");
+  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación.");
 
-// Este es el schema final que la función devuelve, garantizando el totalScore.
 const EvaluateRoundOutputSchema = z.object({
     results: AIOutputSchema,
     totalScore: z.number().describe("La puntuación total del jugador para la ronda.")
@@ -61,7 +59,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
+      You MUST return a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
 
       Example for user input "Category: Animal, Word: Tigre" and "Category: Color, Word: EMPTY":
       {
@@ -85,7 +83,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         schema: AIOutputSchema,
       },
       config: {
-        temperature: 0.1 // Bajar la temperatura para respuestas más deterministas
+        temperature: 0.1
       }
     });
     
@@ -93,8 +91,6 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
     
-    // GARANTÍA: Asegurarse de que cada categoría tiene una entrada, incluso si la IA omite una.
-    // También, calcular el puntaje total de forma segura aquí.
     let totalScore = 0;
     const finalResults: z.infer<typeof AIOutputSchema> = {};
 
@@ -117,5 +113,3 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         totalScore: totalScore
     };
 }
-
-    
