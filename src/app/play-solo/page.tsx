@@ -69,12 +69,12 @@ export default function PlaySoloPage() {
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
     
-    isEvaluatingRef.current = true;
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
     }
     
+    isEvaluatingRef.current = true;
     setGameState('EVALUATING');
     stopMusic();
 
@@ -271,5 +271,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    

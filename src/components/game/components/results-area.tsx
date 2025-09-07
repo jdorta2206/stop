@@ -47,10 +47,10 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
       );
     }
     
-    const aiResult = roundResults[category]?.ai;
+    const aiResult = roundResults[category]?.ai || { response: '-', score: 0, isValid: false };
 
     const pRes = playerResult;
-    const aRes = aiResult || { response: '-', score: 0, isValid: false };
+    const aRes = aiResult;
     
     const getScoreClass = (score: number) => {
         if (score === 10) return 'text-green-400';
