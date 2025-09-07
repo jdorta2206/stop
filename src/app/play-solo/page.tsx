@@ -64,14 +64,10 @@ export default function PlaySoloPage() {
   
   useEffect(() => {
     startNewRound();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      stopMusic();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleStop = useCallback(async () => {
+  const handleStop = async () => {
     if (isEvaluatingRef.current) return;
     isEvaluatingRef.current = true;
 
@@ -159,7 +155,7 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  };
 
   useEffect(() => {
     if (gameState === 'PLAYING') {
@@ -184,7 +180,7 @@ export default function PlaySoloPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameState, handleStop, playSound]);
+  }, [gameState]); // Removed handleStop and playSound from dependencies
 
   const startNewRound = () => {
     isEvaluatingRef.current = false;
