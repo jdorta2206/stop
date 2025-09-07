@@ -12,7 +12,7 @@ const PlayerResponseSchema = z.object({
 const ResultDetailSchema = z.object({
   response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida, 0 si no lo es).")
+  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida y única, 5 si es válida pero no única, 0 si no lo es).")
 });
 
 const AIOutputSchema = z.record(

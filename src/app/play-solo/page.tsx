@@ -63,7 +63,6 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
-    // Initial start of the game
     startNewRound();
   }, []);
 
@@ -150,8 +149,7 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        // Do not reset the game, let user see the error and decide
-        setGameState('IDLE'); 
+        startNewRound();
     } finally {
         isEvaluatingRef.current = false;
     }
