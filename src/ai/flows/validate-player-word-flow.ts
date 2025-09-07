@@ -37,30 +37,30 @@ export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
     const playerResponsesText = input.playerResponses
-      .map(p => `- Category: ${p.category}, Word: ${p.word || 'EMPTY'}`)
+      .map(p => `- Categoría: ${p.category}, Palabra: ${p.word || 'VACÍA'}`)
       .join('\n');
 
     const systemPrompt = `
       Eres el juez experto del juego "STOP". Tu tarea es evaluar las palabras de una ronda para una letra y un idioma específicos.
       
-      Reglas de Evaluación (aplica para cada categoría):
+      **Reglas de Evaluación (aplica para cada categoría):**
       1.  **Validación de la Palabra:**
           -   ¿La palabra es real en el idioma '${input.language}'?
-          -   ¿Pertenece a la categoría?
-          -   ¿Empieza con la letra '${input.letter}' (sin distinguir mayúsculas/minúsculas)?
-          -   Si las tres condiciones se cumplen, la palabra es válida.
+          -   ¿Pertenece a la categoría proporcionada?
+          -   ¿Empieza con la letra '${input.letter}' (ignorando mayúsculas/minúsculas)?
+          -   Si las tres condiciones se cumplen, la palabra es VÁLIDA.
       2.  **Asignación de Puntuación:**
-          -   Si la palabra es válida, la puntuación es 10.
-          -   Si la palabra es inválida (no empieza con la letra, no es real, no encaja en la categoría) o si la palabra está vacía ('EMPTY'), la puntuación es 0.
+          -   Si la palabra es VÁLIDA, la puntuación es 10.
+          -   Si la palabra es INVÁLIDA (no empieza con la letra, no es real, no encaja en la categoría) o si la palabra está VACÍA, la puntuación es 0.
       3.  **Formato de Salida Obligatorio (JSON):**
           -   Debes devolver un objeto JSON.
           -   Las claves de este objeto deben ser los nombres EXACTOS de las categorías recibidas.
           -   Cada valor debe ser un objeto con:
-              - 'response': La palabra exacta que el jugador escribió (o una cadena vacía si no escribió nada).
+              - 'response': La palabra exacta que el jugador escribió (o una cadena vacía si estaba 'VACÍA').
               - 'isValid': Un booleano (true si es válida, false si no).
               - 'score': Un número (10 para válida, 0 para inválida).
       
-      Es **crucial** que devuelvas una entrada para CADA categoría, incluso si la palabra está vacía.
+      **IMPORTANTE:** Tu respuesta DEBE contener una entrada para CADA una de las categorías proporcionadas, incluso si la palabra estaba 'VACÍA'. No omitas ninguna categoría.
     `;
 
     const userPrompt = `
@@ -108,3 +108,5 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         totalScore: totalScore
     };
 }
+
+    

@@ -148,7 +148,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        // Dejar en estado EVALUATING para que el usuario vea el error y no se reinicie el juego.
+        // Reiniciar la ronda en caso de error para no dejar el juego bloqueado
+        startNewRound();
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -272,3 +273,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
