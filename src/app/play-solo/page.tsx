@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
@@ -67,6 +67,24 @@ export default function PlaySoloPage() {
       stopMusic();
     };
   }, []);
+  
+  // Timer logic
+  useEffect(() => {
+    if (gameState !== 'PLAYING' || isEvaluatingRef.current) return;
+
+    if (timeLeft <= 0) {
+        handleStop();
+        return;
+    }
+
+    const timer = setTimeout(() => {
+        setTimeLeft(t => t - 1);
+        if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [gameState, timeLeft]);
+
 
   const handleStop = async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
@@ -86,6 +104,10 @@ export default function PlaySoloPage() {
             language: language as LanguageCode,
             playerResponses: playerPayload,
         });
+        
+        if (!aiOutput || !aiOutput.results) {
+             throw new Error("Invalid AI response format.");
+        }
 
         const pScore = aiOutput.totalScore;
         const aScore = 0; // IA no juega en modo solo
@@ -138,24 +160,6 @@ export default function PlaySoloPage() {
     }
   };
   
-  // Timer logic
-  useEffect(() => {
-    if (gameState !== 'PLAYING') return;
-
-    if (timeLeft <= 0) {
-        handleStop();
-        return;
-    }
-
-    const timer = setTimeout(() => {
-        setTimeLeft(t => t - 1);
-        if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [gameState, timeLeft]);
-
-
   const startNewRound = () => {
     stopMusic();
     setPlayerResponses({});
