@@ -66,7 +66,6 @@ export default function PlaySoloPage() {
     return () => {
       stopMusic();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStop = async () => {
@@ -133,7 +132,7 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, inténtalo de nuevo.`, 
             variant: 'destructive' 
         });
-        setGameState('PLAYING'); 
+        setGameState('PLAYING'); // Vuelve al juego para que el usuario pueda reintentar
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -154,7 +153,6 @@ export default function PlaySoloPage() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, timeLeft]);
 
 
