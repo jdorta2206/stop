@@ -76,7 +76,6 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       ${playerResponsesText}
     `;
 
-    // Aumentar el timeout para dar tiempo a la IA a procesar
     const { output: aiResults } = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
@@ -118,3 +117,5 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         totalScore: totalScore
     };
 }
+
+    

@@ -68,7 +68,9 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    if (isEvaluatingRef.current) return;
+    if (isEvaluatingRef.current || gameState !== 'PLAYING') return;
+    
+    isEvaluatingRef.current = true;
     
     // Detener el temporizador INMEDIATAMENTE
     if (timerRef.current) {
@@ -76,7 +78,6 @@ export default function PlaySoloPage() {
         timerRef.current = null;
     }
     
-    isEvaluatingRef.current = true;
     setGameState('EVALUATING');
     stopMusic();
 
@@ -108,7 +109,7 @@ export default function PlaySoloPage() {
              if (result) {
                 pScore += result.score;
                 adaptedResults[category] = {
-                    player: result, // La estructura devuelta por la IA ya tiene `response`, `isValid` y `score`
+                    player: result,
                     ai: { response: '-', isValid: false, score: 0 } // AI no juega en solo
                 };
             } else {
@@ -156,39 +157,35 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, gameState]);
 
+  // Efecto para el temporizador, solo depende de gameState
   useEffect(() => {
     if (gameState === 'PLAYING') {
-      // Limpiar cualquier temporizador existente
-      if (timerRef.current) clearInterval(timerRef.current);
-      
-      // Iniciar el nuevo temporizador
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            if(timerRef.current) clearInterval(timerRef.current);
-            // La llamada a handleStop debe estar fuera de setTimeLeft para evitar problemas de closure
+            if (timerRef.current) clearInterval(timerRef.current);
             return 0;
           }
           if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
           return prevTime - 1;
         });
       }, 1000);
-    } else {
-        if (timerRef.current) clearInterval(timerRef.current);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
 
-    // Función de limpieza del efecto
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameState]); // Solo depende de gameState para iniciar/detener
+  }, [gameState, playSound]);
 
 
-  // Efecto separado para manejar cuando el tiempo se agota
+  // Efecto para manejar cuando el tiempo se agota
   useEffect(() => {
     if (gameState === 'PLAYING' && timeLeft <= 0) {
       handleStop();
@@ -285,3 +282,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
