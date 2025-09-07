@@ -149,11 +149,12 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        startNewRound();
+        // DO NOT start a new round. Let the user see the error and decide.
+        // If we leave it in EVALUATING, the user sees the spinner. That's correct.
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, gameState]);
+  }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
 
   // Timer effect
@@ -170,6 +171,11 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
+    } else {
+        if(timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
     }
     
     return () => {
