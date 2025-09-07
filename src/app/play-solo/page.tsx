@@ -70,7 +70,7 @@ export default function PlaySoloPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
     isEvaluatingRef.current = true;
@@ -101,19 +101,28 @@ export default function PlaySoloPage() {
         if (!aiOutput || !aiOutput.results) {
             throw new Error("Invalid AI response format.");
         }
-
-        const pScore = aiOutput.totalScore;
-        const aScore = 0; // IA no juega en modo solo
-
-        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
-
+        
+        let pScore = 0;
         const adaptedResults: RoundResults = {};
-        for (const category in aiOutput.results) {
-            adaptedResults[category] = {
-                player: aiOutput.results[category],
-                ai: { response: '-', isValid: false, score: 0 }
-            };
+        
+        for (const category of categories) {
+            const result = aiOutput.results[category];
+             if (result) {
+                pScore += result.score;
+                adaptedResults[category] = {
+                    player: result,
+                    ai: { response: '-', isValid: false, score: 0 } // Placeholder for solo mode
+                };
+            } else {
+                 adaptedResults[category] = {
+                    player: { response: playerResponses[category] || '', isValid: false, score: 0 },
+                    ai: { response: '-', isValid: false, score: 0 }
+                };
+            }
         }
+        
+        const aScore = 0; // IA no juega en modo solo
+        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
 
         setPlayerRoundScore(pScore);
         setAiRoundScore(aScore);
@@ -150,12 +159,11 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-}, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
-
-  // Timer logic
   useEffect(() => {
     if (gameState === 'PLAYING') {
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
@@ -167,6 +175,8 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
+    } else {
+        if (timerRef.current) clearInterval(timerRef.current);
     }
 
     return () => {
@@ -177,16 +187,13 @@ export default function PlaySoloPage() {
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
-    if (timerRef.current) {
-        clearInterval(timerRef.current);
-    }
-    stopMusic();
+    isEvaluatingRef.current = false;
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
-    isEvaluatingRef.current = false;
+    stopMusic();
   };
   
   const handleSpinComplete = (letter: string) => {
@@ -268,6 +275,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-
-    
