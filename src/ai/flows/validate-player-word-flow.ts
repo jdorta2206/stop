@@ -94,11 +94,15 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     let totalScore = 0;
     const finalResults: z.infer<typeof AIOutputSchema> = {};
 
+    // Iterate over the categories from the input to ensure all are present in the output
     for (const p of input.playerResponses) {
+        // If the AI provides a result for the category, use it.
         if (aiResults[p.category]) {
             finalResults[p.category] = aiResults[p.category];
             totalScore += aiResults[p.category].score;
         } else {
+            // If the AI omits a category, create a default 'invalid' result for it.
+            // This makes the client-side logic simpler and more robust.
             console.warn(`AI did not return result for category: ${p.category}. Creating default.`);
             finalResults[p.category] = {
                 response: p.word || '',

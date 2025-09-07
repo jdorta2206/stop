@@ -72,6 +72,7 @@ export default function PlaySoloPage() {
     isEvaluatingRef.current = true;
     if (timerRef.current) {
         clearInterval(timerRef.current);
+        timerRef.current = null;
     }
     setGameState('EVALUATING');
     stopMusic();
@@ -148,7 +149,7 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('IDLE');
+        setGameState('IDLE'); // Fallback to IDLE on error
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -161,6 +162,7 @@ export default function PlaySoloPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
             handleStop();
             return 0;
           }
@@ -168,12 +170,10 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
-    } else {
-      if (timerRef.current) {
+    } else if (timerRef.current) {
         clearInterval(timerRef.current);
-      }
+        timerRef.current = null;
     }
-
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
