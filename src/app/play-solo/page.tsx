@@ -68,8 +68,8 @@ export default function PlaySoloPage() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
-   const handleStop = useCallback(async () => {
+
+  const handleStop = async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
 
     isEvaluatingRef.current = true;
@@ -137,11 +137,16 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, totalAiScore]);
+  };
   
   // Timer logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || timeLeft <= 0) return;
+    if (gameState !== 'PLAYING') return;
+
+    if (timeLeft <= 0) {
+        handleStop();
+        return;
+    }
 
     const timer = setTimeout(() => {
         setTimeLeft(t => t - 1);
@@ -149,13 +154,8 @@ export default function PlaySoloPage() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [gameState, timeLeft, playSound]);
-
-  useEffect(() => {
-      if (gameState === 'PLAYING' && timeLeft === 0) {
-          handleStop();
-      }
-  }, [gameState, timeLeft, handleStop]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState, timeLeft]);
 
 
   const startNewRound = () => {
