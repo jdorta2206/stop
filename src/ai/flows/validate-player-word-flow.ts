@@ -76,6 +76,7 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       ${playerResponsesText}
     `;
 
+    // Aumentar el timeout para dar tiempo a la IA a procesar
     const { output: aiResults } = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
@@ -84,14 +85,17 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         format: 'json',
         schema: AIOutputSchema,
       },
+      config: {
+        temperature: 0.1 // Bajar la temperatura para respuestas más deterministas
+      }
     });
     
     if (!aiResults) {
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
     
-    // GUARANTEE: Ensure every category has an entry, even if the AI misses one.
-    // Also, calculate the total score safely here.
+    // GARANTÍA: Asegurarse de que cada categoría tiene una entrada, incluso si la IA omite una.
+    // También, calcular el puntaje total de forma segura aquí.
     let totalScore = 0;
     const finalResults: z.infer<typeof AIOutputSchema> = {};
 

@@ -63,12 +63,14 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
+    // Iniciar el juego en cuanto el componente se monte
     startNewRound();
   }, []);
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
     
+    // Detener el temporizador INMEDIATAMENTE
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -106,7 +108,7 @@ export default function PlaySoloPage() {
              if (result) {
                 pScore += result.score;
                 adaptedResults[category] = {
-                    player: result,
+                    player: result, // La estructura devuelta por la IA ya tiene `response`, `isValid` y `score`
                     ai: { response: '-', isValid: false, score: 0 } // AI no juega en solo
                 };
             } else {
@@ -150,7 +152,7 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('IDLE'); // Revert to a safe state on error
+        setGameState('IDLE'); // Revertir a un estado seguro en caso de error
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -158,13 +160,15 @@ export default function PlaySoloPage() {
 
   useEffect(() => {
     if (gameState === 'PLAYING') {
+      // Limpiar cualquier temporizador existente
       if (timerRef.current) clearInterval(timerRef.current);
       
+      // Iniciar el nuevo temporizador
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
             if(timerRef.current) clearInterval(timerRef.current);
-            handleStop();
+            // La llamada a handleStop debe estar fuera de setTimeLeft para evitar problemas de closure
             return 0;
           }
           if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
@@ -175,12 +179,22 @@ export default function PlaySoloPage() {
         if (timerRef.current) clearInterval(timerRef.current);
     }
 
+    // Función de limpieza del efecto
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameState, handleStop, playSound]);
+  }, [gameState]); // Solo depende de gameState para iniciar/detener
+
+
+  // Efecto separado para manejar cuando el tiempo se agota
+  useEffect(() => {
+    if (gameState === 'PLAYING' && timeLeft <= 0) {
+      handleStop();
+    }
+  }, [timeLeft, gameState, handleStop]);
+
 
   const startNewRound = () => {
     setGameState('SPINNING');
@@ -195,7 +209,7 @@ export default function PlaySoloPage() {
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
     setGameState('PLAYING');
-    setTimeLeft(ROUND_DURATION);
+    setTimeLeft(ROUND_DURATION); // Reiniciar el contador aquí
     playMusic();
   };
   
