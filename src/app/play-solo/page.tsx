@@ -63,11 +63,9 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
-    // Start the very first round when the component mounts
     startNewRound();
-    // Cleanup on unmount
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       stopMusic();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,8 +73,8 @@ export default function PlaySoloPage() {
   
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
-    
     isEvaluatingRef.current = true;
+
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -148,8 +146,9 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING'); // Revert to playing state on error
-        isEvaluatingRef.current = false; // Allow retrying
+        setGameState('PLAYING'); 
+    } finally {
+        isEvaluatingRef.current = false;
     }
 }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
@@ -173,15 +172,13 @@ export default function PlaySoloPage() {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
-        timerRef.current = null;
       }
     };
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
     if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
+        clearInterval(timerRef.current);
     }
     stopMusic();
     setPlayerResponses({});
@@ -272,3 +269,5 @@ export default function PlaySoloPage() {
   );
 }
 
+
+    
