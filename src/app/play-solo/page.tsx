@@ -54,8 +54,8 @@ export default function PlaySoloPage() {
   const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
-  const isEvaluatingRef = useRef<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isEvaluatingRef = useRef<boolean>(false);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -65,12 +65,36 @@ export default function PlaySoloPage() {
   useEffect(() => {
     startNewRound();
     return () => {
-      stopMusic();
       if (timerRef.current) clearTimeout(timerRef.current);
+      stopMusic();
     };
   }, []);
   
-  const handleStop = useCallback(async () => {
+  // Timer logic
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prevTime => {
+          if (prevTime > 1) {
+            if (prevTime > 1 && prevTime <= 11) playSound('timer-tick');
+            return prevTime - 1;
+          }
+          // Time is up, stop the round
+          handleStop();
+          return 0;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameState]);
+
+
+  const handleStop = async () => {
     if (isEvaluatingRef.current) return;
     
     isEvaluatingRef.current = true;
@@ -147,29 +171,8 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [currentLetter, categories, playerResponses, language, user, playSound, stopMusic, toast, translate]);
+  };
   
-  useEffect(() => {
-    if (gameState === 'PLAYING') {
-      timerRef.current = setInterval(() => {
-        setTimeLeft(t => {
-          if (t > 1) {
-            if (t > 1 && t <= 11) playSound('timer-tick');
-            return t - 1;
-          }
-          handleStop();
-          return 0;
-        });
-      }, 1000);
-    } else {
-        if (timerRef.current) clearInterval(timerRef.current);
-    }
-    return () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [gameState, playSound, handleStop]);
-
-
   const startNewRound = () => {
     stopMusic();
     setPlayerResponses({});
@@ -226,14 +229,6 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
-        if (!roundResults) {
-          return (
-            <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
-              <Loader2 className="h-16 w-16 animate-spin mb-4" />
-              <h2 className="text-2xl font-bold">Cargando resultados...</h2>
-            </div>
-          );
-        }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}
