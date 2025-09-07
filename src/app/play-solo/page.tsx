@@ -70,7 +70,7 @@ export default function PlaySoloPage() {
   
   // Timer logic
   useEffect(() => {
-    if (gameState !== 'PLAYING' || isEvaluatingRef.current) return;
+    if (gameState !== 'PLAYING') return;
 
     if (timeLeft <= 0) {
         handleStop();
@@ -79,7 +79,7 @@ export default function PlaySoloPage() {
 
     const timer = setTimeout(() => {
         setTimeLeft(t => t - 1);
-        if (timeLeft <= 11 && timeLeft > 1) playSound('timer-tick');
+        if (timeLeft > 1 && timeLeft <= 11) playSound('timer-tick');
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -88,7 +88,7 @@ export default function PlaySoloPage() {
 
   const handleStop = async () => {
     if (isEvaluatingRef.current || !currentLetter) return;
-
+    
     isEvaluatingRef.current = true;
     setGameState('EVALUATING');
     stopMusic();
