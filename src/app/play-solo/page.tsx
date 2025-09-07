@@ -69,11 +69,11 @@ export default function PlaySoloPage() {
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
     
+    isEvaluatingRef.current = true;
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
     }
-    isEvaluatingRef.current = true;
     
     setGameState('EVALUATING');
     stopMusic();
@@ -183,13 +183,13 @@ export default function PlaySoloPage() {
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
-    isEvaluatingRef.current = false;
     setGameState('SPINNING');
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
     stopMusic();
+    isEvaluatingRef.current = false;
   };
   
   const handleSpinComplete = (letter: string) => {
@@ -271,3 +271,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
