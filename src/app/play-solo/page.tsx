@@ -9,7 +9,7 @@ import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode, RoundResults, ResultDetail } from '@/components/game/types';
+import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
@@ -68,12 +68,12 @@ export default function PlaySoloPage() {
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
-    isEvaluatingRef.current = true;
-
+    
     if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
     }
+    isEvaluatingRef.current = true;
     
     setGameState('EVALUATING');
     stopMusic();
