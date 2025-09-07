@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,6 +55,7 @@ export default function PlaySoloPage() {
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
   const isEvaluatingRef = useRef<boolean>(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -65,35 +66,23 @@ export default function PlaySoloPage() {
     startNewRound();
     return () => {
       stopMusic();
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
   
-  // Timer logic
-  useEffect(() => {
-    if (gameState !== 'PLAYING') return;
-
-    if (timeLeft <= 0) {
-        handleStop();
-        return;
-    }
-
-    const timer = setTimeout(() => {
-        setTimeLeft(t => t - 1);
-        if (timeLeft > 1 && timeLeft <= 11) playSound('timer-tick');
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [gameState, timeLeft]);
-
-
-  const handleStop = async () => {
-    if (isEvaluatingRef.current || !currentLetter) return;
+  const handleStop = useCallback(async () => {
+    if (isEvaluatingRef.current) return;
     
     isEvaluatingRef.current = true;
+    if (timerRef.current) clearTimeout(timerRef.current);
     setGameState('EVALUATING');
     stopMusic();
 
     try {
+        if (!currentLetter) {
+            throw new Error("No letter was selected for the round.");
+        }
+
         const playerPayload = categories.map(cat => ({
             category: cat,
             word: playerResponses[cat] || ""
@@ -158,8 +147,29 @@ export default function PlaySoloPage() {
     } finally {
         isEvaluatingRef.current = false;
     }
-  };
+  }, [currentLetter, categories, playerResponses, language, user, playSound, stopMusic, toast, translate]);
   
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t > 1) {
+            if (t > 1 && t <= 11) playSound('timer-tick');
+            return t - 1;
+          }
+          handleStop();
+          return 0;
+        });
+      }, 1000);
+    } else {
+        if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameState, playSound, handleStop]);
+
+
   const startNewRound = () => {
     stopMusic();
     setPlayerResponses({});
@@ -168,6 +178,7 @@ export default function PlaySoloPage() {
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
     isEvaluatingRef.current = false;
+    if (timerRef.current) clearTimeout(timerRef.current);
   };
   
   const handleSpinComplete = (letter: string) => {
@@ -215,6 +226,14 @@ export default function PlaySoloPage() {
           </div>
         );
       case 'RESULTS':
+        if (!roundResults) {
+          return (
+            <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+              <Loader2 className="h-16 w-16 animate-spin mb-4" />
+              <h2 className="text-2xl font-bold">Cargando resultados...</h2>
+            </div>
+          );
+        }
         return (
           <ResultsArea
             key={`results-${currentLetter}`}
