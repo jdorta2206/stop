@@ -70,12 +70,9 @@ export default function PlaySoloPage() {
     if (isEvaluatingRef.current || gameState !== 'PLAYING') return;
     
     isEvaluatingRef.current = true;
-    
     if (timerRef.current) {
         clearInterval(timerRef.current);
-        timerRef.current = null;
     }
-    
     setGameState('EVALUATING');
     stopMusic();
 
@@ -157,21 +154,24 @@ export default function PlaySoloPage() {
     }
   }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, gameState]);
 
+
+  // Timer effect
   useEffect(() => {
     if (gameState === 'PLAYING') {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
+            handleStop();
             return 0;
           }
           if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
           return prevTime - 1;
         });
       }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     }
 
     return () => {
@@ -179,14 +179,7 @@ export default function PlaySoloPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameState, playSound]);
-
-
-  useEffect(() => {
-    if (gameState === 'PLAYING' && timeLeft <= 0) {
-      handleStop();
-    }
-  }, [timeLeft, gameState, handleStop]);
+  }, [gameState, handleStop, playSound]);
 
 
   const startNewRound = () => {
