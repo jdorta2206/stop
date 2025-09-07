@@ -63,11 +63,14 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
+    // Start the very first round when the component mounts
     startNewRound();
+    // Cleanup on unmount
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       stopMusic();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleStop = useCallback(async () => {
@@ -146,8 +149,7 @@ export default function PlaySoloPage() {
             variant: 'destructive'
         });
         setGameState('PLAYING'); // Revert to playing state on error
-    } finally {
-        isEvaluatingRef.current = false;
+        isEvaluatingRef.current = false; // Allow retrying
     }
 }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
@@ -269,3 +271,4 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
