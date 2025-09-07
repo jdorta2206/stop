@@ -150,8 +150,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING');
-        isEvaluatingRef.current = false; // Reset on error
+        setGameState('PLAYING'); // Revert to playing on error, but DONT start new round
+        isEvaluatingRef.current = false;
     }
   }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
@@ -181,13 +181,13 @@ export default function PlaySoloPage() {
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
+    isEvaluatingRef.current = false;
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
     stopMusic();
-    isEvaluatingRef.current = false;
   };
   
   const handleSpinComplete = (letter: string) => {
