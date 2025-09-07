@@ -64,10 +64,9 @@ export default function PlaySoloPage() {
   
   useEffect(() => {
     startNewRound();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleStop = async () => {
+  const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
     isEvaluatingRef.current = true;
 
@@ -87,7 +86,7 @@ export default function PlaySoloPage() {
             category: cat,
             word: playerResponses[cat] || ""
         }));
-
+        
         const aiOutput: EvaluateRoundOutput = await evaluateRound({
             letter: currentLetter,
             language: language as LanguageCode,
@@ -107,7 +106,7 @@ export default function PlaySoloPage() {
                 pScore += result.score;
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 } // Placeholder for solo mode
+                    ai: { response: '-', isValid: false, score: 0 }
                 };
             } else {
                  adaptedResults[category] = {
@@ -119,7 +118,7 @@ export default function PlaySoloPage() {
         
         const aScore = 0; // IA no juega en modo solo
         const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
-
+        
         setPlayerRoundScore(pScore);
         setAiRoundScore(aScore);
         setRoundWinner(winner);
@@ -142,7 +141,6 @@ export default function PlaySoloPage() {
                 won: pScore > aScore,
             });
         }
-
         setGameState('RESULTS');
     } catch (error) {
         console.error("Error in handleStop:", error);
@@ -153,9 +151,9 @@ export default function PlaySoloPage() {
         });
         setGameState('PLAYING'); 
     } finally {
-        isEvaluatingRef.current = false;
+       isEvaluatingRef.current = false;
     }
-  };
+  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
   useEffect(() => {
     if (gameState === 'PLAYING') {
@@ -180,16 +178,16 @@ export default function PlaySoloPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameState]); // Removed handleStop and playSound from dependencies
+  }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
-    isEvaluatingRef.current = false;
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
     stopMusic();
+    isEvaluatingRef.current = false;
   };
   
   const handleSpinComplete = (letter: string) => {
