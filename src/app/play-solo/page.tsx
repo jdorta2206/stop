@@ -150,7 +150,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING'); // Revert to playing on error, but DONT start new round
+        setGameState('IDLE'); // Revert to a safe state on error
+    } finally {
         isEvaluatingRef.current = false;
     }
   }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
@@ -158,6 +159,7 @@ export default function PlaySoloPage() {
   useEffect(() => {
     if (gameState === 'PLAYING') {
       if (timerRef.current) clearInterval(timerRef.current);
+      
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
@@ -165,7 +167,7 @@ export default function PlaySoloPage() {
             handleStop();
             return 0;
           }
-          if (prevTime <= 11) playSound('timer-tick');
+          if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
           return prevTime - 1;
         });
       }, 1000);

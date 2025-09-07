@@ -15,13 +15,18 @@ const ResultDetailSchema = z.object({
   score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida y única, 5 si es válida pero no única, 0 si no lo es).")
 });
 
-const EvaluateRoundOutputSchema = z.object({
-  results: z.record(
+// Este es el schema que la IA DEBE devolver.
+const AIOutputSchema = z.record(
     z.string(), // Category name
     ResultDetailSchema
-  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación del jugador."),
-  totalScore: z.number().describe("La puntuación total del jugador para la ronda.")
+  ).describe("Un objeto donde cada clave es una categoría y el valor contiene los resultados de la evaluación del jugador.");
+
+// Este es el schema final que la función devuelve, garantizando el totalScore.
+const EvaluateRoundOutputSchema = z.object({
+    results: AIOutputSchema,
+    totalScore: z.number().describe("La puntuación total del jugador para la ronda.")
 });
+
 
 const evaluateRoundInputSchema = z.object({
   letter: z.string().length(1),
@@ -48,26 +53,20 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       2.  **Determine Score**:
           -   If the word is valid, the score is 10.
           -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY' or not provided, the score is 0.
-      3.  **Calculate Total Score**:
-          - Sum up all the scores from the individual categories to get a 'totalScore'.
-      4.  **Output Format**:
+      3.  **Output Format**:
           -   You MUST return a JSON object.
-          -   The JSON object must have a 'results' key and a 'totalScore' key.
-          -   The value of 'results' must be an object where each key is a category name from the user's input.
-          -   For each category, you MUST return an object with:
+          -   The JSON object's keys MUST be the exact category names from the user's input.
+          -   For each category key, the value MUST be an object with:
               - 'response': The exact word the player provided, or an empty string if they provided none.
               - 'isValid': a boolean (true if valid, false otherwise).
               - 'score': a number (10 for a valid word, 0 otherwise).
       
-      You MUST return the output in the specified JSON format, with a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each, and a 'totalScore' of 0. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
+      You MUST return a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' set to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
 
       Example for user input "Category: Animal, Word: Tigre" and "Category: Color, Word: EMPTY":
       {
-        "results": {
-          "Animal": { "response": "Tigre", "isValid": true, "score": 10 },
-          "Color": { "response": "", "isValid": false, "score": 0 }
-        },
-        "totalScore": 10
+        "Animal": { "response": "Tigre", "isValid": true, "score": 10 },
+        "Color": { "response": "", "isValid": false, "score": 0 }
       }
     `;
 
@@ -77,34 +76,41 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       ${playerResponsesText}
     `;
 
-    const { output } = await ai.generate({
+    const { output: aiResults } = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
       system: systemPrompt,
       prompt: userPrompt,
       output: {
         format: 'json',
-        schema: EvaluateRoundOutputSchema,
+        schema: AIOutputSchema,
       },
     });
     
-    if (!output || !output.results) {
+    if (!aiResults) {
       throw new Error("The AI could not process the round evaluation or returned an invalid format.");
     }
     
     // GUARANTEE: Ensure every category has an entry, even if the AI misses one.
+    // Also, calculate the total score safely here.
+    let totalScore = 0;
+    const finalResults: z.infer<typeof AIOutputSchema> = {};
+
     for (const p of input.playerResponses) {
-        if (!output.results[p.category]) {
+        if (aiResults[p.category]) {
+            finalResults[p.category] = aiResults[p.category];
+            totalScore += aiResults[p.category].score;
+        } else {
             console.warn(`AI did not return result for category: ${p.category}. Creating default.`);
-            output.results[p.category] = {
+            finalResults[p.category] = {
                 response: p.word || '',
                 isValid: false,
                 score: 0
             };
         }
     }
-    
-    // Recalculate total score to be sure
-    output.totalScore = Object.values(output.results).reduce((sum, res) => sum + res.score, 0);
 
-    return output;
+    return {
+        results: finalResults,
+        totalScore: totalScore
+    };
 }
