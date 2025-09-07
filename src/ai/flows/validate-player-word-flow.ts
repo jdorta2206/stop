@@ -85,9 +85,6 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
         format: 'json',
         schema: EvaluateRoundOutputSchema,
       },
-      config: {
-          timeout: 45000 
-      }
     });
     
     if (!output || !output.results) {

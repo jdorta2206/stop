@@ -74,6 +74,7 @@ export default function PlaySoloPage() {
         clearInterval(timerRef.current);
         timerRef.current = null;
     }
+    
     setGameState('EVALUATING');
     stopMusic();
 
@@ -106,7 +107,7 @@ export default function PlaySoloPage() {
                 pScore += result.score;
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 }
+                    ai: { response: '-', isValid: false, score: 0 } // AI no juega en solo
                 };
             } else {
                  adaptedResults[category] = {
@@ -149,9 +150,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING'); 
-    } finally {
-       isEvaluatingRef.current = false;
+        setGameState('PLAYING');
+        isEvaluatingRef.current = false; // Reset on error
     }
   }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
 
