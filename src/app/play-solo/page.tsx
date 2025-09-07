@@ -63,6 +63,7 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
+    // Initial start of the game
     startNewRound();
   }, []);
 
@@ -106,7 +107,7 @@ export default function PlaySoloPage() {
                 pScore += result.score;
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 }
+                    ai: { response: '-', isValid: false, score: 0 } // AI part is not implemented yet
                 };
             } else {
                  adaptedResults[category] = {
@@ -116,8 +117,8 @@ export default function PlaySoloPage() {
             }
         }
         
-        const aScore = 0;
-        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === 0 && aScore === 0) ? 'Nadie' : 'Empate';
+        const aScore = 0; // AI score is 0 for now
+        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === aScore && pScore > 0) ? 'Empate' : 'Nadie';
         
         setPlayerRoundScore(pScore);
         setAiRoundScore(aScore);
@@ -149,7 +150,8 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('IDLE'); // Fallback to IDLE on error
+        // Do not reset the game, let user see the error and decide
+        setGameState('IDLE'); 
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -170,10 +172,8 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
-    } else if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
     }
+    
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -188,6 +188,7 @@ export default function PlaySoloPage() {
     setRoundResults(null);
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
+    if(timerRef.current) clearInterval(timerRef.current);
     stopMusic();
     isEvaluatingRef.current = false;
   };
