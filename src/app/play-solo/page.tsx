@@ -75,6 +75,8 @@ export default function PlaySoloPage() {
     isEvaluatingRef.current = true;
 
     if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    
     setGameState('EVALUATING');
     stopMusic();
 
@@ -146,31 +148,37 @@ export default function PlaySoloPage() {
     } finally {
       isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  }, [categories, currentLetter, language, playerResponses, playSound, stopMusic, toast, translate, user, isEvaluatingRef]);
 
   // Timer logic
   useEffect(() => {
     if (gameState === 'PLAYING') {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
-          if (prevTime > 1) {
-            if (prevTime <= 11) playSound('timer-tick');
-            return prevTime - 1;
+          if (prevTime <= 1) {
+            if(timerRef.current) clearInterval(timerRef.current);
+            handleStop();
+            return 0;
           }
-          handleStop();
-          return 0;
+          if (prevTime <= 11) playSound('timer-tick');
+          return prevTime - 1;
         });
       }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
+    if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+    }
     stopMusic();
     setPlayerResponses({});
     setRoundResults(null);
@@ -178,7 +186,6 @@ export default function PlaySoloPage() {
     setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
     isEvaluatingRef.current = false;
-    if (timerRef.current) clearTimeout(timerRef.current);
   };
   
   const handleSpinComplete = (letter: string) => {
@@ -260,3 +267,4 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
