@@ -183,13 +183,13 @@ export default function PlaySoloPage() {
   }, [gameState, handleStop, playSound]);
 
   const startNewRound = () => {
-    isEvaluatingRef.current = false;
+    setGameState('SPINNING');
     setPlayerResponses({});
     setRoundResults(null);
     setCurrentLetter(null);
-    setGameState('SPINNING');
     setTimeLeft(ROUND_DURATION);
     stopMusic();
+    isEvaluatingRef.current = false;
   };
   
   const handleSpinComplete = (letter: string) => {
