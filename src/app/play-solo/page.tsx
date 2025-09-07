@@ -79,7 +79,7 @@ export default function PlaySoloPage() {
 
     try {
         if (!currentLetter) {
-            throw new Error("No letter was selected for the round.");
+            throw new Error("No se seleccionó ninguna letra para la ronda.");
         }
 
         const playerPayload = categories.map(cat => ({
@@ -94,19 +94,17 @@ export default function PlaySoloPage() {
         });
 
         if (!aiOutput || !aiOutput.results) {
-            throw new Error("Invalid AI response format.");
+            throw new Error("La IA devolvió un formato de respuesta inválido.");
         }
         
-        let pScore = 0;
         const adaptedResults: RoundResults = {};
         
         for (const category of categories) {
             const result = aiOutput.results[category];
              if (result) {
-                pScore += result.score;
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 } // AI part is not implemented yet
+                    ai: { response: '-', isValid: false, score: 0 } // AI part is not implemented for scoring, just validation
                 };
             } else {
                  adaptedResults[category] = {
@@ -116,6 +114,7 @@ export default function PlaySoloPage() {
             }
         }
         
+        const pScore = aiOutput.totalScore;
         const aScore = 0; // AI score is 0 for now
         const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === aScore && pScore > 0) ? 'Empate' : 'Nadie';
         
@@ -143,14 +142,13 @@ export default function PlaySoloPage() {
         }
         setGameState('RESULTS');
     } catch (error) {
-        console.error("Error in handleStop:", error);
+        console.error("Error en handleStop:", error);
         toast({
             title: translate('notifications.aiError.title'),
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        // DO NOT start a new round. Let the user see the error and decide.
-        // If we leave it in EVALUATING, the user sees the spinner. That's correct.
+        // Dejar en estado EVALUATING para que el usuario vea el error y no se reinicie el juego.
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -171,11 +169,9 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
-    } else {
-        if(timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
     
     return () => {

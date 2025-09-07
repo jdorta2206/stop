@@ -12,7 +12,7 @@ const PlayerResponseSchema = z.object({
 const ResultDetailSchema = z.object({
   response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
   isValid: z.boolean().describe("Si la palabra fue considerada válida por la IA (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida y única, 5 si es válida pero no única, 0 si no lo es).")
+  score: z.number().describe("La puntuación obtenida para esta palabra (10 si es válida, 0 si no lo es).")
 });
 
 const AIOutputSchema = z.record(
@@ -41,36 +41,30 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
       .join('\n');
 
     const systemPrompt = `
-      You are the expert judge of the game "STOP". Your task is to evaluate the words of a round based on a given letter and language.
-      Follow these rules strictly for EACH category provided by the user:
-      1.  **Validate the player's word**:
-          -   Check if the word is a real and known word in the specified language ('${input.language}').
-          -   Check if it belongs to the corresponding category.
-          -   Check if it starts with the specified letter ('${input.letter}'), case-insensitively.
-          -   If all three conditions are met, the word is valid.
-      2.  **Determine Score**:
-          -   If the word is valid, the score is 10.
-          -   If the word is invalid (doesn't start with the letter, is not a real word, doesn't fit the category) or if the word is 'EMPTY' or not provided, the score is 0.
-      3.  **Output Format**:
-          -   You MUST return a JSON object.
-          -   The JSON object's keys MUST be the exact category names from the user's input.
-          -   For each category key, the value MUST be an object with:
-              - 'response': The exact word the player provided, or an empty string if they provided none.
-              - 'isValid': a boolean (true if valid, false otherwise).
-              - 'score': a number (10 for a valid word, 0 otherwise).
+      Eres el juez experto del juego "STOP". Tu tarea es evaluar las palabras de una ronda para una letra y un idioma específicos.
       
-      You MUST return a key for EVERY category the user sent. If all words are invalid, you must still return the object with all categories, with 'isValid' set to false and 'score' to 0 for each. Even if the user provides an empty word, you must include the category in the final JSON with an empty 'response', 'isValid' as false, and 'score' as 0.
-
-      Example for user input "Category: Animal, Word: Tigre" and "Category: Color, Word: EMPTY":
-      {
-        "Animal": { "response": "Tigre", "isValid": true, "score": 10 },
-        "Color": { "response": "", "isValid": false, "score": 0 }
-      }
+      Reglas de Evaluación (aplica para cada categoría):
+      1.  **Validación de la Palabra:**
+          -   ¿La palabra es real en el idioma '${input.language}'?
+          -   ¿Pertenece a la categoría?
+          -   ¿Empieza con la letra '${input.letter}' (sin distinguir mayúsculas/minúsculas)?
+          -   Si las tres condiciones se cumplen, la palabra es válida.
+      2.  **Asignación de Puntuación:**
+          -   Si la palabra es válida, la puntuación es 10.
+          -   Si la palabra es inválida (no empieza con la letra, no es real, no encaja en la categoría) o si la palabra está vacía ('EMPTY'), la puntuación es 0.
+      3.  **Formato de Salida Obligatorio (JSON):**
+          -   Debes devolver un objeto JSON.
+          -   Las claves de este objeto deben ser los nombres EXACTOS de las categorías recibidas.
+          -   Cada valor debe ser un objeto con:
+              - 'response': La palabra exacta que el jugador escribió (o una cadena vacía si no escribió nada).
+              - 'isValid': Un booleano (true si es válida, false si no).
+              - 'score': Un número (10 para válida, 0 para inválida).
+      
+      Es **crucial** que devuelvas una entrada para CADA categoría, incluso si la palabra está vacía.
     `;
 
     const userPrompt = `
-      Evaluate the following words for the letter '${input.letter}' in language '${input.language}'.
-      Player Input:
+      Evalúa las siguientes respuestas para la letra '${input.letter}' en el idioma '${input.language}':
       ${playerResponsesText}
     `;
 
@@ -88,22 +82,19 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
     });
     
     if (!aiResults) {
-      throw new Error("The AI could not process the round evaluation or returned an invalid format.");
+      throw new Error("La IA no pudo procesar la evaluación de la ronda o devolvió un formato inválido.");
     }
     
     let totalScore = 0;
     const finalResults: z.infer<typeof AIOutputSchema> = {};
 
-    // Iterate over the categories from the input to ensure all are present in the output
+    // Asegurarse de que todas las categorías de entrada estén en la salida
     for (const p of input.playerResponses) {
-        // If the AI provides a result for the category, use it.
         if (aiResults[p.category]) {
             finalResults[p.category] = aiResults[p.category];
             totalScore += aiResults[p.category].score;
         } else {
-            // If the AI omits a category, create a default 'invalid' result for it.
-            // This makes the client-side logic simpler and more robust.
-            console.warn(`AI did not return result for category: ${p.category}. Creating default.`);
+            // Si la IA omite una categoría (no debería ocurrir con el prompt actual), se añade un resultado por defecto.
             finalResults[p.category] = {
                 response: p.word || '',
                 isValid: false,
