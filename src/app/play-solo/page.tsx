@@ -145,12 +145,12 @@ export default function PlaySoloPage() {
         console.error("Error en handleStop:", error);
         toast({
             title: translate('notifications.aiError.title'),
-            description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
+            description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo más tarde.`,
             variant: 'destructive'
         });
-        // Reiniciar la ronda en caso de error para no dejar el juego bloqueado
-        startNewRound();
+        // No reiniciar la ronda aquí. El usuario decidirá qué hacer.
     } finally {
+        // Asegurarse de que el ref se resetea para permitir futuros intentos si es necesario.
         isEvaluatingRef.current = false;
     }
   }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
