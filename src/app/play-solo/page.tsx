@@ -148,9 +148,9 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo más tarde.`,
             variant: 'destructive'
         });
-        // No reiniciar la ronda aquí. El usuario decidirá qué hacer.
+        // No reiniciar la ronda. Dejar que el usuario decida.
+        // startNewRound(); // <<-- ESTE ERA EL ERROR
     } finally {
-        // Asegurarse de que el ref se resetea para permitir futuros intentos si es necesario.
         isEvaluatingRef.current = false;
     }
   }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
