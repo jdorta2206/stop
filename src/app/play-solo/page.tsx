@@ -55,27 +55,23 @@ export default function PlaySoloPage() {
   const isEvaluatingRef = useRef(false);
 
   // Use refs to hold the latest state for callbacks to avoid stale closures
-  const playerResponsesRef = useRef(playerResponses);
-  playerResponsesRef.current = playerResponses;
-  
-  const currentLetterRef = useRef(currentLetter);
-  currentLetterRef.current = currentLetter;
-  
-  const languageRef = useRef(language);
-  languageRef.current = language;
-
-  const categoriesRef = useRef(categories);
-  categoriesRef.current = categories;
+  const stateRef = useRef({
+    playerResponses,
+    currentLetter,
+    language,
+    categories,
+    gameState,
+  });
 
   useEffect(() => {
-    setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
-    setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
-  }, [language]);
-  
-  useEffect(() => {
-    // Start the first round on component mount
-    startNewRound();
-  }, []);
+    stateRef.current = {
+      playerResponses,
+      currentLetter,
+      language,
+      categories,
+      gameState,
+    };
+  }, [playerResponses, currentLetter, language, categories, gameState]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -85,22 +81,20 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    if (isEvaluatingRef.current) return;
-    isEvaluatingRef.current = true;
+    // Prevent multiple executions
+    if (isEvaluatingRef.current || stateRef.current.gameState !== 'PLAYING') return;
     
+    isEvaluatingRef.current = true;
     stopTimer();
     stopMusic();
     setGameState('EVALUATING');
 
     try {
-      const letter = currentLetterRef.current;
+      const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage } = stateRef.current;
+      
       if (!letter) {
         throw new Error("No se seleccionó ninguna letra para la ronda.");
       }
-
-      const responses = playerResponsesRef.current;
-      const currentCategories = categoriesRef.current;
-      const currentLanguage = languageRef.current;
 
       const playerPayload = currentCategories.map(cat => ({
         category: cat,
@@ -136,12 +130,12 @@ export default function PlaySoloPage() {
       setPlayerRoundScore(calculatedPlayerScore);
       setTotalPlayerScore(prev => prev + calculatedPlayerScore);
       setRoundResults(adaptedResults);
-      setGameState('RESULTS');
+      setGameState('RESULTS'); // This is the crucial state change
       
       if (calculatedPlayerScore > 0) playSound('round-win');
       else playSound('round-lose');
 
-      // Save result to DB in the background, don't let it block the UI update
+      // Save result to DB in the background. Don't let it block the UI update.
       if (user) {
         rankingManager.saveGameResult({
           playerId: user.uid,
@@ -169,15 +163,15 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
         variant: 'destructive'
       });
-      // Do NOT restart the round automatically. Let the user decide.
-      // Set back to playing so user can see their answers.
+      // Set back to a state where user can see their answers and decide what to do
       setGameState('PLAYING'); 
     } finally {
+      // Allow evaluation again
       isEvaluatingRef.current = false;
     }
   }, [stopTimer, stopMusic, user, playSound, toast, translate]);
 
-  // Timer effect
+  // Timer effect - This is now stable.
   useEffect(() => {
     if (gameState === 'PLAYING') {
       timerRef.current = setInterval(() => {
@@ -190,13 +184,23 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
+    } else {
+      // Clean up timer whenever the game is not in 'PLAYING' state
+      stopTimer();
     }
     
-    // Cleanup timer on unmount or when gameState changes
-    return () => {
-      stopTimer();
-    };
+    return () => stopTimer();
   }, [gameState, handleStop, playSound, stopTimer]);
+
+
+  useEffect(() => {
+    setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
+    setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
+  }, [language]);
+  
+  useEffect(() => {
+    startNewRound();
+  }, []);
 
   const startNewRound = () => {
     setGameState('SPINNING');
@@ -204,7 +208,6 @@ export default function PlaySoloPage() {
     setRoundResults(null);
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
-    stopTimer();
     stopMusic();
     isEvaluatingRef.current = false;
   };
@@ -259,10 +262,10 @@ export default function PlaySoloPage() {
             key={`results-${currentLetter}`}
             roundResults={roundResults}
             playerRoundScore={playerRoundScore}
-            aiRoundScore={0} // AI Score is always 0 in solo
+            aiRoundScore={0}
             roundWinner={playerRoundScore > 0 ? (user?.displayName || 'Jugador') : 'Nadie'}
             totalPlayerScore={totalPlayerScore}
-            totalAiScore={0} // AI Score is always 0 in solo
+            totalAiScore={0}
             startNextRound={startNewRound}
             translateUi={translate}
             currentLetter={currentLetter}
