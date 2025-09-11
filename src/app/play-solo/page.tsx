@@ -78,6 +78,16 @@ export default function PlaySoloPage() {
     }
   }, []);
 
+  const startNewRound = useCallback(() => {
+    setGameState('SPINNING');
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    stopMusic();
+    isEvaluatingRef.current = false;
+  }, [stopMusic]);
+
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current || stateRef.current.gameState !== 'PLAYING') return;
     
@@ -159,7 +169,8 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
         variant: 'destructive'
       });
-      startNewRound();
+      // NO reiniciar la ronda. Dejar que el usuario decida.
+      setGameState('PLAYING'); // Vuelve al juego para que el usuario pueda reintentar
     } finally {
       isEvaluatingRef.current = false;
     }
@@ -190,16 +201,6 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
   
-  const startNewRound = useCallback(() => {
-    setGameState('SPINNING');
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
-    stopMusic();
-    isEvaluatingRef.current = false;
-  }, [stopMusic]);
-
   useEffect(() => {
     startNewRound();
   }, [startNewRound]);
@@ -283,5 +284,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
