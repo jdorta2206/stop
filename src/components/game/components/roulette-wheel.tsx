@@ -134,6 +134,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    border: '1px solid hsla(var(--border), 0.2)'
                 };
                 const letterStyle: React.CSSProperties = {
                     transform: `skewY(${90 - (360 / alphabet.length)}deg) rotate(${(360 / alphabet.length) / 2}deg)`,
@@ -172,3 +173,5 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
     </Card>
   );
 }
+
+    

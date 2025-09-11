@@ -59,6 +59,7 @@ export default function PlaySoloPage() {
     language,
     categories,
     gameState,
+    user
   });
 
   useEffect(() => {
@@ -68,25 +69,16 @@ export default function PlaySoloPage() {
       language,
       categories,
       gameState,
+      user
     };
-  }, [playerResponses, currentLetter, language, categories, gameState]);
-
+  }, [playerResponses, currentLetter, language, categories, gameState, user]);
+  
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
   }, []);
-
-  const startNewRound = useCallback(() => {
-    setGameState('SPINNING');
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
-    setTimeLeft(ROUND_DURATION);
-    stopMusic();
-    isEvaluatingRef.current = false;
-  }, [stopMusic]);
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current || stateRef.current.gameState !== 'PLAYING') return;
@@ -97,7 +89,7 @@ export default function PlaySoloPage() {
     setGameState('EVALUATING');
 
     try {
-      const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage } = stateRef.current;
+      const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage, user: currentUser } = stateRef.current;
       
       if (!letter) {
         throw new Error("No se seleccionó ninguna letra para la ronda.");
@@ -142,11 +134,11 @@ export default function PlaySoloPage() {
       if (calculatedPlayerScore > 0) playSound('round-win');
       else playSound('round-lose');
 
-      if (user) {
+      if (currentUser) {
         rankingManager.saveGameResult({
-          playerId: user.uid,
-          playerName: user.displayName || 'Jugador',
-          photoURL: user.photoURL || null,
+          playerId: currentUser.uid,
+          playerName: currentUser.displayName || 'Jugador',
+          photoURL: currentUser.photoURL || null,
           score: calculatedPlayerScore,
           categories: responses,
           letter: letter,
@@ -169,12 +161,24 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
         variant: 'destructive'
       });
-      // NO reiniciar la ronda. Dejar que el usuario decida.
-      setGameState('PLAYING'); // Vuelve al juego para que el usuario pueda reintentar
+      // Vuelve al estado de juego para que el usuario vea sus respuestas y pueda reintentar, pero NO reinicia la ronda.
+      setGameState('PLAYING');
     } finally {
       isEvaluatingRef.current = false;
     }
-  }, [stopTimer, stopMusic, user, playSound, toast, translate]);
+  }, [stopTimer, stopMusic, playSound, toast, translate]);
+
+
+  const startNewRound = useCallback(() => {
+    setGameState('SPINNING');
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    stopMusic();
+    isEvaluatingRef.current = false;
+  }, [stopMusic]);
+
 
   useEffect(() => {
     if (gameState === 'PLAYING') {
@@ -284,3 +288,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
