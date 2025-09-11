@@ -62,15 +62,19 @@ export default function PlaySoloPage() {
   useEffect(() => {
     startNewRound();
   }, []);
+  
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current || gameState !== 'PLAYING') return;
-    
+
     isEvaluatingRef.current = true;
-    if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-    }
+    stopTimer();
     setGameState('EVALUATING');
     stopMusic();
 
@@ -101,7 +105,7 @@ export default function PlaySoloPage() {
              if (result) {
                 adaptedResults[category] = {
                     player: result,
-                    ai: { response: '-', isValid: false, score: 0 } // AI part is not implemented for scoring, just validation
+                    ai: { response: '-', isValid: false, score: 0 }
                 };
             } else {
                  adaptedResults[category] = {
@@ -143,10 +147,11 @@ export default function PlaySoloPage() {
         console.error("Error en handleStop:", error);
         toast({
             title: translate('notifications.aiError.title'),
-            description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
+            description: `Error al procesar la ronda: ${(error as Error).message}.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING'); 
+        // No reiniciar la ronda, dejar que el usuario lo haga
+        setGameState('PLAYING'); // Back to playing to allow retry
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -159,7 +164,7 @@ export default function PlaySoloPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
+            stopTimer();
             handleStop();
             return 0;
           }
@@ -167,15 +172,12 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    } else {
+       stopTimer();
     }
     
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      stopTimer();
     };
   }, [gameState, handleStop, playSound]);
 
@@ -186,7 +188,7 @@ export default function PlaySoloPage() {
     setRoundResults(null);
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
-    if(timerRef.current) clearInterval(timerRef.current);
+    stopTimer();
     stopMusic();
     isEvaluatingRef.current = false;
   };
@@ -270,5 +272,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
