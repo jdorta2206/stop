@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
 import { GameArea } from '@/components/game/components/game-area';
@@ -35,7 +34,6 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 const ROUND_DURATION = 60; // seconds
 
 export default function PlaySoloPage() {
-  const router = useRouter();
   const { language, translate } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
