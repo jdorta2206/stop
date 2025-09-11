@@ -96,7 +96,7 @@ export default function PlaySoloPage() {
         language: currentLanguage as LanguageCode,
         playerResponses: playerPayload,
       });
-
+      
       if (!aiOutput || !aiOutput.results) {
         throw new Error("La IA devolvió un formato de respuesta inválido.");
       }
@@ -107,7 +107,7 @@ export default function PlaySoloPage() {
       for (const category of currentCategories) {
         const result = aiOutput.results[category];
         if (result) {
-          adaptedResults[category] = { player: result, ai: { response: '-', isValid: false, score: 0 } };
+          adaptedResults[category] = { player: result, ai: { response: '-', isValid: false, score: 0 } }; // AI part is mocked for solo
           calculatedPlayerScore += result.score;
         } else {
           adaptedResults[category] = {
@@ -116,7 +116,7 @@ export default function PlaySoloPage() {
           };
         }
       }
-
+      
       setPlayerRoundScore(calculatedPlayerScore);
       setTotalPlayerScore(prev => prev + calculatedPlayerScore);
       setRoundResults(adaptedResults);
@@ -151,12 +151,12 @@ export default function PlaySoloPage() {
       console.error("Error en handleStop:", error);
       toast({
         title: translate('notifications.aiError.title'),
-        description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
+        description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`,
         variant: 'destructive'
       });
       // CRITICAL: Do not restart the round. Let the user decide.
-      // Reset to a state where they can see their answers and retry.
-      setGameState('IDLE'); // Go to a neutral state before restarting
+      // Go back to playing state so user can re-submit or change answers
+      setGameState('PLAYING');
     } finally {
       isEvaluatingRef.current = false;
     }
@@ -179,7 +179,7 @@ export default function PlaySoloPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            stopTimer(); // Stop timer before calling handleStop
+            stopTimer();
             handleStop();
             return 0;
           }
