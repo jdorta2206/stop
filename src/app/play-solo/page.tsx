@@ -148,7 +148,9 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo más tarde.`,
             variant: 'destructive'
         });
-        setGameState('IDLE'); // Revert to idle on error to avoid loops
+        // NO reiniciar la ronda. Dejar que el usuario vea el error.
+        // Si es necesario, puede volver a intentarlo desde la UI o recargar.
+        setGameState('PLAYING'); // Revertir a PLAYING para que pueda intentarlo de nuevo si quiere
     } finally {
         isEvaluatingRef.current = false;
     }
