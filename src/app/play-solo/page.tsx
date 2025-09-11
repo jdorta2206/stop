@@ -52,27 +52,18 @@ export default function PlaySoloPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isEvaluatingRef = useRef(false);
 
-  // Use refs to hold the latest state for callbacks to avoid stale closures
   const stateRef = useRef({
     playerResponses,
     currentLetter,
     language,
     categories,
-    gameState,
     user
   });
 
   useEffect(() => {
-    stateRef.current = {
-      playerResponses,
-      currentLetter,
-      language,
-      categories,
-      gameState,
-      user
-    };
-  }, [playerResponses, currentLetter, language, categories, gameState, user]);
-  
+    stateRef.current = { playerResponses, currentLetter, language, categories, user };
+  }, [playerResponses, currentLetter, language, categories, user]);
+
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -81,12 +72,12 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    if (isEvaluatingRef.current || stateRef.current.gameState !== 'PLAYING') return;
+    if (isEvaluatingRef.current) return;
     
-    isEvaluatingRef.current = true;
     stopTimer();
-    stopMusic();
     setGameState('EVALUATING');
+    isEvaluatingRef.current = true;
+    stopMusic();
 
     try {
       const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage, user: currentUser } = stateRef.current;
@@ -129,11 +120,13 @@ export default function PlaySoloPage() {
       setPlayerRoundScore(calculatedPlayerScore);
       setTotalPlayerScore(prev => prev + calculatedPlayerScore);
       setRoundResults(adaptedResults);
-      setGameState('RESULTS');
       
       if (calculatedPlayerScore > 0) playSound('round-win');
       else playSound('round-lose');
 
+      setGameState('RESULTS');
+
+      // Save result in background, AFTER UI has updated
       if (currentUser) {
         rankingManager.saveGameResult({
           playerId: currentUser.uid,
@@ -161,8 +154,9 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
         variant: 'destructive'
       });
-      // Vuelve al estado de juego para que el usuario vea sus respuestas y pueda reintentar, pero NO reinicia la ronda.
-      setGameState('PLAYING');
+      // CRITICAL: Do not restart the round. Let the user decide.
+      // Reset to a state where they can see their answers and retry.
+      setGameState('IDLE'); // Go to a neutral state before restarting
     } finally {
       isEvaluatingRef.current = false;
     }
@@ -185,6 +179,7 @@ export default function PlaySoloPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
+            stopTimer(); // Stop timer before calling handleStop
             handleStop();
             return 0;
           }
@@ -288,5 +283,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
