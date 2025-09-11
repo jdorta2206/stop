@@ -99,21 +99,9 @@ class RankingManager {
       // Re-fetch the document to ensure we have the created data, including server-generated timestamps
       docSnap = await getDoc(playerDocRef);
     }
+    
+    const playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
 
-    let playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Check if daily missions need to be reset
-    if (!playerData.missionsLastReset || playerData.missionsLastReset !== today) {
-        const newMissions = getDailyMissions();
-        const updatedData = {
-            dailyMissions: newMissions.map(m => ({...m})),
-            missionsLastReset: today,
-        };
-        await updateDoc(playerDocRef, updatedData);
-        playerData = { ...playerData, ...updatedData };
-    }
-    
     return { id: playerId, ...playerData };
   }
   
@@ -127,6 +115,17 @@ class RankingManager {
     
     // Ensure player profile exists before saving game result
     const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
+
+    // Reset daily missions if needed
+    const today = new Date().toISOString().split('T')[0];
+    let finalMissions = playerRanking.dailyMissions;
+    if (playerRanking.missionsLastReset !== today) {
+        finalMissions = getDailyMissions();
+        await updateDoc(playerDocRef, {
+            missionsLastReset: today,
+            dailyMissions: finalMissions.map(m => ({...m}))
+        });
+    }
 
     const finalGameResult = { ...gameResult, timestamp: serverTimestamp() };
     await addDoc(gameHistoryCollectionRef, finalGameResult);
@@ -146,7 +145,7 @@ class RankingManager {
     };
     
     const updatedAchievements = this.checkAchievements(playerRanking as PlayerScore, gameResult);
-    const updatedMissions = checkMissions(playerRanking.dailyMissions, gameResult);
+    const updatedMissions = checkMissions(finalMissions, gameResult);
 
     const updatedData: Record<string, any> = {
       totalScore: increment(gameResult.score),
@@ -234,3 +233,5 @@ export const getLevelColor = (level: string): string => {
 export const getAchievementInfo = (achievementId: string) => {
   return ACHIEVEMENTS[achievementId];
 };
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -111,18 +112,16 @@ export default function PlaySoloPage() {
         }
         
         const pScore = aiOutput.totalScore;
-        const aScore = 0; // AI score is 0
-        const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === aScore && pScore > 0) ? 'Empate' : 'Nadie';
-        
         setPlayerRoundScore(pScore);
         setTotalPlayerScore(prev => prev + pScore);
         setRoundResults(adaptedResults);
-
+        setGameState('RESULTS');
+        
         if (pScore > 0) playSound('round-win');
         else playSound('round-lose');
 
         if (user) {
-            await rankingManager.saveGameResult({
+            rankingManager.saveGameResult({
                 playerId: user.uid,
                 playerName: user.displayName || 'Jugador',
                 photoURL: user.photoURL || null,
@@ -130,18 +129,24 @@ export default function PlaySoloPage() {
                 categories: playerResponses,
                 letter: currentLetter,
                 gameMode: 'solo',
-                won: pScore > aScore,
+                won: pScore > 0,
+            }).catch(dbError => {
+                console.error("Error saving game result:", dbError);
+                toast({
+                    title: "Error de Guardado",
+                    description: "No se pudo guardar tu puntuación, pero tus resultados están aquí.",
+                    variant: 'destructive'
+                });
             });
         }
-        setGameState('RESULTS');
     } catch (error) {
         console.error("Error en handleStop:", error);
         toast({
             title: translate('notifications.aiError.title'),
-            description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo más tarde.`,
+            description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo.`,
             variant: 'destructive'
         });
-        setGameState('PLAYING'); // Revertir a PLAYING para que pueda intentarlo de nuevo si quiere
+        setGameState('PLAYING'); 
     } finally {
         isEvaluatingRef.current = false;
     }
@@ -265,3 +270,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
