@@ -79,7 +79,6 @@ export default function PlaySoloPage() {
   }, []);
 
   const handleStop = useCallback(async () => {
-    // Prevent multiple executions
     if (isEvaluatingRef.current || stateRef.current.gameState !== 'PLAYING') return;
     
     isEvaluatingRef.current = true;
@@ -128,12 +127,11 @@ export default function PlaySoloPage() {
       setPlayerRoundScore(calculatedPlayerScore);
       setTotalPlayerScore(prev => prev + calculatedPlayerScore);
       setRoundResults(adaptedResults);
-      setGameState('RESULTS'); // This is the crucial state change
+      setGameState('RESULTS');
       
       if (calculatedPlayerScore > 0) playSound('round-win');
       else playSound('round-lose');
 
-      // Save result to DB in the background. Don't let it block the UI update.
       if (user) {
         rankingManager.saveGameResult({
           playerId: user.uid,
@@ -161,15 +159,12 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
         variant: 'destructive'
       });
-      // Set back to a state where user can see their answers and decide what to do
-      setGameState('PLAYING'); 
+      startNewRound();
     } finally {
-      // Allow evaluation again
       isEvaluatingRef.current = false;
     }
   }, [stopTimer, stopMusic, user, playSound, toast, translate]);
 
-  // Timer effect - This is now stable.
   useEffect(() => {
     if (gameState === 'PLAYING') {
       timerRef.current = setInterval(() => {
@@ -183,7 +178,6 @@ export default function PlaySoloPage() {
         });
       }, 1000);
     } else {
-      // Clean up timer whenever the game is not in 'PLAYING' state
       stopTimer();
     }
     
@@ -196,11 +190,7 @@ export default function PlaySoloPage() {
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
   }, [language]);
   
-  useEffect(() => {
-    startNewRound();
-  }, []);
-
-  const startNewRound = () => {
+  const startNewRound = useCallback(() => {
     setGameState('SPINNING');
     setPlayerResponses({});
     setRoundResults(null);
@@ -208,7 +198,11 @@ export default function PlaySoloPage() {
     setTimeLeft(ROUND_DURATION);
     stopMusic();
     isEvaluatingRef.current = false;
-  };
+  }, [stopMusic]);
+
+  useEffect(() => {
+    startNewRound();
+  }, [startNewRound]);
   
   const handleSpinComplete = (letter: string) => {
     setCurrentLetter(letter);
@@ -289,3 +283,5 @@ export default function PlaySoloPage() {
     </div>
   );
 }
+
+    
