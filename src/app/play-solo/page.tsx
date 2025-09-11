@@ -54,16 +54,18 @@ export default function PlaySoloPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isEvaluatingRef = useRef(false);
 
-  // Use refs to hold the latest state for useCallback to avoid dependency issues
+  // Use refs to hold the latest state for callbacks to avoid stale closures
   const playerResponsesRef = useRef(playerResponses);
   playerResponsesRef.current = playerResponses;
+  
   const currentLetterRef = useRef(currentLetter);
   currentLetterRef.current = currentLetter;
-  const categoriesRef = useRef(categories);
-  categoriesRef.current = categories;
+  
   const languageRef = useRef(language);
   languageRef.current = language;
 
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
 
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
@@ -71,15 +73,16 @@ export default function PlaySoloPage() {
   }, [language]);
   
   useEffect(() => {
+    // Start the first round on component mount
     startNewRound();
   }, []);
-  
+
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  },[]);
+  }, []);
 
   const handleStop = useCallback(async () => {
     if (isEvaluatingRef.current) return;
@@ -90,88 +93,89 @@ export default function PlaySoloPage() {
     setGameState('EVALUATING');
 
     try {
-        const letter = currentLetterRef.current;
-        if (!letter) {
-            throw new Error("No se seleccionó ninguna letra para la ronda.");
-        }
+      const letter = currentLetterRef.current;
+      if (!letter) {
+        throw new Error("No se seleccionó ninguna letra para la ronda.");
+      }
 
-        const responses = playerResponsesRef.current;
-        const currentCategories = categoriesRef.current;
+      const responses = playerResponsesRef.current;
+      const currentCategories = categoriesRef.current;
+      const currentLanguage = languageRef.current;
 
-        const playerPayload = currentCategories.map(cat => ({
-            category: cat,
-            word: responses[cat] || ""
-        }));
-        
-        const aiOutput: EvaluateRoundOutput = await evaluateRound({
-            letter: letter,
-            language: languageRef.current as LanguageCode,
-            playerResponses: playerPayload,
-        });
+      const playerPayload = currentCategories.map(cat => ({
+        category: cat,
+        word: responses[cat] || ""
+      }));
+      
+      const aiOutput: EvaluateRoundOutput = await evaluateRound({
+        letter: letter,
+        language: currentLanguage as LanguageCode,
+        playerResponses: playerPayload,
+      });
 
-        if (!aiOutput || !aiOutput.results) {
-            throw new Error("La IA devolvió un formato de respuesta inválido.");
+      if (!aiOutput || !aiOutput.results) {
+        throw new Error("La IA devolvió un formato de respuesta inválido.");
+      }
+      
+      const adaptedResults: RoundResults = {};
+      let calculatedPlayerScore = 0;
+      
+      for (const category of currentCategories) {
+        const result = aiOutput.results[category];
+        if (result) {
+          adaptedResults[category] = { player: result, ai: { response: '-', isValid: false, score: 0 } };
+          calculatedPlayerScore += result.score;
+        } else {
+          adaptedResults[category] = {
+            player: { response: responses[category] || '', isValid: false, score: 0 },
+            ai: { response: '-', isValid: false, score: 0 }
+          };
         }
-        
-        const adaptedResults: RoundResults = {};
-        
-        for (const category of currentCategories) {
-            const result = aiOutput.results[category];
-             if (result) {
-                adaptedResults[category] = {
-                    player: result,
-                    ai: { response: '-', isValid: false, score: 0 }
-                };
-            } else {
-                 adaptedResults[category] = {
-                    player: { response: responses[category] || '', isValid: false, score: 0 },
-                    ai: { response: '-', isValid: false, score: 0 }
-                };
-            }
-        }
-        
-        const pScore = aiOutput.totalScore;
-        setPlayerRoundScore(pScore);
-        setTotalPlayerScore(prev => prev + pScore);
-        setRoundResults(adaptedResults);
-        
-        if (pScore > 0) playSound('round-win');
-        else playSound('round-lose');
+      }
 
-        if (user) {
-            rankingManager.saveGameResult({
-                playerId: user.uid,
-                playerName: user.displayName || 'Jugador',
-                photoURL: user.photoURL || null,
-                score: pScore,
-                categories: responses,
-                letter: letter,
-                gameMode: 'solo',
-                won: pScore > 0,
-            }).catch(dbError => {
-                console.error("Error saving game result:", dbError);
-                toast({
-                    title: "Error de Guardado",
-                    description: "No se pudo guardar tu puntuación, pero tus resultados están aquí.",
-                    variant: 'destructive'
-                });
-            });
-        }
-        setGameState('RESULTS');
-    } catch (error) {
-        console.error("Error en handleStop:", error);
-        toast({
-            title: translate('notifications.aiError.title'),
-            description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
+      setPlayerRoundScore(calculatedPlayerScore);
+      setTotalPlayerScore(prev => prev + calculatedPlayerScore);
+      setRoundResults(adaptedResults);
+      setGameState('RESULTS');
+      
+      if (calculatedPlayerScore > 0) playSound('round-win');
+      else playSound('round-lose');
+
+      // Save result to DB in the background, don't let it block the UI update
+      if (user) {
+        rankingManager.saveGameResult({
+          playerId: user.uid,
+          playerName: user.displayName || 'Jugador',
+          photoURL: user.photoURL || null,
+          score: calculatedPlayerScore,
+          categories: responses,
+          letter: letter,
+          gameMode: 'solo',
+          won: calculatedPlayerScore > 0,
+        }).catch(dbError => {
+          console.error("Error saving game result:", dbError);
+          toast({
+            title: "Error de Guardado",
+            description: "No se pudo guardar tu puntuación, pero tus resultados están aquí.",
             variant: 'destructive'
+          });
         });
-        // No reiniciar la ronda, dejar que el usuario lo haga
-        setGameState('PLAYING'); // Back to playing to allow retry or inspection
+      }
+
+    } catch (error) {
+      console.error("Error en handleStop:", error);
+      toast({
+        title: translate('notifications.aiError.title'),
+        description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
+        variant: 'destructive'
+      });
+      // Do NOT restart the round automatically. Let the user decide.
+      // Set back to playing so user can see their answers.
+      setGameState('PLAYING'); 
     } finally {
-        isEvaluatingRef.current = false;
+      isEvaluatingRef.current = false;
     }
   }, [stopTimer, stopMusic, user, playSound, toast, translate]);
-
 
   // Timer effect
   useEffect(() => {
@@ -179,7 +183,6 @@ export default function PlaySoloPage() {
       timerRef.current = setInterval(() => {
         setTimeLeft(prevTime => {
           if (prevTime <= 1) {
-            stopTimer();
             handleStop();
             return 0;
           }
@@ -187,15 +190,13 @@ export default function PlaySoloPage() {
           return prevTime - 1;
         });
       }, 1000);
-    } else {
-       stopTimer();
     }
     
+    // Cleanup timer on unmount or when gameState changes
     return () => {
       stopTimer();
     };
   }, [gameState, handleStop, playSound, stopTimer]);
-
 
   const startNewRound = () => {
     setGameState('SPINNING');
