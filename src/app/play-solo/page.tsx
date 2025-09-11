@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -48,10 +47,7 @@ export default function PlaySoloPage() {
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0); 
-  const [roundWinner, setRoundWinner] = useState('');
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
-  const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -115,14 +111,11 @@ export default function PlaySoloPage() {
         }
         
         const pScore = aiOutput.totalScore;
-        const aScore = 0; // AI score is 0 for now
+        const aScore = 0; // AI score is 0
         const winner = pScore > aScore ? (user?.displayName || 'Jugador') : (pScore === aScore && pScore > 0) ? 'Empate' : 'Nadie';
         
         setPlayerRoundScore(pScore);
-        setAiRoundScore(aScore);
-        setRoundWinner(winner);
         setTotalPlayerScore(prev => prev + pScore);
-        setTotalAiScore(prev => prev + aScore);
         setRoundResults(adaptedResults);
 
         if (pScore > 0) playSound('round-win');
@@ -148,8 +141,6 @@ export default function PlaySoloPage() {
             description: `Error al procesar la ronda: ${(error as Error).message}. Inténtalo de nuevo más tarde.`,
             variant: 'destructive'
         });
-        // NO reiniciar la ronda. Dejar que el usuario vea el error.
-        // Si es necesario, puede volver a intentarlo desde la UI o recargar.
         setGameState('PLAYING'); // Revertir a PLAYING para que pueda intentarlo de nuevo si quiere
     } finally {
         isEvaluatingRef.current = false;
@@ -245,10 +236,10 @@ export default function PlaySoloPage() {
             key={`results-${currentLetter}`}
             roundResults={roundResults}
             playerRoundScore={playerRoundScore}
-            aiRoundScore={aiRoundScore}
-            roundWinner={roundWinner}
+            aiRoundScore={0} // AI Score is always 0 in solo
+            roundWinner={playerRoundScore > 0 ? (user?.displayName || 'Jugador') : 'Nadie'}
             totalPlayerScore={totalPlayerScore}
-            totalAiScore={totalAiScore}
+            totalAiScore={0} // AI Score is always 0 in solo
             startNextRound={startNewRound}
             translateUi={translate}
             currentLetter={currentLetter}
