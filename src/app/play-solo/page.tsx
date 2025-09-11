@@ -54,6 +54,17 @@ export default function PlaySoloPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isEvaluatingRef = useRef(false);
 
+  // Use refs to hold the latest state for useCallback to avoid dependency issues
+  const playerResponsesRef = useRef(playerResponses);
+  playerResponsesRef.current = playerResponses;
+  const currentLetterRef = useRef(currentLetter);
+  currentLetterRef.current = currentLetter;
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
+  const languageRef = useRef(language);
+  languageRef.current = language;
+
+
   useEffect(() => {
     setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
     setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
@@ -63,34 +74,38 @@ export default function PlaySoloPage() {
     startNewRound();
   }, []);
   
-  const stopTimer = () => {
+  const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  };
+  },[]);
 
   const handleStop = useCallback(async () => {
-    if (isEvaluatingRef.current || gameState !== 'PLAYING') return;
-
+    if (isEvaluatingRef.current) return;
     isEvaluatingRef.current = true;
+    
     stopTimer();
-    setGameState('EVALUATING');
     stopMusic();
+    setGameState('EVALUATING');
 
     try {
-        if (!currentLetter) {
+        const letter = currentLetterRef.current;
+        if (!letter) {
             throw new Error("No se seleccionó ninguna letra para la ronda.");
         }
 
-        const playerPayload = categories.map(cat => ({
+        const responses = playerResponsesRef.current;
+        const currentCategories = categoriesRef.current;
+
+        const playerPayload = currentCategories.map(cat => ({
             category: cat,
-            word: playerResponses[cat] || ""
+            word: responses[cat] || ""
         }));
         
         const aiOutput: EvaluateRoundOutput = await evaluateRound({
-            letter: currentLetter,
-            language: language as LanguageCode,
+            letter: letter,
+            language: languageRef.current as LanguageCode,
             playerResponses: playerPayload,
         });
 
@@ -100,7 +115,7 @@ export default function PlaySoloPage() {
         
         const adaptedResults: RoundResults = {};
         
-        for (const category of categories) {
+        for (const category of currentCategories) {
             const result = aiOutput.results[category];
              if (result) {
                 adaptedResults[category] = {
@@ -109,7 +124,7 @@ export default function PlaySoloPage() {
                 };
             } else {
                  adaptedResults[category] = {
-                    player: { response: playerResponses[category] || '', isValid: false, score: 0 },
+                    player: { response: responses[category] || '', isValid: false, score: 0 },
                     ai: { response: '-', isValid: false, score: 0 }
                 };
             }
@@ -119,7 +134,6 @@ export default function PlaySoloPage() {
         setPlayerRoundScore(pScore);
         setTotalPlayerScore(prev => prev + pScore);
         setRoundResults(adaptedResults);
-        setGameState('RESULTS');
         
         if (pScore > 0) playSound('round-win');
         else playSound('round-lose');
@@ -130,8 +144,8 @@ export default function PlaySoloPage() {
                 playerName: user.displayName || 'Jugador',
                 photoURL: user.photoURL || null,
                 score: pScore,
-                categories: playerResponses,
-                letter: currentLetter,
+                categories: responses,
+                letter: letter,
                 gameMode: 'solo',
                 won: pScore > 0,
             }).catch(dbError => {
@@ -143,19 +157,20 @@ export default function PlaySoloPage() {
                 });
             });
         }
+        setGameState('RESULTS');
     } catch (error) {
         console.error("Error en handleStop:", error);
         toast({
             title: translate('notifications.aiError.title'),
-            description: `Error al procesar la ronda: ${(error as Error).message}.`,
+            description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta jugar una nueva ronda.`,
             variant: 'destructive'
         });
         // No reiniciar la ronda, dejar que el usuario lo haga
-        setGameState('PLAYING'); // Back to playing to allow retry
+        setGameState('PLAYING'); // Back to playing to allow retry or inspection
     } finally {
         isEvaluatingRef.current = false;
     }
-  }, [categories, currentLetter, gameState, language, playerResponses, playSound, stopMusic, toast, translate, user]);
+  }, [stopTimer, stopMusic, user, playSound, toast, translate]);
 
 
   // Timer effect
@@ -179,7 +194,7 @@ export default function PlaySoloPage() {
     return () => {
       stopTimer();
     };
-  }, [gameState, handleStop, playSound]);
+  }, [gameState, handleStop, playSound, stopTimer]);
 
 
   const startNewRound = () => {
