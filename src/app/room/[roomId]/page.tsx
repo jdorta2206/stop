@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -8,7 +9,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { useAuth, type AppUser } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import type { ChatMessage } from '@/components/chat/chat-message-item';
-import { ChatPanel } from '@/components/chat/chat-panel';
 import { onRoomUpdate, sendMessageToRoom, addPlayerToRoom } from '@/lib/room-service';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { Loader2 } from 'lucide-react';
@@ -22,12 +22,10 @@ export default function RoomPage() {
   const params = useParams();
   const roomId = Array.isArray(params.roomId) ? params.roomId[0] : params.roomId;
   
-  const { language, translate } = useLanguage();
+  const { language } = useLanguage();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  const [isChatOpen, setIsChatOpen] = useState(true);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
