@@ -231,7 +231,7 @@ export const UI_TEXTS = {
 
   // Juego
   game: {
-    title: { es: "Juego Stop", en: "Stop Game", fr: "Jeu Stop", pt: "Jogo Stop" },
+    title: { es: "Stop", en: "Stop", fr: "Stop", pt: "Stop" },
     logoAlt: { es: "Logo del juego Stop", en: "Stop Game Logo", fr: "Logo du jeu Stop", pt: "Logo do Jogo Stop" },
     playVsAI: { es: "Jugar contra IA", en: "Play against AI", fr: "Jouer contre l'IA", pt: "Jogar contra IA" },
     share: { es: "Compartir Juego", en: "Share Game", fr: "Partager le Jeu", pt: "Compartilhar Jogo" },
@@ -621,7 +621,7 @@ export const UI_TEXTS = {
       games: { es: "Partidas", en: "Games", fr: "Parties", pt: "Jogos" },
       winRate: { es: "% Victorias", en: "Win Rate", fr: "% Victoires", pt: "% Vitórias" },
       level: { es: "Nivel", en: "Level", fr: "Niveau", pt: "Nível" },
-      you: { es: "(Tú)", en: "(You)", fr: "(Vous)", pt: "(Você)" },
+      you: { es: "(Tú)", en: "You", fr: "(Vous)", pt: "(Você)" },
       totalGames: { es: "Total de Partidas", en: "Total Games", fr: "Total des Parties", pt: "Total de Jogos" },
       activeUsers: { es: "Usuarios Activos", en: "Active Users", fr: "Utilisateurs Actifs", pt: "Usuários Ativos" },
       highestScore: { es: "Puntuación Más Alta", en: "Highest Score", fr: "Score le Plus Élevé", pt: "Maior Pontuação" },

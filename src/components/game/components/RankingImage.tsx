@@ -33,7 +33,7 @@ export const RankingImage: React.FC<RankingImageProps> = ({ players }) => {
             <h1 className="text-5xl font-extrabold text-white text-center mb-1">
                 🏆 Ranking Semanal 🏆
             </h1>
-            <h2 className="text-3xl font-bold text-yellow-300 text-center">STOP Game</h2>
+            <h2 className="text-3xl font-bold text-yellow-300 text-center">Stop</h2>
         </div>
 
       <div className="flex items-end justify-center gap-4">

@@ -6,20 +6,20 @@ import { Providers } from '@/components/providers/Providers';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://juego-stop.netlify.app'),
-  title: 'Juego Stop - Multijugador Online | Contra IA y Amigos',
+  title: 'Stop - Juego de Palabras Multijugador Online',
   description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos! Demuestra tu vocabulario en categorías como países, animales, nombres y más.',
   keywords: 'stop, juego de palabras, multijugador, online, IA, categorías, vocabulario, competir, multilenguaje',
   authors: [{ name: 'Stop Game Team' }],
-  creator: 'Stop Game',
-  publisher: 'Stop Game',
+  creator: 'Stop',
+  publisher: 'Stop',
   manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'es_ES',
     url: 'https://juego-stop.netlify.app',
-    title: 'Juego Stop - Multijugador Online',
+    title: 'Stop - Juego Multijugador Online',
     description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos!',
-    siteName: 'Stop Game',
+    siteName: 'Stop',
     images: [
       {
         url: '/android-chrome-192x192.png',
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'Juego Stop - Multijugador Online',
+    title: 'Stop - Juego Multijugador Online',
     description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos!',
     images: ['/android-chrome-192x192.png'],
   },
@@ -59,7 +59,7 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" type="image/png" sizes="180x180" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-          <meta name="apple-mobile-web-app-title" content="Juego Stop" />
+          <meta name="apple-mobile-web-app-title" content="Stop" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="msapplication-TileColor" content="#4a00e0" />
           <meta name="msapplication-TileImage" content="/ms-touch-icon-144x144.png" />
