@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { 
   Users, 
-  Settings, _marker
+  Settings,
   Share2, 
   Lock, 
   Unlock,
