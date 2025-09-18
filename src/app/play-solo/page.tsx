@@ -46,7 +46,9 @@ export default function PlaySoloPage() {
   const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
   const [playerRoundScore, setPlayerRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0);
   const [totalPlayerScore, setTotalPlayerScore] = useState(0);
+  const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -91,37 +93,25 @@ export default function PlaySoloPage() {
         word: responses[cat] || ""
       }));
       
-      const aiOutput: EvaluateRoundOutput = await evaluateRound({
+      const evaluationOutput: EvaluateRoundOutput = await evaluateRound({
         letter: letter,
         language: currentLanguage as LanguageCode,
         playerResponses: playerPayload,
       });
       
-      if (!aiOutput || !aiOutput.results) {
+      if (!evaluationOutput || !evaluationOutput.results) {
         throw new Error("La IA devolvió un formato de respuesta inválido.");
       }
       
-      const adaptedResults: RoundResults = {};
-      let calculatedPlayerScore = 0;
+      const { results, playerTotalScore, aiTotalScore: calculatedAiScore } = evaluationOutput;
       
-      for (const category of currentCategories) {
-        const result = aiOutput.results[category];
-        if (result) {
-          adaptedResults[category] = { player: result, ai: { response: '-', isValid: false, score: 0 } }; // AI part is mocked for solo
-          calculatedPlayerScore += result.score;
-        } else {
-          adaptedResults[category] = {
-            player: { response: responses[category] || '', isValid: false, score: 0 },
-            ai: { response: '-', isValid: false, score: 0 }
-          };
-        }
-      }
+      setPlayerRoundScore(playerTotalScore);
+      setTotalPlayerScore(prev => prev + playerTotalScore);
+      setAiRoundScore(calculatedAiScore);
+      setTotalAiScore(prev => prev + calculatedAiScore);
+      setRoundResults(results);
       
-      setPlayerRoundScore(calculatedPlayerScore);
-      setTotalPlayerScore(prev => prev + calculatedPlayerScore);
-      setRoundResults(adaptedResults);
-      
-      if (calculatedPlayerScore > 0) playSound('round-win');
+      if (playerTotalScore > calculatedAiScore) playSound('round-win');
       else playSound('round-lose');
 
       setGameState('RESULTS');
@@ -132,11 +122,11 @@ export default function PlaySoloPage() {
           playerId: currentUser.uid,
           playerName: currentUser.displayName || 'Jugador',
           photoURL: currentUser.photoURL || null,
-          score: calculatedPlayerScore,
+          score: playerTotalScore,
           categories: responses,
           letter: letter,
           gameMode: 'solo',
-          won: calculatedPlayerScore > 0,
+          won: playerTotalScore > calculatedAiScore,
         }).catch(dbError => {
           console.error("Error saving game result:", dbError);
           toast({
@@ -154,8 +144,6 @@ export default function PlaySoloPage() {
         description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`,
         variant: 'destructive'
       });
-      // CRITICAL: Do not restart the round. Let the user decide.
-      // Go back to playing state so user can re-submit or change answers
       setGameState('PLAYING');
     } finally {
       isEvaluatingRef.current = false;
@@ -215,6 +203,19 @@ export default function PlaySoloPage() {
     setPlayerResponses(prev => ({ ...prev, [category]: value }));
   };
 
+  const getRoundWinner = () => {
+    if (playerRoundScore > aiRoundScore) {
+      return user?.displayName || 'Jugador';
+    }
+    if (aiRoundScore > playerRoundScore) {
+      return 'IA';
+    }
+    if (playerRoundScore > 0 && playerRoundScore === aiRoundScore) {
+        return translate('game.results.winner.tie');
+    }
+    return translate('game.results.winner.none');
+  }
+
   const renderContent = () => {
     switch (gameState) {
       case 'SPINNING':
@@ -254,10 +255,10 @@ export default function PlaySoloPage() {
             key={`results-${currentLetter}`}
             roundResults={roundResults}
             playerRoundScore={playerRoundScore}
-            aiRoundScore={0}
-            roundWinner={playerRoundScore > 0 ? (user?.displayName || 'Jugador') : 'Nadie'}
+            aiRoundScore={aiRoundScore}
+            roundWinner={getRoundWinner()}
             totalPlayerScore={totalPlayerScore}
-            totalAiScore={0}
+            totalAiScore={totalAiScore}
             startNextRound={startNewRound}
             translateUi={translate}
             currentLetter={currentLetter}
