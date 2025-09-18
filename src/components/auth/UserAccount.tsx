@@ -6,22 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { LogOut, User as UserIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function UserAccount() {
   const { user, logout } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Ensure this runs only on the client
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem('user-avatar');
+      if (savedAvatar) {
+        setAvatarUrl(savedAvatar);
+      } else if (user?.photoURL) {
+        setAvatarUrl(user.photoURL);
+      }
+    }
+  }, [user?.photoURL]);
+
 
   if (!user) {
     return null;
   }
   
   const fallbackContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : <UserIcon />;
+  const finalAvatarUrl = avatarUrl || user.photoURL || '';
 
   return (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                    <AvatarImage src={finalAvatarUrl} alt={user.displayName || 'User'} />
                     <AvatarFallback>
                       {fallbackContent}
                     </AvatarFallback>

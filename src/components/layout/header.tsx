@@ -21,9 +21,14 @@ export function AppHeader() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [roomId, setRoomId] = useState<string | null>('global');
+  const [logoSrc, setLogoSrc] = useState('/android-chrome-192x192.png');
 
   useEffect(() => {
     setIsMounted(true);
+    const savedAvatar = localStorage.getItem('user-avatar');
+    if (savedAvatar) {
+      setLogoSrc(savedAvatar);
+    }
   }, []);
 
   useEffect(() => {
@@ -58,7 +63,7 @@ export function AppHeader() {
         <div className="container mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity" aria-label={translate('game.title')}>
             <img
-              src="/android-chrome-192x192.png"
+              src={logoSrc}
               alt={translate('game.logoAlt')}
               width={40}
               height={40}
