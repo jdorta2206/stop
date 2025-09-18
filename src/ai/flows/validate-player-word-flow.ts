@@ -52,15 +52,15 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
   let aiTotalScore = 0;
   const letterLower = input.letter.toLowerCase();
 
-  // Mini-diccionario para la IA (muy simple)
+  // Diccionario de la IA (ampliado)
   const aiDictionary: Record<string, string[]> = {
-    nombre: ['ana', 'andrés', 'antonio'],
-    lugar: ['alemania', 'argentina', 'atenas'],
-    animal: ['araña', 'águila', 'avispa'],
-    objeto: ['anillo', 'aguja', 'arco'],
-    color: ['azul', 'amarillo', 'añil'],
-    fruta: ['arándano', 'albaricoque', 'aceituna'],
-    marca: ['adidas', 'audi', 'apple'],
+    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
+    lugar: ["alemania", "argentina", "atenas", "brasil", "bogotá", "barcelona", "canadá", "china", "copenhague", "dinamarca", "dublín", "ecuador", "españa", "estocolmo", "francia", "finlandia", "florencia", "grecia", "guatemala", "ginebra", "holanda", "honduras", "helsinki", "italia", "irlanda", "islandia", "japón", "jamaica", "jerusalén", "kenia", "kuwait", "kiev", "libia", "lisboa", "londres", "méxico", "madrid", "moscú", "noruega", "nairobi", "nueva york", "oslo", "ottawa", "omán", "parís", "perú", "praga", "qatar", "quito", "rumanía", "roma", "rusia", "suecia", "suiza", "santiago", "tokio", "turquía", "Toronto", "uruguay", "ucrania", "venecia", "vietnam", "varsovia", "washington", "wellington", "xalapa", "yemen", "zagreb", "zimbabue"],
+    animal: ["araña", "águila", "avispa", "búho", "ballena", "buitre", "caballo", "canguro", "cocodrilo", "delfín", "dromedario", "dragón de komodo", "elefante", "erizo", "escorpión", "foca", "flamenco", "gato", "gacela", "gorila", "halcón", "hiena", "hipopótamo", "iguana", "impala", "jaguar", "jabalí", "jirafa", "koala", "krill", "león", "loro", "lobo", "mapache", "mariposa", "medusa", "nutria", "ñu", "orangután", "oso", "orca", "perro", "pingüino", "pantera", "quetzal", "rana", "ratón", "rinoceronte", "serpiente", "sapo", "tiburón", "tigre", "tortuga", "topo", "urraca", "urogallo", "vaca", "vicuña", "vívora", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote"],
+    objeto: ["anillo", "aguja", "arco", "barco", "botella", "brújula", "cámara", "cuchillo", "copa", "dado", "destornillador", "diamante", "escalera", "escoba", "espejo", "flauta", "flecha", "foco", "guitarra", "gafas", "globo", "hacha", "hilo", "imán", "impresora", "jarrón", "jeringa", "juguete", "lámpara", "lápiz", "libro", "martillo", "mesa", "micrófono", "nube", "navaja", "ordenador", "olla", "paraguas", "pelota", "piano", "queso", "reloj", "regla", "rueda", "silla", "sofá", "sombrero", "teléfono", "tijeras", "tambor", "uniforme", "usb", "violín", "vela", "ventana", "xilófono", "yoyo", "zapato", "zapatilla"],
+    color: ["azul", "amarillo", "añil", "blanco", "beige", "burdeos", "cian", "carmesí", "castaño", "dorado", "esmeralda", "escarlata", "fucsia", "grana", "gris", "hueso", "índigo", "jade", "kaki", "lavanda", "lila", "marrón", "magenta", "marfil", "naranja", "negro", "ocre", "oro", "púrpura", "plata", "perla", "rojo", "rosa", "salmón", "turquesa", "terracota", "ultramar", "verde", "violeta", "vino", "wengue", "xantico", "zafiro"],
+    fruta: ["arándano", "albaricoque", "aceituna", "banana", "cereza", "ciruela", "dátil", "durazno", "fresa", "frambuesa", "granada", "higo", "kiwi", "limón", "lima", "mandarina", "manzana", "melón", "mora", "naranja", "nectarina", "níspero", "papaya", "pera", "piña", "plátano", "pomelo", "sandía", "tamarindo", "toronja", "uva"],
+    marca: ["adidas", "audi", "apple", "bic", "bosch", "casio", "chanel", "dior", "dell", "ebay", "elle", "fila", "ford", "gucci", "google", "hp", "honda", "ibm", "ikea", "intel", "jaguar", "jeep", "kodak", "kia", "lego", "levi's", "lg", "microsoft", "mercedes", "motorola", "nike", "nintendo", "nestlé", "omega", "oracle", "pepsi", "prada", "puma", "quick", "rolex", "ray-ban", "reebok", "samsung", "sony", "sega", "toyota", "tesla", "tissot", "uber", "umbro", "visa", "volkswagen", "versace", "walmart", "wikipedia", "xbox", "xiaomi", "yahoo", "youtube", "zara", "zoom"],
   };
 
   for (const playerResponse of input.playerResponses) {
@@ -82,9 +82,11 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
             isAiWordValid = true;
         }
     }
-    // Si no encontró una palabra, "inventa" una (o la deja en blanco)
+    
+    // Si no encontró una palabra, ahora no inventa, simplemente se queda en blanco.
+    // Esto es más realista que inventar "Qlgo".
     if (!aiWord) {
-        aiWord = Math.random() < 0.5 ? `${input.letter}lgo` : ''; // inventa algo o la deja vacía
+        aiWord = '';
         isAiWordValid = false;
     }
     const aiWordLower = aiWord.toLowerCase();
