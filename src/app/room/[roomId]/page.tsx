@@ -13,6 +13,10 @@ import { onRoomUpdate, sendMessageToRoom, addPlayerToRoom } from '@/lib/room-ser
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { Loader2 } from 'lucide-react';
 
+export async function generateStaticParams() {
+  return [];
+}
+
 export default function RoomPage() {
   const router = useRouter();
   const params = useParams();
