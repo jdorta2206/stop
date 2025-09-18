@@ -33,13 +33,13 @@ export const RankingImage: React.FC<RankingImageProps> = ({ players }) => {
             <h1 className="text-5xl font-extrabold text-white text-center mb-1">
                 🏆 Ranking Semanal 🏆
             </h1>
-            <h2 className="text-3xl font-bold text-yellow-300 text-center">STOP Game</h2>
+            <h2 className="text-3xl font-bold text-yellow-300 text-center">Stop</h2>
         </div>
 
       <div className="flex items-end justify-center gap-4">
         {podiumOrder.map((player) => (
           <div key={player.rank} className="flex flex-col items-center">
-            <img src={player.avatar || `https://i.pravatar.cc/150?u=${player.name}`} alt={player.name} className="w-24 h-24 rounded-full border-4 border-yellow-300 mb-2" />
+            <img src={player.avatar || `https://placehold.co/150x150.png`} alt={player.name} className="w-24 h-24 rounded-full border-4 border-yellow-300 mb-2" data-ai-hint="avatar person" />
             <h3 className="text-white text-xl font-bold">{player.name}</h3>
             <div className={`flex items-center justify-center rounded-t-lg bg-gray-700/80 w-32 ${getPodiumHeight(player.rank)}`}>
               <div className="text-center text-white">

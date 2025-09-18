@@ -1,6 +1,7 @@
+
 'use server';
 
-import { ai } from '@/ai/genkit';
+import { ai } from '@/lib/genkit';
 import { z } from 'zod';
 
 const PlayerSchema = z.object({
@@ -29,7 +30,7 @@ const rankingPrompt = ai.definePrompt({
     input: { schema: GenerateRankingImageInputSchema },
     output: { schema: GenerateRankingImageOutputSchema },
     prompt: `
-      Eres un asistente de redes sociales para "STOP Game". Tu tarea es escribir el texto para una publicación de Facebook que anuncie a los ganadores del ranking {{timeframe}}.
+      Eres un asistente de redes sociales para "Stop". Tu tarea es escribir el texto para una publicación de Facebook que anuncie a los ganadores del ranking {{timeframe}}.
       
       **Tarea: Escribir el Texto del Post**
       - Redacta un texto corto y enérgico para la publicación de Facebook en español.

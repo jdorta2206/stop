@@ -9,21 +9,22 @@ export interface Player {
 }
 
 export interface PlayerScore {
-  id: string;
-  playerName: string;
-  photoURL?: string | null;
-  totalScore: number;
-  gamesPlayed: number;
-  gamesWon: number;
-  averageScore: number;
-  bestScore: number;
-  lastPlayed: any; // Firestore Timestamp or null
-  level: string;
-  achievements: string[];
-  coins: number;
-  dailyMissions: MissionProgress[];
-  missionsLastReset: string; // YYYY-MM-DD
+    id: string;
+    playerName: string;
+    photoURL?: string | null;
+    totalScore: number;
+    gamesPlayed: number;
+    gamesWon: number;
+    averageScore: number;
+    bestScore: number;
+    lastPlayed: any;
+    level: string;
+    achievements: string[];
+    coins: number;
+    dailyMissions: MissionProgress[];
+    missionsLastReset: string;
 }
+
 
 export interface GameResult {
     id: string;
@@ -35,6 +36,6 @@ export interface GameResult {
     letter: string;
     gameMode: 'solo' | 'multiplayer' | 'private';
     roomId?: string;
-    timestamp: any; // Firestore Timestamp
+    timestamp: any; // Can be Firestore Timestamp on server, Date on client
     won?: boolean;
 }

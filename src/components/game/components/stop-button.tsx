@@ -47,13 +47,11 @@ export const StopButton: React.FC<StopButtonProps> = ({
       <Button
         onClick={onClick}
         disabled={disabled}
-        variant="default"
+        variant="destructive"
         size="lg"
         className="
           w-full h-full
           p-0
-          bg-red-600 hover:bg-red-700
-          text-white
           font-bold text-2xl md:text-3xl
           shadow-xl
           active:scale-95

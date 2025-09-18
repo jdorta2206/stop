@@ -5,28 +5,41 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
-
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  name?: string;
-  photoURL?: string | null;
-}
+import { LogOut, User as UserIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function UserAccount() {
-  const { user, logout } = useAuth() as { user: AuthUser | null; logout: () => Promise<void> };
+  const { user, logout } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  if (!user) return null;
+  useEffect(() => {
+    // Ensure this runs only on the client
+    if (typeof window !== 'undefined') {
+      const savedAvatar = localStorage.getItem('user-avatar');
+      if (savedAvatar) {
+        setAvatarUrl(savedAvatar);
+      } else if (user?.photoURL) {
+        setAvatarUrl(user.photoURL);
+      }
+    }
+  }, [user?.photoURL]);
+
+
+  if (!user) {
+    return null;
+  }
+  
+  const fallbackContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : <UserIcon />;
+  const finalAvatarUrl = avatarUrl || user.photoURL || '';
 
   return (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.photoURL || ''} alt={user.name || 'User'} />
+                    <AvatarImage src={finalAvatarUrl} alt={user.displayName || 'User'} />
                     <AvatarFallback>
-                      {user.name ? user.name.charAt(0).toUpperCase() : <User />}
+                      {fallbackContent}
                     </AvatarFallback>
                 </Avatar>
             </Button>
@@ -34,12 +47,12 @@ export function UserAccount() {
         <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-medium leading-none">{user.displayName || 'Usuario sin nombre'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user.email || 'Sin email'}</p>
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer">
+            <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Cerrar sesión</span>
             </DropdownMenuItem>

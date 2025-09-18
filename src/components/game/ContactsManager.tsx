@@ -1,10 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Users, Search, X, Plus, Phone, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Users, Search, X, Plus, Phone, MessageSquare, BookUser, Check } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Contact {
   id: string;
@@ -19,35 +20,30 @@ interface ContactsManagerProps {
   onClose: () => void;
 }
 
-const mockContacts: Contact[] = [
-  { id: '1', name: 'Ana García', phone: '+34600123456', avatarUrl: 'https://i.pravatar.cc/150?img=1' },
-  { id: '2', name: 'Carlos Rodríguez', phone: '+34600789012', avatarUrl: 'https://i.pravatar.cc/150?img=3' },
-  { id: '3', name: 'Elena Martín', phone: '+34600345678', avatarUrl: 'https://i.pravatar.cc/150?img=5' },
-  { id: '4', name: 'Javier López', phone: '+34600901234', avatarUrl: 'https://i.pravatar.cc/150?img=7' },
-  { id: '5', name: 'María Sánchez', phone: '+34600567890', avatarUrl: 'https://i.pravatar.cc/150?img=9' },
-  { id: '6', name: 'Pablo Fernández', phone: '+34600112233' },
-  { id: '7', name: 'Sara Díaz', phone: '+34600445566', avatarUrl: 'https://i.pravatar.cc/150?img=10' },
-  { id: '8', name: 'Luis Torres', phone: '+34600778899' }
-];
-
 const content = {
   es: {
     title: 'Invitar Contactos',
-    search: 'Buscar contactos',
+    search: 'Buscar contactos...',
     noResults: 'No se encontraron contactos',
     inviteVia: 'Invitar vía',
     whatsapp: 'WhatsApp',
     sms: 'SMS',
-    inviteMessage: '¡Únete a mi partida de STOP! Usa el código',
+    inviteMessage: '¡Únete a mi partida de STOP! Usa el código:',
     close: 'Cerrar',
     myContacts: 'Mis Contactos',
     searchContacts: 'Buscar por nombre o teléfono',
     inviteSent: 'Invitación enviada',
-    inviteAll: 'Invitar a todos'
+    inviteAll: 'Invitar a todos',
+    featureComingSoon: 'Accede a tus contactos',
+    featureDescription: 'Permite que el juego acceda a tus contactos para enviar invitaciones fácilmente.',
+    accessButton: 'Permitir Acceso',
+    browserNotSupported: 'Tu navegador no soporta esta función.',
+    errorLoading: 'No se pudieron cargar los contactos.',
+    noPermission: 'Permiso denegado. No podemos acceder a tus contactos.'
   },
   en: {
     title: 'Invite Contacts',
-    search: 'Search contacts',
+    search: 'Search contacts...',
     noResults: 'No contacts found',
     inviteVia: 'Invite via',
     whatsapp: 'WhatsApp',
@@ -57,11 +53,17 @@ const content = {
     myContacts: 'My Contacts',
     searchContacts: 'Search by name or phone',
     inviteSent: 'Invitation sent',
-    inviteAll: 'Invite all'
+    inviteAll: 'Invite all',
+    featureComingSoon: 'Access Your Contacts',
+    featureDescription: 'Allow the game to access your contacts to easily send invitations.',
+    accessButton: 'Allow Access',
+    browserNotSupported: 'Your browser does not support this feature.',
+    errorLoading: 'Could not load contacts.',
+    noPermission: 'Permission denied. We cannot access your contacts.'
   },
   fr: {
     title: 'Inviter des Contacts',
-    search: 'Rechercher des contacts',
+    search: 'Rechercher des contacts...',
     noResults: 'Aucun contact trouvé',
     inviteVia: 'Inviter via',
     whatsapp: 'WhatsApp',
@@ -71,11 +73,17 @@ const content = {
     myContacts: 'Mes Contacts',
     searchContacts: 'Rechercher par nom ou téléphone',
     inviteSent: 'Invitation envoyée',
-    inviteAll: 'Inviter tous'
+    inviteAll: 'Inviter tous',
+    featureComingSoon: 'Accédez à vos contacts',
+    featureDescription: 'Autorisez le jeu à accéder à vos contacts pour envoyer facilement des invitations.',
+    accessButton: 'Autoriser l\'accès',
+    browserNotSupported: 'Votre navigateur ne prend pas en charge cette fonctionnalité.',
+    errorLoading: 'Impossible de charger les contacts.',
+    noPermission: 'Permission refusée. Nous ne pouvons pas accéder à vos contacts.'
   },
   pt: {
     title: 'Convidar Contatos',
-    search: 'Pesquisar contatos',
+    search: 'Pesquisar contatos...',
     noResults: 'Nenhum contato encontrado',
     inviteVia: 'Convidar via',
     whatsapp: 'WhatsApp',
@@ -85,161 +93,165 @@ const content = {
     myContacts: 'Meus Contatos',
     searchContacts: 'Pesquisar por nome ou telefone',
     inviteSent: 'Convite enviado',
-    inviteAll: 'Convidar todos'
+    inviteAll: 'Convidar todos',
+    featureComingSoon: 'Acesse seus contatos',
+    featureDescription: 'Permita que o jogo acesse seus contatos para enviar convites facilmente.',
+    accessButton: 'Permitir Acesso',
+    browserNotSupported: 'Seu navegador não suporta este recurso.',
+    errorLoading: 'Não foi possível carregar os contatos.',
+    noPermission: 'Permissão negada. Não podemos acessar seus contatos.'
   }
 };
 
 export default function ContactsManager({ language, roomCode, onClose }: ContactsManagerProps) {
-  const [contacts, setContacts] = useState<Contact[]>(mockContacts);
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>(mockContacts);
-  const [invitedContacts, setInvitedContacts] = useState<Set<string>>(new Set());
-
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+  const [hasPermission, setHasPermission] = useState(false);
+  
   const t = content[language];
 
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredContacts(contacts);
-      return;
+  const requestContactsPermission = async () => {
+    // La API de Contactos solo funciona en contextos seguros (HTTPS)
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      try {
+        const props = ['name', 'tel', 'icon'];
+        const opts = { multiple: true };
+        const selected = await (navigator as any).contacts.select(props, opts);
+        
+        if(selected.length > 0) {
+            const mappedContacts: Contact[] = selected.map((c: any) => ({
+                id: c.tel[0] || c.name[0],
+                name: c.name[0],
+                phone: c.tel[0],
+                avatarUrl: c.icon?.length ? URL.createObjectURL(c.icon[0]) : undefined
+            }));
+            setContacts(mappedContacts);
+            setHasPermission(true);
+        }
+      } catch (ex) {
+        setHasPermission(false);
+        toast({ title: t.errorLoading, variant: 'destructive'});
+      }
+    } else {
+        toast({ title: t.browserNotSupported, variant: 'destructive'});
     }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = contacts.filter(contact => 
-      contact.name.toLowerCase().includes(query) || 
-      contact.phone.includes(query)
-    );
-    setFilteredContacts(filtered);
-  }, [searchQuery, contacts]);
-
-  const requestContacts = async () => {
-    // This is a placeholder for a real implementation that would use the Contact Picker API
   };
 
-  useEffect(() => {
-    requestContacts();
-  }, []);
+  const handleSelectContact = (contactId: string) => {
+    setSelectedContacts(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(contactId)) {
+        newSelection.delete(contactId);
+      } else {
+        newSelection.add(contactId);
+      }
+      return newSelection;
+    });
+  };
 
-  const inviteViaWhatsApp = (contact: Contact) => {
-    const message = encodeURIComponent(`${t.inviteMessage} ${roomCode} https://stop-game.app/join/${roomCode}`);
-    const url = `https://wa.me/${contact.phone.replace(/[+\s]/g, '')}?text=${message}`;
+  const sendInvite = (platform: 'whatsapp' | 'sms') => {
+    const message = encodeURIComponent(`${t.inviteMessage} ${roomCode}`);
+    const selectedPhones = Array.from(selectedContacts).map(id => contacts.find(c => c.id === id)?.phone).filter(Boolean);
     
-    setInvitedContacts(prev => new Set([...prev, contact.id]));
+    if (selectedPhones.length === 0) return;
+
+    // Para SMS, el estándar es un poco diferente entre plataformas
+    const phoneList = selectedPhones.join(',');
+    
+    let url = '';
+    if (platform === 'whatsapp') {
+      url = `https://api.whatsapp.com/send?text=${message}`;
+    } else {
+       url = `sms:${phoneList}?&body=${message}`;
+    }
     
     window.open(url, '_blank');
   };
 
-  const inviteViaSMS = (contact: Contact) => {
-    const message = encodeURIComponent(`${t.inviteMessage} ${roomCode}`);
-    const url = `sms:${contact.phone}?body=${message}`;
-    
-    setInvitedContacts(prev => new Set([...prev, contact.id]));
-    
-    window.location.href = url;
-  };
+  const filteredContacts = useMemo(() => {
+    return contacts.filter(c => 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.phone.includes(searchQuery)
+    );
+  }, [contacts, searchQuery]);
 
-  const inviteAllViaWhatsApp = () => {
-    const message = encodeURIComponent(`${t.inviteMessage} ${roomCode} https://stop-game.app/join/${roomCode}`);
+  const renderContent = () => {
+    if (!hasPermission) {
+      return (
+        <div className="flex flex-col justify-center items-center text-center h-full">
+            <BookUser className="h-20 w-20 text-white/50 mb-4" />
+            <h4 className="text-lg font-bold text-white mb-2">{t.featureComingSoon}</h4>
+            <p className="text-white/70 max-w-xs mb-6">{t.featureDescription}</p>
+            <Button onClick={requestContactsPermission}>{t.accessButton}</Button>
+        </div>
+      );
+    }
     
-    window.open(`https://web.whatsapp.com/`, '_blank');
-    
-    setInvitedContacts(new Set(contacts.map(c => c.id)));
-  };
+    return (
+        <>
+            <div className="px-4 pt-2 pb-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input 
+                        placeholder={t.search} 
+                        className="pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </div>
+            <CardContent className="overflow-y-auto flex-grow p-4 space-y-2">
+                {filteredContacts.length > 0 ? filteredContacts.map(contact => (
+                    <div 
+                        key={contact.id} 
+                        onClick={() => handleSelectContact(contact.id)}
+                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedContacts.has(contact.id) ? 'bg-white/30' : 'hover:bg-white/10'}`}
+                    >
+                        <Avatar>
+                            <AvatarImage src={contact.avatarUrl} />
+                            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-grow">
+                            <p className="font-semibold">{contact.name}</p>
+                            <p className="text-xs text-white/70">{contact.phone}</p>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedContacts.has(contact.id) ? 'bg-green-500 border-green-400' : 'border-white/50'}`}>
+                            {selectedContacts.has(contact.id) && <Check className="h-4 w-4 text-white" />}
+                        </div>
+                    </div>
+                )) : (
+                    <p className="text-center text-white/70 py-8">{t.noResults}</p>
+                )}
+            </CardContent>
+            <CardFooter className="flex gap-2">
+                <Button className="flex-1" onClick={() => sendInvite('whatsapp')} disabled={selectedContacts.size === 0}>
+                    <MessageSquare className="mr-2 h-4 w-4" /> {t.whatsapp}
+                </Button>
+                <Button className="flex-1" variant="outline" onClick={() => sendInvite('sms')} disabled={selectedContacts.size === 0}>
+                    <Phone className="mr-2 h-4 w-4" /> {t.sms}
+                </Button>
+            </CardFooter>
+        </>
+    )
+  }
 
   return (
-    <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white w-full max-w-md max-h-[80vh] flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="bg-black/50 backdrop-blur-lg border-white/20 text-white w-full max-w-md h-[70vh] flex flex-col shadow-2xl rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between p-4">
         <div className="flex items-center gap-2">
           <Users size={20} />
           <h3 className="font-bold text-xl">{t.title}</h3>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose} className="text-white">
+        <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/20 rounded-full">
           <X size={20} />
         </Button>
       </CardHeader>
       
-      <div className="px-4 pb-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-white/60" />
-          <Input
-            placeholder={t.searchContacts}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white/20 border-white/30 text-white placeholder-white/60"
-          />
-        </div>
-      </div>
+      {renderContent()}
       
-      <CardContent className="overflow-y-auto flex-grow">
-        <div className="space-y-1 mt-2">
-          <div className="flex justify-between items-center mb-3">
-            <h4 className="font-medium text-sm text-white/70">{t.myContacts} ({filteredContacts.length})</h4>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={inviteAllViaWhatsApp}
-              className="bg-white/10 border-white/30 text-white text-xs hover:bg-green-700"
-            >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              {t.inviteAll}
-            </Button>
-          </div>
-          
-          {filteredContacts.length === 0 ? (
-            <div className="text-center py-8 text-white/60">
-              <p>{t.noResults}</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredContacts.map((contact) => (
-                <div key={contact.id} className="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-white/20">
-                      {contact.avatarUrl ? (
-                        <AvatarImage src={contact.avatarUrl} alt={contact.name} />
-                      ) : (
-                        <AvatarFallback className="bg-red-700 text-white">
-                          {contact.name.charAt(0)}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-xs text-white/70">{contact.phone}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1">
-                    {invitedContacts.has(contact.id) ? (
-                      <span className="text-xs text-green-400">{t.inviteSent}</span>
-                    ) : (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-green-400 hover:text-white hover:bg-green-700"
-                          onClick={() => inviteViaWhatsApp(contact)}
-                          title={`${t.inviteVia} WhatsApp`}
-                        >
-                          <MessageSquare size={18} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-blue-400 hover:text-white hover:bg-blue-700"
-                          onClick={() => inviteViaSMS(contact)}
-                          title={`${t.inviteVia} SMS`}
-                        >
-                          <Phone size={18} />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
     </Card>
   );
 }
+

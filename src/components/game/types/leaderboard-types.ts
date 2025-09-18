@@ -26,11 +26,11 @@ export interface LeaderboardCardProps {
 }
 
 export interface GlobalLeaderboardCardProps {
-  leaderboardData: EnrichedPlayerScore[];
+  leaderboardData: PlayerScore[];
   language: Language;
   currentUserId?: string;
-  onAddFriend: (player: EnrichedPlayerScore) => void;
-  onChallenge: (player: EnrichedPlayerScore) => void;
+  onAddFriend: (player: PlayerScore) => void;
+  onChallenge: (player: PlayerScore) => void;
   translateUi: any; 
   className?: string;
   isLoading?: boolean;

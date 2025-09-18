@@ -9,7 +9,7 @@ import {
   Loader2,
   UserPlus
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import type { Language } from '@/contexts/language-context';
 import { searchUsers, addFriend, Friend } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
@@ -85,7 +85,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
                     <div key={player.id} className="flex items-center justify-between p-2 rounded-lg bg-card/50">
                         <div className="flex items-center gap-3">
                             <Avatar>
-                                <AvatarImage src={player.avatar || ''} />
+                                <AvatarImage src={player.avatar || ''} data-ai-hint="avatar person" />
                                 <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span className="font-medium">{player.name}</span>

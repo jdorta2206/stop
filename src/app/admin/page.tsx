@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,13 +9,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
-
-// Definición de tipo para el usuario
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  // Agrega otras propiedades que uses
-}
+import type { AppUser } from '@/hooks/use-auth';
 
 // Mock data for admin panel
 const MOCK_USERS = [
@@ -32,7 +27,7 @@ const MOCK_STATS = {
 
 export default function AdminPage() {
     const { language, translate } = useLanguage();
-    const { user, isLoading: authLoading } = useAuth() as { user: AuthUser | null; isLoading: boolean };
+    const { user, isLoading: authLoading } = useAuth();
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -56,7 +51,7 @@ export default function AdminPage() {
     if (!isAdmin) {
         return (
             <div className="flex flex-col min-h-screen">
-                <AppHeader onToggleChat={() => {}} isChatOpen={false} />
+                <AppHeader />
                 <main className="flex-grow flex items-center justify-center text-center">
                     <Card className="w-full max-w-md">
                         <CardHeader>
@@ -75,7 +70,7 @@ export default function AdminPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-muted/40">
-            <AppHeader onToggleChat={() => {}} isChatOpen={false} />
+            <AppHeader />
             <main className="flex-grow container mx-auto p-4 md:p-8">
                 <h1 className="text-3xl font-bold mb-6 flex items-center gap-3 text-primary"><ShieldCheck /> Panel de Administración</h1>
 

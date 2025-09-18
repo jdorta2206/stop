@@ -4,27 +4,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth, type User } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
 import { rankingManager } from '@/lib/ranking';
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
-import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
 import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
-
-// Definición de tipo para el usuario autenticado
-interface AuthUser {
-  uid: string;
-  email: string | null;
-  // Agrega aquí otras propiedades que necesites
-}
+import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
+import FriendsInvite from '@/components/social/FriendsInvite';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -33,35 +28,42 @@ export default function LeaderboardPage() {
   const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [friendsLeaderboard, setFriendsLeaderboard] = useState<PlayerScore[]>([]);
   const [personalStats, setPersonalStats] = useState<PlayerScore | null>(null);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
-      if (user) {
-        const personalData = await rankingManager.getPlayerRanking(user.uid);
+      if (userId) {
+        const personalData = await rankingManager.getPlayerRanking(userId);
         setPersonalStats(personalData);
         
-        const historyData = await rankingManager.getGameHistory(user.uid, 5);
+        const historyData = await rankingManager.getGameHistory(userId, 5);
         setGameHistory(historyData);
+        
+        const friendsList = await getFriends(userId);
+        setFriends(friendsList);
 
-        const friendIds = (await getFriends(user.uid)).map(f => f.id);
-        const friendScores = await Promise.all(
-          friendIds.map(id => rankingManager.getPlayerRanking(id))
-        );
-        const validFriendScores = friendScores.filter((s): s is PlayerScore => s !== null);
-        setFriendsLeaderboard(validFriendScores);
+        if (friendsList.length > 0) {
+            const friendIds = friendsList.map(f => f.id);
+            const friendRankings = await Promise.all(friendIds.map(id => rankingManager.getPlayerRanking(id)));
+            const validFriendRankings = friendRankings.filter(p => p !== null) as Awaited<ReturnType<typeof rankingManager.getPlayerRanking>>[];
+            const enrichedFriendRankings = validFriendRankings.map((p, index) => ({...p, id: friendIds[index] } as PlayerScore));
+            setFriendsLeaderboard(enrichedFriendRankings);
+        } else {
+            setFriendsLeaderboard([]);
+        }
       }
     } catch (error) {
       toast({ 
         title: translate('error'), 
-        description: translate('leaderboards.loadError'), 
+        description: (error as Error).message,
         variant: "destructive" 
       });
     } finally {
@@ -70,7 +72,11 @@ export default function LeaderboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (user) {
+      fetchData(user.uid);
+    } else {
+      fetchData(); // Fetch global data even if not logged in
+    }
   }, [user]);
 
   const handleAddFriend = async (player: PlayerScore) => {
@@ -87,7 +93,7 @@ export default function LeaderboardPage() {
         title: translate('success'), 
         description: translate('leaderboards.friendAdded', { name: player.playerName }) 
       });
-      fetchData(); // Refresh friends list
+      fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast({ 
         title: translate('error'), 
@@ -96,6 +102,10 @@ export default function LeaderboardPage() {
       });
     }
   };
+  
+  const onFriendAdded = () => {
+      if(user) fetchData(user.uid);
+  }
 
   const handleChallenge = (player: PlayerScore) => {
     toast({
@@ -104,7 +114,7 @@ export default function LeaderboardPage() {
     });
   };
 
-  if (isAuthLoading) {
+  if (isAuthLoading && isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-16 w-16 animate-spin" />
@@ -114,11 +124,11 @@ export default function LeaderboardPage() {
   
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
-      <AppHeader onToggleChat={() => {}} isChatOpen={false} />
+      <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
-          <Button onClick={fetchData} disabled={isLoading} variant="outline">
+          <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? translate('loading') : translate('refresh')}
           </Button>
@@ -138,7 +148,7 @@ export default function LeaderboardPage() {
             {user && (
               <FriendsLeaderboardCard 
                 leaderboardData={friendsLeaderboard}
-                currentUserId={user.uid}
+                currentUserId={user?.uid}
                 onChallenge={handleChallenge}
                 language={language}
                 translateUi={translate}
@@ -148,14 +158,24 @@ export default function LeaderboardPage() {
           </div>
           
           <div className="space-y-6">
-            {user && personalStats && (
+            {user && personalStats ? (
               <>
                 <PersonalHighScoreCard highScore={personalStats.bestScore} translateUi={translate} />
                 <GameHistoryCard gameHistory={gameHistory} translateUi={translate} />
-                <AchievementsCard achievements={personalStats.achievements} translateUi={translate} />
+                <AchievementsCard achievements={personalStats.achievements || []} translateUi={translate} />
+                 <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserPlus />
+                      Añadir Amigos
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FriendsInvite onFriendAdded={onFriendAdded} />
+                  </CardContent>
+                </Card>
               </>
-            )}
-            {!user && !isLoading && (
+            ) : !user && !isLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
                 <Button onClick={() => router.push('/')}>

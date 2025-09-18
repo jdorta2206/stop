@@ -27,7 +27,8 @@ export interface Player {
     avatar?: string | null;
     isReady: boolean;
     status: 'online' | 'away' | 'offline';
-    joinedAt: any; 
+    joinedAt: any;
+    isHost?: boolean;
 }
 
 export interface Room {
@@ -35,6 +36,7 @@ export interface Room {
     players: Record<string, Player>;
     createdAt: any;
     status: 'waiting' | 'playing' | 'finished';
+    hostId: string;
     settings: {
         maxPlayers: number;
         roundDuration: number;
@@ -57,14 +59,17 @@ const generateRoomId = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 };
 
-export const createRoom = async (creatorId: string, creatorName: string): Promise<Room> => {
+export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
     const roomId = generateRoomId();
+    
     const creatorPlayer: Player = {
         id: creatorId,
         name: creatorName,
+        avatar: creatorAvatar,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),
+        isHost: true,
     };
 
     const newRoom: Room = {
@@ -72,12 +77,13 @@ export const createRoom = async (creatorId: string, creatorName: string): Promis
         players: {
             [creatorId]: creatorPlayer,
         },
+        hostId: creatorId,
         createdAt: serverTimestamp(),
         status: 'waiting',
         settings: {
             maxPlayers: 8,
             roundDuration: 60,
-            isPrivate: false,
+            isPrivate: true,
             language: 'es'
         },
     };
@@ -128,10 +134,33 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
-    await updateDoc(roomDocRef, {
-        [`players.${playerId}`]: deleteField()
-    });
+    const room = await getRoom(roomId);
+    if (!room) return;
+
+    // Check if the player to be removed is the host
+    if (room.hostId === playerId) {
+        const otherPlayers = Object.keys(room.players).filter(id => id !== playerId);
+        // If there are other players, assign the first one as the new host
+        if (otherPlayers.length > 0) {
+            const newHostId = otherPlayers[0];
+            await updateDoc(roomDocRef, {
+                [`players.${playerId}`]: deleteField(),
+                hostId: newHostId,
+                [`players.${newHostId}.isHost`]: true
+            });
+        } else {
+            // If no other players, the room can be deleted, but for now just remove the player
+            await updateDoc(roomDocRef, {
+                [`players.${playerId}`]: deleteField()
+            });
+        }
+    } else {
+        await updateDoc(roomDocRef, {
+            [`players.${playerId}`]: deleteField()
+        });
+    }
 };
+
 
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
@@ -291,7 +320,8 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
             const data = doc.data();
             messages.push({
                 id: doc.id,
-                ...data,
+                text: data.text,
+                sender: data.sender,
                 timestamp: data.timestamp?.toDate() || new Date(),
             } as ChatMessage);
         });

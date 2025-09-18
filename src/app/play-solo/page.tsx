@@ -1,25 +1,27 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/components/ui/use-toast';
 import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
-import { evaluateRound, type EvaluateRoundInput, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode } from '@/components/game/types';
-import { useAuth, type User } from '@/hooks/use-auth';
+import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
+import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
+import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
 import { useSound } from '@/hooks/use-sound';
+import { Loader2 } from 'lucide-react';
+import { RouletteWheel } from '@/components/game/components/roulette-wheel';
+import { ResultsArea } from '@/components/game/components/results-area';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
-  es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta o Verdura", "Marca"],
-  en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit or Vegetable", "Brand"],
-  fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit ou Légume", "Marque"],
-  pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta ou Legume", "Marca"],
+  es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
+  en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit", "Brand"],
+  fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit", "Marque"],
+  pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta", "Marca"],
 };
 
 const ALPHABET_BY_LANG: Record<string, string[]> = {
@@ -31,89 +33,254 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 
 const ROUND_DURATION = 60; // seconds
 
-export type ProcessingState = 'idle' | 'thinking' | 'validating' | 'scoring';
-
 export default function PlaySoloPage() {
-  const router = useRouter();
   const { language, translate } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
   const { playSound, stopMusic, playMusic } = useSound();
 
-  const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const [processingState, setProcessingState] = useState<ProcessingState>('idle');
-  const [categories, setCategories] = useState<string[]>([]);
-  const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
+  const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
-  const [totalPlayerScore, setTotalPlayerScore] = useState<number>(0);
-  const [totalAiScore, setTotalAiScore] = useState<number>(0);
-  const [gameState, setGameState] = useState<GameState>('SPINNING');
- const [roundResults, setRoundResults] = useState<EvaluateRoundOutput['results'] | null>(null);
- // ... (resto de estados)
+  const [categories, setCategories] = useState<string[]>([]);
+  const [alphabet, setAlphabet] = useState<string[]>([]);
+  const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
+  const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
+  const [playerRoundScore, setPlayerRoundScore] = useState(0);
+  const [aiRoundScore, setAiRoundScore] = useState(0);
+  const [totalPlayerScore, setTotalPlayerScore] = useState(0);
+  const [totalAiScore, setTotalAiScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isEvaluatingRef = useRef(false);
+
+  const stateRef = useRef({
+    playerResponses,
+    currentLetter,
+    language,
+    categories,
+    user
+  });
+
+  useEffect(() => {
+    stateRef.current = { playerResponses, currentLetter, language, categories, user };
+  }, [playerResponses, currentLetter, language, categories, user]);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   const handleStop = useCallback(async () => {
-    if (timerId) clearInterval(timerId);
-    setTimerId(null);
-    setIsLoadingAi(true);
-    setProcessingState('thinking');
-
-    if (!currentLetter) {
-        toast({ title: "Error", description: "No letter selected.", variant: "destructive"});
-        setIsLoadingAi(false);
-        return;
-    }
-
-    const playerPayload: EvaluateRoundInput['playerResponses'] = categories.map(cat => ({
-        category: cat,
-        word: playerResponses[cat] || ""
-    }));
+    if (isEvaluatingRef.current) return;
+    
+    stopTimer();
+    setGameState('EVALUATING');
+    isEvaluatingRef.current = true;
+    stopMusic();
 
     try {
-        const results = await evaluateRound({
-            letter: currentLetter,
-            language: language as LanguageCode,
-            playerResponses: playerPayload,
+      const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage, user: currentUser } = stateRef.current;
+      
+      if (!letter) {
+        throw new Error("No se seleccionó ninguna letra para la ronda.");
+      }
+
+      const playerPayload = currentCategories.map(cat => ({
+        category: cat,
+        word: responses[cat] || ""
+      }));
+      
+      const evaluationOutput: EvaluateRoundOutput = await evaluateRound({
+        letter: letter,
+        language: currentLanguage as LanguageCode,
+        playerResponses: playerPayload,
+      });
+      
+      if (!evaluationOutput || !evaluationOutput.results) {
+        throw new Error("La IA devolvió un formato de respuesta inválido.");
+      }
+      
+      const { results, playerTotalScore, aiTotalScore: calculatedAiScore } = evaluationOutput;
+      
+      setPlayerRoundScore(playerTotalScore);
+      setTotalPlayerScore(prev => prev + playerTotalScore);
+      setAiRoundScore(calculatedAiScore);
+      setTotalAiScore(prev => prev + calculatedAiScore);
+      setRoundResults(results);
+      
+      if (playerTotalScore > calculatedAiScore) playSound('round-win');
+      else playSound('round-lose');
+
+      setGameState('RESULTS');
+
+      // Save result in background, AFTER UI has updated
+      if (currentUser) {
+        rankingManager.saveGameResult({
+          playerId: currentUser.uid,
+          playerName: currentUser.displayName || 'Jugador',
+          photoURL: currentUser.photoURL || null,
+          score: playerTotalScore,
+          categories: responses,
+          letter: letter,
+          gameMode: 'solo',
+          won: playerTotalScore > calculatedAiScore,
+        }).catch(dbError => {
+          console.error("Error saving game result:", dbError);
+          toast({
+            title: "Error de Guardado",
+            description: "No se pudo guardar tu puntuación, pero tus resultados están aquí.",
+            variant: 'destructive'
+          });
         });
+      }
 
-        setProcessingState('validating');
-        setRoundResults(results.results);
-        
-        setProcessingState('scoring');
-        const { playerRoundScore, aiRoundScore } = Object.values(results.results).reduce((acc, res) => {
-            acc.playerRoundScore += res.player.score;
-            acc.aiRoundScore += res.ai.score;
-            return acc;
-        }, { playerRoundScore: 0, aiRoundScore: 0 });
-
-        setTotalPlayerScore(prev => prev + playerRoundScore);
-        setTotalAiScore(prev => prev + aiRoundScore);
-        
-        if(playerRoundScore > aiRoundScore) playSound('round-win');
-        else playSound('round-lose');
-
-        if(user){
-            await rankingManager.saveGameResult({
-                playerId: user.uid,
-                playerName: user.name || 'Jugador',
-                photoURL: user.photoURL || null,
-                score: playerRoundScore,
-                categories: playerResponses,
-                letter: currentLetter,
-                gameMode: 'solo',
-                won: playerRoundScore > aiRoundScore,
-            });
-        }
-
-        setGameState('RESULTS');
     } catch (error) {
-        toast({ title: translate('notifications.aiError.title'), description: (error as Error).message, variant: 'destructive'});
-        setGameState('PLAYING'); // Revert to playing to allow retry
+      console.error("Error en handleStop:", error);
+      toast({
+        title: translate('notifications.aiError.title'),
+        description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`,
+        variant: 'destructive'
+      });
+      setGameState('PLAYING');
     } finally {
-        setIsLoadingAi(false);
-        setProcessingState('idle');
+      isEvaluatingRef.current = false;
     }
-  }, [currentLetter, playerResponses, categories, language, toast, translate, user, timerId, playSound]);
+  }, [stopTimer, stopMusic, playSound, toast, translate]);
 
-  // ... (resto del componente)
+
+  const startNewRound = useCallback(() => {
+    setGameState('SPINNING');
+    setPlayerResponses({});
+    setRoundResults(null);
+    setCurrentLetter(null);
+    setTimeLeft(ROUND_DURATION);
+    stopMusic();
+    isEvaluatingRef.current = false;
+  }, [stopMusic]);
+
+
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prevTime => {
+          if (prevTime <= 1) {
+            stopTimer();
+            handleStop();
+            return 0;
+          }
+          if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
+          return prevTime - 1;
+        });
+      }, 1000);
+    } else {
+      stopTimer();
+    }
+    
+    return () => stopTimer();
+  }, [gameState, handleStop, playSound, stopTimer]);
+
+
+  useEffect(() => {
+    setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
+    setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
+  }, [language]);
+  
+  useEffect(() => {
+    startNewRound();
+  }, [startNewRound]);
+  
+  const handleSpinComplete = (letter: string) => {
+    setCurrentLetter(letter);
+    setGameState('PLAYING');
+    setTimeLeft(ROUND_DURATION);
+    playMusic();
+  };
+  
+  const handleInputChange = (category: string, value: string) => {
+    setPlayerResponses(prev => ({ ...prev, [category]: value }));
+  };
+
+  const getRoundWinner = () => {
+    if (playerRoundScore > aiRoundScore) {
+      return user?.displayName || 'Jugador';
+    }
+    if (aiRoundScore > playerRoundScore) {
+      return 'IA';
+    }
+    if (playerRoundScore > 0 && playerRoundScore === aiRoundScore) {
+        return translate('game.results.winner.tie');
+    }
+    return translate('game.results.winner.none');
+  }
+
+  const renderContent = () => {
+    switch (gameState) {
+      case 'SPINNING':
+        return (
+          <RouletteWheel 
+            alphabet={alphabet}
+            language={language as LanguageCode}
+            onSpinComplete={handleSpinComplete}
+            className="my-8"
+          />
+        );
+      case 'PLAYING':
+        return (
+          <GameArea
+            key={currentLetter}
+            currentLetter={currentLetter}
+            categories={categories}
+            playerResponses={playerResponses}
+            onInputChange={handleInputChange}
+            translateUi={translate}
+            onStop={handleStop}
+            timeLeft={timeLeft}
+            roundDuration={ROUND_DURATION}
+          />
+        );
+      case 'EVALUATING':
+        return (
+          <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+            <Loader2 className="h-16 w-16 animate-spin mb-4" />
+            <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
+            <p className="text-white/80 mt-2">{translate('game.loadingAI.description')}</p>
+          </div>
+        );
+      case 'RESULTS':
+        return (
+          <ResultsArea
+            key={`results-${currentLetter}`}
+            roundResults={roundResults}
+            playerRoundScore={playerRoundScore}
+            aiRoundScore={aiRoundScore}
+            roundWinner={getRoundWinner()}
+            totalPlayerScore={totalPlayerScore}
+            totalAiScore={totalAiScore}
+            startNextRound={startNewRound}
+            translateUi={translate}
+            currentLetter={currentLetter}
+          />
+        );
+      case 'IDLE':
+      default:
+         return (
+          <div className="flex h-screen items-center justify-center">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen text-foreground">
+      <AppHeader />
+      <main className="flex-grow flex items-center justify-center p-4">
+        {renderContent()}
+      </main>
+      <AppFooter language={language as LanguageCode} />
+    </div>
+  );
 }

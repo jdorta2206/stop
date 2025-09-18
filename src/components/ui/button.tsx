@@ -43,11 +43,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, va
   const { playSound } = useSound();
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    if (withSound) {
-      playSound('click');
-    }
+    // Primero, ejecutar la lógica original del botón de forma síncrona
     if (onClick) {
       onClick(e);
+    }
+    // Luego, reproducir el sonido sin bloquear el evento principal
+    if (withSound) {
+      playSound('click');
     }
   }
 

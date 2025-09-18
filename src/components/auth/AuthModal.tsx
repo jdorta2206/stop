@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth'; 
 import { Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { rankingManager } from '@/lib/ranking';
+import type { User } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="18" height="18" {...props}>
@@ -31,25 +33,39 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, loginWithGoogle, loginWithFacebook, isLoading, error } = useAuth();
   const { toast } = useToast();
   
-  // This effect closes the modal once the user is successfully logged in and loaded.
   useEffect(() => {
-    if (user && isOpen && !isLoading) {
+    if (user && isOpen) {
       onClose();
     }
-  }, [user, isOpen, onClose, isLoading]);
+  }, [user, isOpen, onClose]);
   
   useEffect(() => {
     if (error) {
        toast({
         title: "Error de inicio de sesión",
-        description: error.message || "No se pudo completar el inicio de sesión. Por favor, revisa la consola y asegúrate de que tu dominio esté autorizado en Firebase.",
+        description: error.message || "No se pudo completar el inicio de sesión.",
         variant: 'destructive'
       });
     }
   }, [error, toast]);
 
+  const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
+    try {
+        const firebaseUser = await loginMethod();
+        if (firebaseUser?.uid) {
+            // After successful login, ensure the user profile exists in Firestore.
+            // This is CRITICAL to ensure all subsequent operations have a player profile to work with.
+            await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
+            toast({ title: "¡Bienvenido!", description: "Has iniciado sesión correctamente." });
+            onClose();
+        }
+    } catch (e: any) {
+        toast({ title: "Error", description: `Error al iniciar sesión: ${e.message}`, variant: 'destructive'});
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { onClose(); }}}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
@@ -71,7 +87,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => loginWithGoogle()}
+                    onClick={() => handleLogin(loginWithGoogle)}
                     disabled={isLoading}
                 >
                     <GoogleIcon />
@@ -80,7 +96,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                  <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => loginWithFacebook()}
+                    onClick={() => handleLogin(loginWithFacebook)}
                     disabled={isLoading}
                 >
                     <FacebookIcon />

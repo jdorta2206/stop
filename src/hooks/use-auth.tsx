@@ -1,29 +1,25 @@
 
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect, useState } from "react";
+import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
-import { rankingManager } from "@/lib/ranking";
 import { useToast } from "@/components/ui/use-toast";
-import type { PlayerScore } from "@/components/game/types";
 
-// The final, unified User object for the app.
-// It combines Firebase Auth info with our game-specific PlayerScore.
-export interface User extends Omit<PlayerScore, 'id' | 'playerName' | 'photoURL'> {
-  uid: string;
-  name: string | null;
-  photoURL?: string | null;
-  coins: number;
+// AppUser se usará en otras partes de la app, pero el hook solo expone FirebaseUser
+export interface AppUser extends FirebaseUser {
+  // Campos del perfil de la base de datos que se pueden añadir
+  totalScore?: number;
+  level?: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: FirebaseUser | null | undefined;
   isLoading: boolean;
   error?: Error | null;
-  loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
+  loginWithGoogle: () => Promise<FirebaseUser | undefined>;
+  loginWithFacebook: () => Promise<FirebaseUser | undefined>;
   logout: () => Promise<void>;
 }
 
@@ -36,99 +32,49 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { toast } = useToast();
   
-  // The single source of truth for Firebase Auth state
   const [firebaseUser, authLoading, authError] = useAuthState(auth);
   
-  // States for the sign-in processes
   const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  // The final user object for the application
-  const [user, setUser] = useState<User | null>(null);
-  // State to manage our internal loading (e.g., Firestore sync)
-  const [isSyncing, setIsSyncing] = useState(true);
-
-  // This useEffect is the core of the new logic.
-  // It reacts to changes in `firebaseUser` from `useAuthState`.
-  useEffect(() => {
-    const syncUser = async () => {
-      // If firebaseUser exists, we sync or create their profile in Firestore.
-      if (firebaseUser) {
-        setIsSyncing(true);
-        try {
-          // getPlayerRanking now handles both getting AND creating the user profile robustly.
-          // We use firebaseUser.uid as the consistent ID.
-          const playerData = await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
-          
-          // Create the final User object for our app's context
-          const appUser: User = {
-            ...playerData,
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            coins: playerData.coins || 0
-          };
-
-          setUser(appUser);
-        } catch (error) {
-          console.error("Error syncing user profile:", error);
-          toast({ title: "Error de sincronización", description: (error as Error).message, variant: "destructive" });
-          // If sync fails, log the user out to prevent an inconsistent state.
-          await signOut();
-          setUser(null);
-        } finally {
-          setIsSyncing(false);
+  const handleLogin = async (loginFunction: () => Promise<any>): Promise<FirebaseUser | undefined> => {
+    try {
+        const userCredential = await loginFunction();
+        if (userCredential?.user) {
+           return userCredential.user;
         }
-      } else {
-        // If there's no firebaseUser, there's no app user.
-        setUser(null);
-        setIsSyncing(false);
-      }
-    };
-
-    syncUser();
-  }, [firebaseUser, signOut, toast]);
+    } catch (e: any) {
+       // El error ya se muestra en el modal, no es necesario un toast aquí.
+       console.error("Login failed:", e);
+    }
+    return undefined;
+  };
 
   const loginWithGoogle = useCallback(async () => {
-    try {
-      await signInWithGoogle();
-      // The useEffect above will handle the rest.
-    } catch (e) {
-      toast({ title: "Error de inicio de sesión", description: (e as Error).message, variant: 'destructive' });
-    }
-  }, [signInWithGoogle, toast]);
+    return await handleLogin(signInWithGoogle);
+  }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
-    try {
-      await signInWithFacebook();
-      // The useEffect above will handle the rest.
-    } catch (e) {
-      toast({ title: "Error de inicio de sesión", description: (e as Error).message, variant: 'destructive' });
-    }
-  }, [signInWithFacebook, toast]);
+     return await handleLogin(signInWithFacebook);
+  }, [signInWithFacebook]);
   
-  const logout = useCallback(async () => {
+  const handleLogout = useCallback(async () => {
     await signOut();
-    setUser(null);
-  }, [signOut]);
-
-  // Combine all loading states into one.
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading || isSyncing;
+    toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente." });
+  }, [signOut, toast]);
+  
+  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
+  const error = authError || googleError || facebookError || signOutError;
 
   const value = useMemo(() => ({
-    user,
+    user: firebaseUser,
     isLoading,
-    error: authError || googleError || facebookError || signOutError,
+    error: error || null,
     loginWithGoogle,
     loginWithFacebook,
-    logout,
-  }), [
-    user, 
-    isLoading,
-    authError, googleError, facebookError, signOutError, 
-    loginWithGoogle, loginWithFacebook, logout
-  ]);
+    logout: handleLogout,
+  }), [firebaseUser, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout]);
 
   return (
     <AuthContext.Provider value={value}>

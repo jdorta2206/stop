@@ -13,9 +13,11 @@ import {
     updateDoc, 
     increment, 
     serverTimestamp,
-    addDoc
+    addDoc,
+    Timestamp,
+    writeBatch
 } from "firebase/firestore";
-import type { PlayerScore, GameResult } from '@/components/game/types';
+import type { GameResult } from '@/components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
 
 const LEVELS = [
@@ -38,6 +40,24 @@ export const ACHIEVEMENTS: Record<string, { name: string; description: string; i
   'champion': { name: 'Campeón', description: 'Gana 10 juegos', icon: '👑' }
 };
 
+export interface PlayerScore {
+  id: string;
+  playerName: string;
+  photoURL?: string | null;
+  totalScore: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  averageScore: number;
+  bestScore: number;
+  lastPlayed: any; // Can be Firestore Timestamp on server, string on client
+  level: string;
+  achievements: string[];
+  coins: number;
+  dailyMissions: MissionProgress[];
+  missionsLastReset: string; // YYYY-MM-DD
+}
+
+
 // Cantidad de monedas a otorgar
 const COINS_PER_GAME = 10;
 const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
@@ -45,73 +65,71 @@ const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 class RankingManager {
   private rankingsCollection = collection(db, 'rankings');
 
-  async getPlayerRanking(playerId: string, displayName?: string | null, photoURL?: string | null): Promise<PlayerScore> {
+  async getPlayerRanking(
+    playerId: string,
+    displayName?: string | null,
+    photoURL?: string | null
+  ): Promise<PlayerScore> {
+    if (!playerId) {
+      throw new Error("getPlayerRanking requiere un playerId válido.");
+    }
     const playerDocRef = doc(this.rankingsCollection, playerId);
-    const docSnap = await getDoc(playerDocRef);
     
+    let docSnap = await getDoc(playerDocRef);
+
     if (!docSnap.exists()) {
-      // If player does not exist, create a new record.
-      const newPlayer: PlayerScore = {
-        id: playerId,
-        playerName: displayName || 'Jugador', // Default name
-        photoURL: photoURL || null,
-        totalScore: 0,
-        gamesPlayed: 0,
-        gamesWon: 0,
-        averageScore: 0,
-        bestScore: 0,
-        lastPlayed: null,
-        level: this.calculateLevel(0),
-        achievements: [],
-        coins: 50, // Welcome coins
-        dailyMissions: getDailyMissions(),
-        missionsLastReset: new Date().toISOString().split('T')[0],
+      // If displayName is null or undefined (can happen on first login), provide a default.
+      const finalDisplayName = displayName || 'Jugador Anónimo';
+      const newPlayer: Omit<PlayerScore, 'id'> = {
+          playerName: finalDisplayName,
+          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalDisplayName || 'player'}`,
+          totalScore: 0,
+          gamesPlayed: 0,
+          gamesWon: 0,
+          averageScore: 0,
+          bestScore: 0,
+          lastPlayed: serverTimestamp(),
+          level: this.calculateLevel(0),
+          achievements: [],
+          coins: 50, // Monedas iniciales
+          dailyMissions: getDailyMissions(),
+          missionsLastReset: new Date().toISOString().split('T')[0],
       };
       await setDoc(playerDocRef, newPlayer);
-      return newPlayer;
+      // Re-fetch the document to ensure we have the created data, including server-generated timestamps
+      docSnap = await getDoc(playerDocRef);
     }
-
-    const data = { id: docSnap.id, ...docSnap.data() } as PlayerScore;
+    
+    const playerData = docSnap.data() as Omit<PlayerScore, 'id'>;
+    
     const today = new Date().toISOString().split('T')[0];
-    
-    const updates: Partial<PlayerScore> = {};
-    let needsUpdate = false;
-
-    // Check if daily missions need to be reset
-    if (!data.dailyMissions || !data.missionsLastReset || data.missionsLastReset !== today) {
-      updates.dailyMissions = getDailyMissions();
-      updates.missionsLastReset = today;
-      needsUpdate = true;
-    }
-    
-    // Ensure local data is consistent with latest login info if provided
-    if (displayName && (data.playerName !== displayName)) {
-      updates.playerName = displayName;
-      needsUpdate = true;
-    }
-     if (typeof photoURL !== 'undefined' && data.photoURL !== photoURL) {
-      updates.photoURL = photoURL;
-      needsUpdate = true;
+    if (playerData.missionsLastReset !== today) {
+        const newMissions = getDailyMissions();
+        await updateDoc(playerDocRef, {
+            missionsLastReset: today,
+            dailyMissions: newMissions.map(m => ({...m}))
+        });
+        playerData.dailyMissions = newMissions;
+        playerData.missionsLastReset = today;
     }
 
 
-    if (needsUpdate) {
-        await updateDoc(playerDocRef, updates);
-        return { ...data, ...updates };
-    }
-
-    return data;
+    return { id: playerId, ...playerData };
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
+    if (!gameResult.playerId) {
+        console.error("saveGameResult requires a valid playerId.");
+        return null;
+    }
     const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
     const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
     
+    // Ensure player profile exists and missions are up-to-date before saving
+    const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
+
     const finalGameResult = { ...gameResult, timestamp: serverTimestamp() };
     await addDoc(gameHistoryCollectionRef, finalGameResult);
-
-    const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
-    if(!playerRanking) return null;
     
     const coinsEarned = COINS_PER_GAME * (gameResult.won ? COINS_PER_WIN_MULTIPLIER : 1);
 
@@ -127,12 +145,10 @@ class RankingManager {
         level: this.calculateLevel(newTotalScore),
     };
     
-    const updatedAchievements = this.checkAchievements(playerRanking, gameResult);
+    const updatedAchievements = this.checkAchievements(playerRanking as PlayerScore, gameResult);
     const updatedMissions = checkMissions(playerRanking.dailyMissions, gameResult);
 
-    const updatedData = {
-      playerName: gameResult.playerName, // Ensure name is updated
-      photoURL: gameResult.photoURL, // Ensure photo is updated
+    const updatedData: Record<string, any> = {
       totalScore: increment(gameResult.score),
       gamesPlayed: increment(1),
       gamesWon: increment(gameResult.won ? 1 : 0),
@@ -141,25 +157,26 @@ class RankingManager {
       lastPlayed: serverTimestamp(),
       level: updatedPlayerStats.level,
       achievements: updatedAchievements,
-      dailyMissions: updatedMissions,
+      dailyMissions: updatedMissions.map(m => ({...m})), // Firestore necesita objetos planos
       coins: increment(coinsEarned),
     };
 
-    await updateDoc(playerDocRef, updatedData as any);
+    await updateDoc(playerDocRef, updatedData);
     
-    return (await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL));
+    const updatedPlayerDoc = await getDoc(playerDocRef);
+    return updatedPlayerDoc.exists() ? { id: updatedPlayerDoc.id, ...updatedPlayerDoc.data() } as PlayerScore : null;
   }
 
   async claimMissionReward(playerId: string, missionId: string): Promise<void> {
     const playerDocRef = doc(this.rankingsCollection, playerId);
     const player = await this.getPlayerRanking(playerId);
 
-    if (!player || !player.dailyMissions) throw new Error("Player or missions not found");
+    if (!player || !player.dailyMissions) throw new Error("Jugador o misiones no encontrados");
 
     const mission = player.dailyMissions.find(m => m.id === missionId);
-    if (!mission) throw new Error("Mission not found");
-    if (mission.progress < mission.goal) throw new Error("Mission not completed");
-    if (mission.claimed) throw new Error("Mission already claimed");
+    if (!mission) throw new Error("Misión no encontrada");
+    if (mission.progress < mission.goal) throw new Error("Misión no completada");
+    if (mission.claimed) throw new Error("Misión ya reclamada");
 
     const updatedMissions = player.dailyMissions.map(m => 
       m.id === missionId ? { ...m, claimed: true } : m
@@ -167,7 +184,7 @@ class RankingManager {
 
     await updateDoc(playerDocRef, {
       coins: increment(mission.reward),
-      dailyMissions: updatedMissions
+      dailyMissions: updatedMissions.map(m => ({...m}))
     });
   }
 
@@ -190,6 +207,7 @@ class RankingManager {
   }
 
   async getGameHistory(playerId: string, historyLimit: number = 5): Promise<GameResult[]> {
+    if (!playerId) return [];
     const q = query(collection(db, `rankings/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GameResult));
