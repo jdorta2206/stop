@@ -1,3 +1,4 @@
+
 build# 🎯 STOP Game - Juego de Palabras
 
 Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías. ¡Solo se aceptan palabras reales!

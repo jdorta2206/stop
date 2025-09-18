@@ -3,6 +3,8 @@
 
 import { ai } from '@/lib/genkit';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/googleai';
+
 
 const PlayerResponseSchema = z.object({
   category: z.string().describe('La categoría de la palabra.'),
@@ -36,6 +38,7 @@ const evaluateRoundPrompt = ai.definePrompt({
   name: 'evaluateRoundPrompt',
   input: { schema: EvaluateRoundInputSchema },
   output: { schema: AIOutputSchema },
+  model: googleAI('gemini-pro'),
   prompt: `
     Eres el juez experto del juego "STOP". Tu tarea es evaluar las palabras de una ronda para una letra y un idioma específicos.
 
@@ -64,7 +67,7 @@ const evaluateRoundPrompt = ai.definePrompt({
     -   Tu respuesta DEBE contener una entrada para CADA una de las categorías proporcionadas.
   `,
   config: {
-    temperature: 0.1,
+    temperature: 0.0,
   }
 });
 
