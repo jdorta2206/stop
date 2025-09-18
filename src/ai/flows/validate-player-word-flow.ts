@@ -38,6 +38,7 @@ const evaluateRoundPrompt = ai.definePrompt({
   name: 'evaluateRoundPrompt',
   input: { schema: EvaluateRoundInputSchema },
   output: { schema: AIOutputSchema },
+  model: googleAI('gemini-pro'), // Specify the model directly in the prompt definition.
   prompt: `
     Eres el juez experto del juego "STOP". Tu tarea es evaluar las palabras de una ronda para una letra y un idioma específicos.
 
@@ -88,7 +89,7 @@ const evaluateRoundFlow = ai.defineFlow(
         }))
     };
 
-    const { output } = await evaluateRoundPrompt(promptInput, { model: googleAI('gemini-pro') });
+    const { output } = await evaluateRoundPrompt(promptInput);
 
     if (!output) {
       throw new Error("La IA no pudo procesar la evaluación de la ronda.");
