@@ -10,10 +10,6 @@ import { AppFooter } from '@/components/layout/footer';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { useLanguage } from '@/contexts/language-context';
 
-export async function generateStaticParams() {
-  return [];
-}
-
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
