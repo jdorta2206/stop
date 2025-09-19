@@ -79,9 +79,11 @@ pnpm run build
 
 Para habilitar autenticación y ranking en tiempo real:
 
-1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com)
-2. Habilita Authentication y Firestore
-3. Copia la configuración a `src/lib/firebase-config.ts`
+1.  Crea un proyecto en [Firebase Console](https://console.firebase.google.com).
+2.  Habilita **Authentication** y **Firestore**.
+3.  Copia la configuración a `src/lib/firebase-config.ts`.
+4.  **Importante:** En la sección de **Authentication**, ve a la pestaña **Settings** -> **Authorized domains**.
+5.  Añade el dominio donde desplegarás la aplicación (ej: `juego-stop.netlify.app`) y `localhost` para las pruebas locales.
 
 ## 🤝 Contribuir
 
