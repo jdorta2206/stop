@@ -11,10 +11,15 @@ import { useEffect, useState } from "react";
 export function UserAccount() {
   const { user, logout } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Ensure this runs only on the client
-    if (typeof window !== 'undefined') {
+    if (isMounted) {
       const savedAvatar = localStorage.getItem('user-avatar');
       if (savedAvatar) {
         setAvatarUrl(savedAvatar);
@@ -22,7 +27,7 @@ export function UserAccount() {
         setAvatarUrl(user.photoURL);
       }
     }
-  }, [user?.photoURL]);
+  }, [user?.photoURL, isMounted]);
 
 
   if (!user) {
