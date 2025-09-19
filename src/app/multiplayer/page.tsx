@@ -17,8 +17,7 @@ function MultiplayerLobbyContent() {
     const { language } = useLanguage();
 
     if (!searchParams) {
-        // Redirect if searchParams is null or undefined
-        router.push('/');
+        // This can happen during initial server render, client will have it.
         return null;
     }
     
@@ -57,7 +56,7 @@ function MultiplayerLobbyContent() {
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
             <AppHeader />
-            <main className="flex-grow container mx-auto p-4 md:p-8">
+            <main className="flex-grow container mx-auto p-4 md:p-8 flex items-center justify-center">
                 <EnhancedRoomManager 
                     roomId={roomId}
                     currentUserId={user.uid}
