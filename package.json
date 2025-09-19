@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next export"
+    "export": "echo 'Next.js export is now handled by output: export in next.config.js'"
   },
   "dependencies": {
     "@genkit-ai/core": "^1.15.5",
