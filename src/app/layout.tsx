@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#4a00e0', 
+  themeColor: '#ef4444', 
   initialScale: 1,
   width: 'device-width'
 };
@@ -61,8 +62,21 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Stop" />
           <meta name="mobile-web-app-capable" content="yes" />
-          <meta name="msapplication-TileColor" content="#4a00e0" />
+          <meta name="msapplication-TileColor" content="#ef4444" />
           <meta name="msapplication-TileImage" content="/ms-touch-icon-144x144.png" />
+          <script
+            type="module"
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker
+                    .register('/sw.js')
+                    .then((registration) => console.log('Service Worker registered with scope:', registration.scope))
+                    .catch((error) => console.error('Service Worker registration failed:', error));
+                }
+              `,
+            }}
+          />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">
         <Providers>

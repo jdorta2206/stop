@@ -1,5 +1,5 @@
 
-build# 🎯 STOP Game - Juego de Palabras
+# 🎯 STOP Game - Juego de Palabras
 
 Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías. ¡Solo se aceptan palabras reales!
 
@@ -82,8 +82,11 @@ Para habilitar autenticación y ranking en tiempo real:
 1.  Crea un proyecto en [Firebase Console](https://console.firebase.google.com).
 2.  Habilita **Authentication** y **Firestore**.
 3.  Copia la configuración a `src/lib/firebase-config.ts`.
-4.  **Importante:** En la sección de **Authentication**, ve a la pestaña **Settings** -> **Authorized domains**.
-5.  Añade el dominio donde desplegarás la aplicación (ej: `juego-stop.netlify.app`) y `localhost` para las pruebas locales.
+4.  **Importante: Habilitar Dominios para el Login**
+    - En la consola de Firebase, ve a **Authentication**.
+    - Ve a la pestaña **Settings** -> **Authorized domains**.
+    - Haz clic en **Add domain**.
+    - Añade el dominio donde desplegarás la aplicación (ej: `juego-stop.netlify.app`) y `localhost` para las pruebas locales.
 
 ## 🤝 Contribuir
 
