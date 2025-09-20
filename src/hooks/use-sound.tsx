@@ -27,7 +27,7 @@ interface SoundContextType {
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
 export function SoundProvider({ children }: { children: ReactNode }) {
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Default to muted
   const [audioPlayers, setAudioPlayers] = useState<Record<string, HTMLAudioElement>>({});
   const [musicPlayer, setMusicPlayer] = useState<HTMLAudioElement | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -35,54 +35,57 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setIsMounted(true);
     
-    // Solo ejecutar en el cliente
+    // Client-side only
     if (typeof window !== 'undefined') {
       const storedMute = localStorage.getItem('globalStopMuted') === 'true';
       setIsMuted(storedMute);
 
-      // Pre-cargar efectos de sonido
+      // Pre-load sound effects
       const players: Record<string, HTMLAudioElement> = {};
       (Object.keys(SOUND_PATHS) as SoundEffect[]).forEach(sound => {
-        const audio = new Audio(SOUND_PATHS[sound]);
-        audio.volume = 0.5;
-        audio.muted = storedMute;
-        players[sound] = audio;
+        if (!players[sound]) {
+          const audio = new Audio(SOUND_PATHS[sound]);
+          audio.volume = 0.5;
+          players[sound] = audio;
+        }
       });
       setAudioPlayers(players);
       
-      // Pre-cargar música de fondo
-      const music = new Audio(BACKGROUND_MUSIC_PATH);
-      music.loop = true;
-      music.volume = 0.3;
-      music.muted = storedMute;
-      setMusicPlayer(music);
+      // Pre-load background music
+      if (!musicPlayer) {
+        const music = new Audio(BACKGROUND_MUSIC_PATH);
+        music.loop = true;
+        music.volume = 0.3;
+        setMusicPlayer(music);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    // Apply mute state to all players when it changes
+    Object.values(audioPlayers).forEach(player => player.muted = isMuted);
+    if (musicPlayer) {
+      musicPlayer.muted = isMuted;
+    }
+  }, [isMuted, audioPlayers, musicPlayer]);
+
+
   const toggleMute = useCallback(() => {
-    setIsMuted(prevMuted => {
-      const newMuteState = !prevMuted;
-      localStorage.setItem('globalStopMuted', String(newMuteState));
+    const newMuteState = !isMuted;
+    setIsMuted(newMuteState);
+    localStorage.setItem('globalStopMuted', String(newMuteState));
       
-      // Actualizar estado de silencio de todos los audios
-      Object.values(audioPlayers).forEach(player => player.muted = newMuteState);
-      if (musicPlayer) {
-        musicPlayer.muted = newMuteState;
-        // Si se silencia, pausar música
-        if (newMuteState && !musicPlayer.paused) {
-          musicPlayer.pause();
-        }
-      }
-      
-      return newMuteState;
-    });
-  }, [audioPlayers, musicPlayer]);
+    if (newMuteState && musicPlayer && !musicPlayer.paused) {
+      musicPlayer.pause();
+    }
+  }, [isMuted, musicPlayer]);
 
   const playSound = useCallback((sound: SoundEffect) => {
     if (isMuted) return;
     const player = audioPlayers[sound];
     if (player) {
-      player.currentTime = 0; // Reiniciar para poder repetir el sonido rápidamente
+      player.currentTime = 0;
       player.play().catch(e => console.error(`Error playing sound ${sound}:`, e));
     }
   }, [isMuted, audioPlayers]);
@@ -110,7 +113,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }), [isMuted, toggleMute, playSound, playMusic, stopMusic]);
   
   if (!isMounted) {
-    return null; // O un fallback de carga si es necesario
+    // Render nothing or a loader on the server
+    return null;
   }
 
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
