@@ -1,14 +1,21 @@
-// Define el nombre de la caché
-const CACHE_NAME = 'stop-game-cache-v1.6';
+// public/sw.js
 
-// Lista de recursos estáticos para cachear durante la instalación
-const STATIC_RESOURCES = [
+// Define el nombre de la caché
+const CACHE_NAME = 'stop-game-cache-v2';
+
+// Lista de recursos para cachear durante la instalación
+const resourcesToCache = [
   '/',
   '/manifest.json',
-  '/images/icons/android-chrome-192x192.png',
-  '/images/icons/android-chrome-512x512.png',
-  '/sounds/button-click.mp3',
-  // --- Añadimos todos los iconos nuevos a la caché estática ---
+  '/favicon.ico',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
+  // Rutas a las páginas principales
+  '/play-solo',
+  '/leaderboard',
+  // Fuentes (si las usas localmente) y otros assets importantes
+  // '/fonts/my-font.woff2',
+  // Iconos
   "/images/icons/windows11/SmallTile.scale-100.png",
   "/images/icons/windows11/SmallTile.scale-125.png",
   "/images/icons/windows11/SmallTile.scale-150.png",
@@ -109,7 +116,6 @@ const STATIC_RESOURCES = [
   "/images/icons/ios/76.png",
   "/images/icons/ios/80.png",
   "/images/icons/ios/87.png",
-ci.tsx:69 ~ AppHeader ~ isMounted", "color: #007acc;", false);
   "/images/icons/ios/100.png",
   "/images/icons/ios/114.png",
   "/images/icons/ios/120.png",
@@ -124,76 +130,95 @@ ci.tsx:69 ~ AppHeader ~ isMounted", "color: #007acc;", false);
   "/images/icons/ios/1024.png"
 ];
 
+// Evento de instalación
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Instalando...');
+  console.log('SW: Instalando...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Cacheando recursos estáticos...');
-        // Usamos addAll, pero con un catch para evitar que un solo error falle toda la instalación
-        return cache.addAll(STATIC_RESOURCES).catch(error => {
-          console.error('[Service Worker] Fallo al cachear durante la instalación:', error);
-        });
-      })
-      .then(() => {
-        console.log('[Service Worker] Instalación completada y recursos cacheados.');
-        return self.skipWaiting();
-      })
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.addAll(resourcesToCache);
+        console.log('SW: Cache de recursos completada.');
+      } catch (error) {
+        console.error('SW: Fallo al cachear durante la instalación:', error);
+      }
+    })()
   );
 });
 
+// Evento de activación
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activando...');
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('SW: Activando...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log(`[Service Worker] Eliminando caché antigua: ${cacheName}`);
-            return caches.delete(cacheName);
-          }
-        })
+    (async () => {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
       );
-    }).then(() => self.clients.claim())
+      console.log('SW: Caches antiguas limpiadas.');
+      await self.clients.claim();
+    })()
   );
 });
 
+// Evento de fetch (estrategia Network First)
 self.addEventListener('fetch', (event) => {
-  // Ignorar peticiones que no son GET
-  if (event.request.method !== 'GET') {
+  const { request } = event;
+
+  // No cachear peticiones que no sean GET
+  if (request.method !== 'GET') {
     return;
   }
   
-  // Estrategia: Network First, then Cache
-  event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // Si la respuesta es válida, la cacheamos y la devolvemos
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+  // No cachear peticiones de Firebase
+  if (request.url.includes('firestore.googleapis.com')) {
+      return;
+  }
+
+  // Para peticiones de navegación, usar Network First
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(request);
+          // Si la respuesta de red es válida, la usamos y la cacheamos
+          if (networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          // Si la red falla, intentamos servir desde la caché
+          console.log('SW: Red no disponible, sirviendo desde caché para:', request.url);
+          const cachedResponse = await caches.match(request);
+          return cachedResponse || caches.match('/'); // Fallback a la página principal
         }
-        return networkResponse;
-      })
-      .catch(() => {
-        // Si la red falla, intentamos obtener la respuesta desde la caché
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
+      })()
+    );
+  } else {
+    // Para otros recursos (CSS, JS, imágenes), usar Cache First
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        try {
+            const networkResponse = await fetch(request);
+            if (networkResponse.ok) {
+                await cache.put(request, networkResponse.clone());
             }
-            // Si no está en caché, devuelve una respuesta de fallback (opcional)
-            // Por ahora, simplemente dejamos que el navegador maneje el error
-            return new Response("Contenido no disponible offline.", {
-              status: 404,
-              statusText: "Offline",
-              headers: { 'Content-Type': 'text/plain' }
-            });
-          });
-      })
-  );
+            return networkResponse;
+        } catch (error) {
+            console.error('SW: Fallo al obtener desde la red:', error);
+            // Opcionalmente, devolver una respuesta de fallback para imágenes/assets
+            return new Response('', {status: 503, statusText: 'Service Unavailable'});
+        }
+      })()
+    );
+  }
 });
