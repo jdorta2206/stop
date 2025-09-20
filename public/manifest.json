@@ -3,122 +3,100 @@
   "short_name": "Stop",
   "description": "¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos! Demuestra tu vocabulario en categorías como países, animales, nombres y más.",
   "start_url": "/?homescreen=1",
-  "id": "/?homescreen=1",
+  "display": "standalone",
   "background_color": "#ef4444",
   "theme_color": "#ef4444",
-  "display": "standalone",
+  "orientation": "any",
+  "lang": "es",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/?homescreen=1",
   "display_override": [
     "standalone",
     "minimal-ui"
-  ],
-  "scope": "/",
-  "lang": "es",
-  "dir": "ltr",
-  "orientation": "any",
-  "icons": [
-    {
-      "src": "/images/icons/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/icons/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/icons/maskable_icon_x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/images/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/images/screenshots/screenshot1.png",
-      "type": "image/png",
-      "sizes": "1080x2340",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/images/screenshots/screenshot2.png",
-      "type": "image/png",
-      "sizes": "1920x1080",
-      "form_factor": "wide"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Jugar contra la IA",
-      "short_name": "Jugar Solo",
-      "description": "Inicia una partida rápida contra la inteligencia artificial.",
-      "url": "/play-solo",
-      "icons": [
-        {
-          "src": "/images/icons/shortcut-solo.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Ver Ranking Global",
-      "short_name": "Ranking",
-      "description": "Consulta la tabla de clasificación mundial.",
-      "url": "/leaderboard",
-      "icons": [
-        {
-          "src": "/images/icons/shortcut-leaderboard.png",
-          "sizes": "96x96"
-        }
-      ]
-    }
   ],
   "categories": [
     "games",
     "education"
   ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "iarc_rating_id": "",
+  "icons": [
+    {
+      "src": "images/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "images/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "images/screenshots/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Pantalla de Inicio del Juego Stop"
+    },
+    {
+      "src": "images/screenshots/screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Jugando una partida en Stop"
+    },
+    {
+      "src": "images/screenshots/screenshot3.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Resultados de la ronda y puntuaciones"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jugar vs IA",
+      "short_name": "Jugar Solo",
+      "description": "Inicia una nueva partida contra la inteligencia artificial.",
+      "url": "/play-solo",
+      "icons": [
+        {
+          "src": "images/icons/shortcut-solo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Ver Ranking",
+      "short_name": "Ranking",
+      "description": "Consulta la tabla de clasificación global y de amigos.",
+      "url": "/leaderboard",
+      "icons": [
+        {
+          "src": "images/icons/shortcut-leaderboard.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
   "launch_handler": {
     "client_mode": "navigate-new"
   },
-  "file_handlers": [
-    {
-      "action": "/open-file",
-      "accept": {
-        "text/*": [
-          ".txt"
-        ]
-      }
-    }
-  ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+stop",
-      "url": "/protocol?type=%s"
-    }
-  ],
   "share_target": {
-    "action": "/share",
+    "action": "/share-target",
     "method": "GET",
-    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
     }
   },
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "iarc_rating_id": "",
   "scope_extensions": [
     {
       "origin": "*"
@@ -126,28 +104,26 @@
   ],
   "widgets": [
     {
-      "name": "Ranking Rápido",
-      "description": "Mira el top 3 del ranking.",
-      "tag": "leaderboard",
-      "template": "leaderboard_widget",
-      "ms_ac_template": "leaderboard_widget",
-      "data": "/widgets/leaderboard.json",
+      "label": "Ranking Rápido de Stop",
+      "name": "Ranking Stop",
+      "description": "Consulta tu posición y el top 3 del ranking.",
+      "template": "ranking-widget",
+      "tag": "ranking",
+      "ms_ac_template": "widgets/ranking.json",
+      "data": "widgets/ranking-data.json",
       "screenshots": [
         {
-          "src": "/images/screenshots/widget_leaderboard.png",
-          "sizes": "320x320",
-          "label": "Widget de Ranking"
+          "src": "images/screenshots/widget-screenshot.png",
+          "sizes": "600x400",
+          "label": "Widget de Ranking de Stop"
         }
       ],
-      "auth": false,
-      "update": 86400
+      "icons": [
+        {
+          "src": "images/icons/widget-icon.png",
+          "sizes": "96x96"
+        }
+      ]
     }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "note_taking": {
-    "new_note_url": "/new-note",
-    "accept_existing_note": true
-  }
+  ]
 }
