@@ -1,51 +1,10 @@
+"use client";
 
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
 import { Providers } from '@/components/providers/Providers';
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://juego-stop.netlify.app'),
-  title: 'Stop - Juego de Palabras Multijugador Online',
-  description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos! Demuestra tu vocabulario en categorías como países, animales, nombres y más.',
-  keywords: 'stop, juego de palabras, multijugador, online, IA, categorías, vocabulario, competir, multilenguaje',
-  authors: [{ name: 'Stop Game Team' }],
-  creator: 'Stop',
-  publisher: 'Stop',
-  manifest: '/manifest.json',
-  openGraph: {
-    type: 'website',
-    locale: 'es_ES',
-    url: 'https://juego-stop.netlify.app',
-    title: 'Stop - Juego Multijugador Online',
-    description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos!',
-    siteName: 'Stop',
-    images: [
-      {
-        url: '/images/icons/android-chrome-192x192.png',
-        width: 192,
-        height: 192,
-        alt: 'Stop - Juego de Palabras',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Stop - Juego Multijugador Online',
-    description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos!',
-    images: ['/images/icons/android-chrome-192x192.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
-
-export const viewport: Viewport = {
-  themeColor: '#ef4444', 
-  initialScale: 1,
-  width: 'device-width'
-};
 
 export default function RootLayout({
   children,
@@ -58,31 +17,33 @@ export default function RootLayout({
           <link rel="icon" href="/images/icons/favicon.ico" sizes="any" />
           <link rel="icon" href="/images/icons/icon.svg" type="image/svg+xml" />
           <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
+          <link rel="manifest" href="/manifest.json" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Stop" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="msapplication-TileColor" content="#ef4444" />
           <meta name="msapplication-TileImage" content="/images/icons/ms-touch-icon-144x144.png" />
-          <script
-            type="module"
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker
-                    .register('/sw.js')
-                    .then((registration) => console.log('Service Worker registered with scope:', registration.scope))
-                    .catch((error) => console.error('Service Worker registration failed:', error));
-                }
-              `,
-            }}
-          />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">
         <Providers>
           {children}
           <Toaster />
         </Providers>
+         <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', () => {
+                    navigator.serviceWorker
+                      .register('/sw.js')
+                      .then((registration) => console.log('Service Worker registered with scope:', registration.scope))
+                      .catch((error) => console.error('Service Worker registration failed:', error));
+                  });
+                }
+              `,
+            }}
+          />
       </body>
     </html>
   );
