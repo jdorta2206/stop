@@ -11,7 +11,6 @@ import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-pla
 import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
 import { useAuth } from '@/hooks/use-auth';
 import { rankingManager } from '@/lib/ranking';
-import { useSound } from '@/hooks/use-sound';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '@/components/game/components/roulette-wheel';
 import { ResultsArea } from '@/components/game/components/results-area';
@@ -37,7 +36,6 @@ export default function PlaySoloPage() {
   const { language, translate } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { playSound, stopMusic, playMusic } = useSound();
 
   const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
@@ -79,7 +77,6 @@ export default function PlaySoloPage() {
     stopTimer();
     setGameState('EVALUATING');
     isEvaluatingRef.current = true;
-    stopMusic();
 
     try {
       const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage, user: currentUser } = stateRef.current;
@@ -111,9 +108,6 @@ export default function PlaySoloPage() {
       setTotalAiScore(prev => prev + calculatedAiScore);
       setRoundResults(results);
       
-      if (playerTotalScore > calculatedAiScore) playSound('round-win');
-      else playSound('round-lose');
-
       setGameState('RESULTS');
 
       // Save result in background, AFTER UI has updated
@@ -148,7 +142,7 @@ export default function PlaySoloPage() {
     } finally {
       isEvaluatingRef.current = false;
     }
-  }, [stopTimer, stopMusic, playSound, toast, translate]);
+  }, [stopTimer, toast, translate]);
 
 
   const startNewRound = useCallback(() => {
@@ -157,9 +151,8 @@ export default function PlaySoloPage() {
     setRoundResults(null);
     setCurrentLetter(null);
     setTimeLeft(ROUND_DURATION);
-    stopMusic();
     isEvaluatingRef.current = false;
-  }, [stopMusic]);
+  }, []);
 
 
   useEffect(() => {
@@ -171,7 +164,6 @@ export default function PlaySoloPage() {
             handleStop();
             return 0;
           }
-          if (prevTime <= 11 && prevTime > 1) playSound('timer-tick');
           return prevTime - 1;
         });
       }, 1000);
@@ -180,7 +172,7 @@ export default function PlaySoloPage() {
     }
     
     return () => stopTimer();
-  }, [gameState, handleStop, playSound, stopTimer]);
+  }, [gameState, handleStop, stopTimer]);
 
 
   useEffect(() => {
@@ -196,7 +188,6 @@ export default function PlaySoloPage() {
     setCurrentLetter(letter);
     setGameState('PLAYING');
     setTimeLeft(ROUND_DURATION);
-    playMusic();
   };
   
   const handleInputChange = (category: string, value: string) => {
