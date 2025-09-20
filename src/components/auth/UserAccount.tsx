@@ -10,27 +10,21 @@ import { useEffect, useState } from "react";
 
 export function UserAccount() {
   const { user, logout } = useAuth();
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    // Ensure this runs only on the client
-    if (user?.photoURL) {
-        setAvatarUrl(user.photoURL);
-    }
-  }, [user?.photoURL]);
-
-
   if (!isMounted || !user) {
-    return null;
+    // Retorna un placeholder o null para evitar el renderizado en servidor que cause mismatch
+    return (
+        <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+    );
   }
   
   const fallbackContent = user.displayName ? user.displayName.charAt(0).toUpperCase() : <UserIcon />;
-  const finalAvatarUrl = avatarUrl || user.photoURL || '';
+  const finalAvatarUrl = user.photoURL || '';
 
   return (
     <DropdownMenu>

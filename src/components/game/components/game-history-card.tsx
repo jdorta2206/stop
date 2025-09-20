@@ -97,7 +97,7 @@ export function GameHistoryCard({ gameHistory, translateUi }: GameHistoryCardPro
                   <div className="text-right">
                     <Badge variant="outline">{getGameModeText(game.gameMode)}</Badge>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {getTimeAgo(game.timestamp)}
+                      {isMounted ? getTimeAgo(game.timestamp) : '...'}
                     </p>
                   </div>
                 </div>
