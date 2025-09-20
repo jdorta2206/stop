@@ -36,10 +36,8 @@ const buttonVariants = cva(
 let clickAudio: HTMLAudioElement | null = null;
 if (typeof window !== 'undefined') {
   clickAudio = new Audio('/sounds/button-click.mp3');
-  clickAudio.volume = 0.5;
-  // Preload the sound
+  clickAudio.volume = 0.3;
   clickAudio.preload = 'auto';
-  clickAudio.load();
 }
 
 
@@ -52,9 +50,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, va
   const Comp = asChild ? Slot : 'button';
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    if (withSound && clickAudio) {
-        // Stop and reset the sound to allow for rapid clicks
-        clickAudio.pause();
+    if (withSound && clickAudio && clickAudio.HAVE_ENOUGH_DATA) {
         clickAudio.currentTime = 0;
         clickAudio.play().catch(error => {
             console.error("Error playing sound:", error);

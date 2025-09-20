@@ -1,38 +1,48 @@
 // public/sw.js
-
-const CACHE_NAME = 'stop-game-cache-v1.2';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'stop-game-cache-v1.3'; // Incrementa la versión para forzar actualización
+const urlsToCache = [
   '/',
+  '/play-solo',
+  '/leaderboard',
+  '/categories',
   '/manifest.json',
   '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
   '/apple-touch-icon.png',
-  '/sounds/background-music.mp3',
+  '/favicon.ico',
   '/sounds/button-click.mp3',
-  '/sounds/round-lose.mp3',
-  '/sounds/round-win.mp3',
-  '/sounds/spin-end.mp3',
-  '/sounds/spin-start.mp3',
-  '/sounds/timer-tick.mp3'
+  '/sounds/game-win.mp3',
+  '/sounds/game-lose.mp3',
+  '/sounds/roulette-spin.mp3',
+  '/sounds/timer-tick.mp3',
+  '/screenshots/screenshot1.png',
+  '/screenshots/screenshot2.png',
+  '/icons/play-icon.png',
+  '/icons/ranking-icon.png'
+  // Los archivos de JS y CSS de Next.js se cachearán dinámicamente
 ];
 
+// Instalación del Service Worker
 self.addEventListener('install', (event) => {
   console.log('[SW] Instalando Service Worker...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Cache abierta, añadiendo assets estáticos');
-        return cache.addAll(STATIC_ASSETS);
+        return cache.addAll(urlsToCache).catch(err => {
+          console.error('[SW] Error al añadir assets estáticos a la caché:', err);
+          // Este error puede pasar si uno de los archivos no existe.
+          // Es importante verificar que todas las rutas en urlsToCache son correctas.
+        });
       })
       .then(() => {
         console.log('[SW] Assets estáticos cacheados. Activación en espera.');
         return self.skipWaiting(); // Forzar la activación del nuevo SW
       })
-      .catch(error => {
-        console.error('[SW] Falló el precaching de assets:', error);
-      })
   );
 });
 
+// Activación del Service Worker
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activando Service Worker...');
   event.waitUntil(
@@ -40,87 +50,63 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Eliminando caché antigua:', cacheName);
+            console.log(`[SW] Eliminando caché antigua: ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-        console.log('[SW] Service Worker activado y listo para tomar el control.');
-        return self.clients.claim(); // Tomar control inmediato de los clientes
+      console.log('[SW] Service Worker activado y listo para tomar el control.');
+      return self.clients.claim(); // Tomar control inmediato
     })
   );
 });
 
-
+// Intercepta las peticiones de red
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  
-  // No cachear peticiones que no son GET
-  if (request.method !== 'GET') {
+
+  // No cachear peticiones a Firebase
+  if (request.url.includes('firestore.googleapis.com')) {
     return;
   }
-  
-  const url = new URL(request.url);
 
-  // Estrategia Network First para el HTML principal para asegurar que siempre esté actualizado.
-  if (request.mode === 'navigate' && url.pathname === '/') {
+  // Estrategia: Network First para las páginas principales (HTML)
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then(response => {
-          // Si la red responde, cachea y devuelve la respuesta
-          return caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, response.clone());
-            return response;
+        .then((response) => {
+          // Si la petición a la red tiene éxito, la cacheamos y la devolvemos
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
           });
+          return response;
         })
         .catch(() => {
-          // Si la red falla, busca en la caché
-          return caches.match(request);
+          // Si falla la red, buscamos en la caché
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || caches.match('/') || new Response("Estás offline.", { status: 503, statusText: "Service Unavailable" });
+          });
         })
     );
     return;
   }
 
-  // Estrategia Cache First para assets estáticos
-  if (STATIC_ASSETS.some(asset => url.pathname.endsWith(asset))) {
-     event.respondWith(
-        caches.match(request)
-            .then(cachedResponse => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                return fetch(request).then(response => {
-                    return caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, response.clone());
-                        return response;
-                    });
-                });
-            })
-    );
-    return;
-  }
-
-  // Para otros assets (como los chunks de Next.js), Cache First también es una buena estrategia.
-  // Si no está en caché, lo busca en la red y lo añade a la caché para futuras peticiones.
-   event.respondWith(
-        caches.match(request)
-            .then(cachedResponse => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                return fetch(request).then(response => {
-                     // Solo cachear respuestas válidas (status 200)
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
-                    
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(request, responseToCache);
-                    });
-                    return response;
-                });
-            })
-    );
+  // Estrategia: Cache First para assets estáticos (CSS, JS, imágenes, etc.)
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(request).then((networkResponse) => {
+        // Cachear la nueva respuesta para futuras peticiones
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
+        });
+        return networkResponse;
+      });
+    })
+  );
 });
