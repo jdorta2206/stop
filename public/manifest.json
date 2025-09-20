@@ -1,46 +1,65 @@
 {
   "name": "Stop - Juego de Palabras",
   "short_name": "Stop",
-  "description": "¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos! Demuestra tu vocabulario en categorías como países, animales, nombres y más.",
-  "start_url": "/",
-  "id": "/?homescreen=1",
+  "description": "Juega al clásico juego de Stop (Tutti Frutti) online. Desafía a la IA o a tus amigos en este juego de palabras multi-idioma.",
+  "start_url": "/?homescreen=1",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
-  "background_color": "#ef4444",
+  "background_color": "#dc2626",
   "theme_color": "#ef4444",
   "orientation": "any",
-  "lang": "es",
+  "categories": ["games", "education", "entertainment"],
+  "lang": "es-ES",
   "dir": "ltr",
-  "categories": [
-    "games",
-    "education"
-  ],
-  "icons": [
+  "scope": "/",
+  "id": "/?homescreen=1",
+  "iarc_rating_id": "",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "scope_extensions": [{ "origin": "*.netlify.app" }, { "origin": "*.cloudworkstations.dev" }],
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  },
+  "file_handlers": [
     {
-      "src": "/images/icons/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/icons/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "/images/icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/images/icons/favicon.svg",
-      "sizes": "48x48 72x72 96x96 128x128 256x256",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "action": "/handle-file",
+      "accept": {
+        "text/*": [".txt"]
+      }
     }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+stop",
+      "url": "/protocol?type=%s"
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Ranking Rápido",
+      "description": "Ver el ranking global directamente desde tu pantalla de inicio.",
+      "tag": "ranking",
+      "template": "ranking_widget",
+      "ms_ac_template": "ranking_widget.json",
+      "data": "ranking.json",
+      "type": "application/json"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "note_taking": {
+    "new_note_url": "/new-note",
+    "preferred_format": "plaintext"
+  },
+  "icons": [
+    { "src": "/images/icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/images/icons/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/images/icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/images/icons/favicon.ico", "sizes": "48x48", "type": "image/x-icon" },
+    { "src": "/images/icons/favicon-16x16.png", "sizes": "16x16", "type": "image/png" },
+    { "src": "/images/icons/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/images/icons/mstile-150x150.png", "sizes": "150x150", "type": "image/png" },
+    { "src": "/images/icons/safari-pinned-tab.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
   ],
   "screenshots": [
     {
@@ -48,109 +67,28 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Pantalla de inicio del juego en escritorio"
+      "label": "Pantalla de inicio en escritorio"
     },
     {
       "src": "/images/screenshots/screenshot-desktop-2.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Partida en curso en escritorio"
+      "label": "Juego en curso en escritorio"
     },
     {
       "src": "/images/screenshots/screenshot-mobile-1.png",
-      "sizes": "360x740",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Pantalla de inicio del juego en móvil"
+      "label": "Pantalla de inicio en móvil"
     },
     {
       "src": "/images/screenshots/screenshot-mobile-2.png",
-      "sizes": "360x740",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Partida en curso en móvil"
+      "label": "Juego en curso en móvil"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Jugar Solo",
-      "short_name": "Solo",
-      "description": "Iniciar una nueva partida contra la IA",
-      "url": "/play-solo",
-      "icons": [
-        {
-          "src": "/images/icons/shortcut-solo.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Ranking Global",
-      "short_name": "Ranking",
-      "description": "Ver la tabla de clasificación global",
-      "url": "/leaderboard",
-      "icons": [
-        {
-          "src": "/images/icons/shortcut-leaderboard.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ],
-  "share_target": {
-    "action": "/share-target",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "launch_handler": {
-    "client_mode": "navigate-new"
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+stop",
-      "url": "/room?roomId=%s",
-      "title": "Unirse a sala de Stop"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/handle-file",
-      "accept": {
-        "text/*": [
-          ".txt"
-        ]
-      }
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "iarc_rating_id": "",
-  "scope_extensions": [
-    {
-      "origin": "*.juego-stop.netlify.app"
-    }
-  ],
-  "widgets": [
-    {
-      "name": "Ranking Rápido de Stop",
-      "description": "Mira el top 3 del ranking directamente desde tu pantalla de inicio.",
-      "tag": "ranking-widget",
-      "template": "ranking-template",
-      "ms_ac_template": "widgets/ranking.json",
-      "data": "widgets/ranking-data.json",
-      "type": "application/json"
-    }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "note_taking": {
-    "new_note_url": "/new-note",
-    "needs_user_activation": true
-  }
+  ]
 }

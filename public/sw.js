@@ -1,96 +1,106 @@
-// public/sw.js
-
-const CACHE_NAME = 'stop-game-cache-v1.3';
-const CORE_ASSETS = [
-    '/',
-    '/manifest.json',
-    '/images/icons/android-chrome-192x192.png',
-    '/images/icons/android-chrome-512x512.png',
-    '/play-solo',
-    '/leaderboard',
-    '/categories'
+// Nombre de la caché
+const CACHE_NAME = 'stop-game-cache-v1';
+const urlsToCache = [
+  '/',
+  '/manifest.json',
+  '/images/icons/android-chrome-192x192.png',
+  '/images/icons/android-chrome-512x512.png',
+  '/sounds/button-click.mp3'
 ];
 
-// 1. Instalación del Service Worker
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Instalando...');
+// Instalación del Service Worker
+self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Cacheando assets principales');
-        return cache.addAll(CORE_ASSETS);
-      })
-      .then(() => self.skipWaiting())
-      .catch((error) => {
-        console.error('[Service Worker] Fallo al cachear durante la instalación:', error);
+      .then(cache => {
+        console.log('Cache abierto durante la instalación');
+        return cache.addAll(urlsToCache).catch(error => {
+          console.error('Fallo al cachear durante la instalación:', error);
+          // Este catch evita que el SW falle si un recurso no está disponible
+        });
       })
   );
 });
 
-// 2. Activación del Service Worker
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activando...');
+// Activación del Service Worker
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Borrando caché antigua:', cacheName);
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Eliminando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  return self.clients.claim();
 });
 
-// 3. Interceptación de Peticiones (Estrategia: Network First, then Cache)
-self.addEventListener('fetch', (event) => {
+// Estrategia: Network First, then Cache for navigation
+self.addEventListener('fetch', event => {
   const { request } = event;
 
-  // No cachear peticiones que no son GET (ej. POST a Firebase)
+  // Ignorar peticiones que no son GET
   if (request.method !== 'GET') {
     return;
   }
-
-  // No cachear peticiones a Firebase Firestore
-  if (request.url.includes('firestore.googleapis.com')) {
-    return;
-  }
-
-  // Para las rutas de navegación, usar Network First
+  
+  // Para peticiones de navegación (HTML)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          // Si la respuesta de la red es válida, la cacheamos y la devolvemos
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+        .then(response => {
+          // Si la respuesta es válida, la cacheamos y la devolvemos
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseToCache);
+            });
+          }
           return response;
         })
         .catch(() => {
-          // Si la red falla, intentamos servir desde la caché
-          return caches.match(request).then((cachedResponse) => {
-            return cachedResponse || caches.match('/'); // Fallback a la página de inicio
+          // Si la red falla, buscamos en la caché
+          return caches.match(request).then(response => {
+            // Si está en caché, la devolvemos. Si no, una página offline de fallback (opcional)
+            return response || caches.match('/');
           });
         })
     );
     return;
   }
 
-  // Para otros assets (CSS, JS, imágenes), usar Cache First
+  // Para otros recursos (CSS, JS, imágenes), Cache First
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      return cachedResponse || fetch(request).then((response) => {
-        // Cachear la nueva respuesta para futuras peticiones
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache);
-        });
-        return response;
-      });
-    })
+    caches.match(request)
+      .then(response => {
+        // Si el recurso está en caché, lo devolvemos
+        if (response) {
+          return response;
+        }
+        
+        // Si no, lo buscamos en la red, lo cacheamos y lo devolvemos
+        return fetch(request).then(
+          networkResponse => {
+             // Ignorar respuestas parciales (status 206) o de extensiones
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(request, responseToCache);
+              });
+
+            return networkResponse;
+          }
+        );
+      })
   );
 });
