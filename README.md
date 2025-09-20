@@ -61,6 +61,20 @@ pnpm run dev
 pnpm run build
 ```
 
+## 🔥 ¡MUY IMPORTANTE! Configuración de Firebase para Login
+
+Para que el inicio de sesión con Google y Facebook funcione, necesitas autorizar el dominio de tu aplicación en Firebase.
+
+1.  **Ve a la Consola de Firebase:** [https://console.firebase.google.com](https://console.firebase.google.com)
+2.  **Selecciona tu proyecto** (ej: `global-stop`).
+3.  En el menú de la izquierda, navega a **Authentication**.
+4.  Haz clic en la pestaña **Settings**.
+5.  Selecciona la sub-pestaña **Authorized domains**.
+6.  Haz clic en **Add domain**.
+7.  Añade el dominio donde tienes desplegada la aplicación (ej: `juego-stop.netlify.app`) y también `localhost` para las pruebas locales.
+
+Este paso es **crucial**. Sin él, Firebase bloqueará los intentos de inicio de sesión por seguridad.
+
 ## 🎮 Cómo Jugar
 
 1. **🎯 Selecciona el modo:** Individual vs IA o Multijugador
@@ -74,19 +88,6 @@ pnpm run build
 - **10 puntos:** Palabra única (solo tú la escribiste)
 - **5 puntos:** Palabra compartida (otros también la escribieron)
 - **0 puntos:** Palabra inventada o que no empiece con la letra correcta
-
-## 🔧 Configuración de Firebase
-
-Para habilitar autenticación y ranking en tiempo real:
-
-1.  Crea un proyecto en [Firebase Console](https://console.firebase.google.com).
-2.  Habilita **Authentication** y **Firestore**.
-3.  Copia la configuración a `src/lib/firebase-config.ts`.
-4.  **Importante: Habilitar Dominios para el Login**
-    - En la consola de Firebase, ve a **Authentication**.
-    - Ve a la pestaña **Settings** -> **Authorized domains**.
-    - Haz clic en **Add domain**.
-    - Añade el dominio donde desplegarás la aplicación (ej: `juego-stop.netlify.app`) y `localhost` para las pruebas locales.
 
 ## 🤝 Contribuir
 
