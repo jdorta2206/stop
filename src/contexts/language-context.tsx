@@ -46,12 +46,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguage = useCallback((lang: Language) => {
-    if (isMounted) {
-      setLanguageState(lang);
-      localStorage.setItem('globalStopLanguage', lang);
-      document.documentElement.lang = lang;
-    }
-  }, [isMounted]); 
+    setLanguageState(lang);
+    localStorage.setItem('globalStopLanguage', lang);
+    document.documentElement.lang = lang;
+  }, []); 
 
   const translate = useCallback(
     (key: string, replacements?: Record<string, string>): string => {
@@ -95,13 +93,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }), [language, setLanguage, translate, currentLanguageOption]);
 
   if (!isMounted) {
-    const serverValue = {
-      ...value,
-      language: defaultLanguage,
-      setLanguage: () => {}, 
-      currentLanguageOption: LANGUAGES.find(l => l.code === defaultLanguage),
-    };
-    return <LanguageContext.Provider value={serverValue}>{children}</LanguageContext.Provider>;
+    return null; // Don't render anything on the server to avoid hydration mismatch
   }
 
   return (

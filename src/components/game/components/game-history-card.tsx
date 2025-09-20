@@ -4,11 +4,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { History } from 'lucide-react';
+import { History, Loader2 } from 'lucide-react';
 import type { GameResult } from '@/components/game/types';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS, fr, ptBR } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/language-context';
+import { useEffect, useState } from 'react';
 
 interface GameHistoryCardProps {
   gameHistory: GameResult[];
@@ -24,6 +25,11 @@ const localeMap = {
 
 export function GameHistoryCard({ gameHistory, translateUi }: GameHistoryCardProps) {
   const { language } = useLanguage();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const getGameModeText = (mode: string) => {
     switch (mode) {
@@ -44,6 +50,24 @@ export function GameHistoryCard({ gameHistory, translateUi }: GameHistoryCardPro
         return 'Fecha inválida';
     }
   };
+
+  if (!isMounted) {
+    return (
+      <Card className="shadow-lg rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            {translateUi('leaderboards.recentGames')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-24">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg rounded-xl">
