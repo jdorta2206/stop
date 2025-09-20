@@ -1,5 +1,4 @@
 
-import React from 'react';
 import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
     siteName: 'Stop',
     images: [
       {
-        url: '/android-chrome-192x192.png',
+        url: '/images/icons/android-chrome-192x192.png',
         width: 192,
         height: 192,
         alt: 'Stop - Juego de Palabras',
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'Stop - Juego Multijugador Online',
     description: '¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos!',
-    images: ['/android-chrome-192x192.png'],
+    images: ['/images/icons/android-chrome-192x192.png'],
   },
   robots: {
     index: true,
@@ -56,14 +55,15 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
-          <link rel="icon" href="/android-chrome-192x192.png" type="image/png" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" type="image/png" sizes="180x180" />
+          <link rel="icon" href="/images/icons/favicon.ico" sizes="any" />
+          <link rel="icon" href="/images/icons/icon.svg" type="image/svg+xml" />
+          <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Stop" />
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="msapplication-TileColor" content="#ef4444" />
-          <meta name="msapplication-TileImage" content="/ms-touch-icon-144x144.png" />
+          <meta name="msapplication-TileImage" content="/images/icons/ms-touch-icon-144x144.png" />
           <script
             type="module"
             dangerouslySetInnerHTML={{
