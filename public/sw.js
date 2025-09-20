@@ -1,90 +1,96 @@
 // public/sw.js
 
-const CACHE_NAME = 'stop-game-cache-v1.6';
+const CACHE_NAME = 'stop-game-cache-v1.3';
 const CORE_ASSETS = [
+    '/',
     '/manifest.json',
-    '/images/icons/icon-192x192.png',
-    '/images/icons/icon-512x512.png',
-    '/'
+    '/images/icons/android-chrome-192x192.png',
+    '/images/icons/android-chrome-512x512.png',
+    '/play-solo',
+    '/leaderboard',
+    '/categories'
 ];
 
 // 1. Instalación del Service Worker
 self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Service Worker: Caching core assets');
+        console.log('[Service Worker] Cacheando assets principales');
         return cache.addAll(CORE_ASSETS);
       })
-      .catch(error => {
-        console.error('Service Worker: Failed to cache core assets during install:', error);
+      .then(() => self.skipWaiting())
+      .catch((error) => {
+        console.error('[Service Worker] Fallo al cachear durante la instalación:', error);
       })
   );
-  self.skipWaiting();
 });
 
 // 2. Activación del Service Worker
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('[Service Worker] Activando...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log(`Service Worker: Deleting old cache: ${cacheName}`);
+          if (cacheName !== CACHE_NAME) {
+            console.log('[Service Worker] Borrando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// 3. Interceptación de peticiones (Estrategia: Network First, fallback to Cache)
+// 3. Interceptación de Peticiones (Estrategia: Network First, then Cache)
 self.addEventListener('fetch', (event) => {
-  // Ignorar peticiones que no son GET
-  if (event.request.method !== 'GET') {
+  const { request } = event;
+
+  // No cachear peticiones que no son GET (ej. POST a Firebase)
+  if (request.method !== 'GET') {
     return;
   }
-  
-  // Ignorar peticiones a Firebase
-  if (event.request.url.includes('firestore.googleapis.com')) {
-      return;
+
+  // No cachear peticiones a Firebase Firestore
+  if (request.url.includes('firestore.googleapis.com')) {
+    return;
   }
 
-  // Estrategia para peticiones de navegación y otros recursos
+  // Para las rutas de navegación, usar Network First
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Si la respuesta de la red es válida, la cacheamos y la devolvemos
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Si la red falla, intentamos servir desde la caché
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || caches.match('/'); // Fallback a la página de inicio
+          });
+        })
+    );
+    return;
+  }
+
+  // Para otros assets (CSS, JS, imágenes), usar Cache First
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // Si la petición a la red es exitosa, la cacheamos y la devolvemos
-        if (networkResponse.ok) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              // No cachear respuestas parciales (status 206)
-              if(responseToCache.status !== 206) {
-                cache.put(event.request, responseToCache);
-              }
-            });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        // Si la red falla, intentamos servir desde la caché
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Si no está en caché, y es una página, devuelve una página de offline genérica
-          if (event.request.mode === 'navigate') {
-            // Puedes crear una página /offline.html y cachearla en la instalación
-            // Por ahora, devolvemos un error simple
-            return new Response("<h1>You are offline</h1><p>This page could not be loaded.</p>", {
-              headers: { 'Content-Type': 'text/html' }
-            });
-          }
-          return new Response(null, { status: 404 });
+    caches.match(request).then((cachedResponse) => {
+      return cachedResponse || fetch(request).then((response) => {
+        // Cachear la nueva respuesta para futuras peticiones
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
         });
-      })
+        return response;
+      });
+    })
   );
 });

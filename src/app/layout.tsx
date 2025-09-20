@@ -14,10 +14,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
-          <link rel="icon" href="/images/icons/favicon.ico" sizes="any" />
-          <link rel="icon" href="/images/icons/icon.svg" type="image/svg+xml" />
-          <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
           <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#ef4444" />
+          <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
           <meta name="apple-mobile-web-app-title" content="Stop" />

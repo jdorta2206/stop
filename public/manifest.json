@@ -1,5 +1,5 @@
 {
-  "name": "Stop - Juego de Palabras Multijugador",
+  "name": "Stop - Juego de Palabras",
   "short_name": "Stop",
   "description": "¡Juega al clásico juego Stop, multilenguaje, contra la IA o amigos! Demuestra tu vocabulario en categorías como países, animales, nombres y más.",
   "lang": "es",
@@ -19,23 +19,38 @@
     {
       "src": "/images/icons/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/images/icons/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/images/icons/icon.svg",
       "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/images/icons/maskable_icon.png",
-      "sizes": "196x196",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -44,62 +59,66 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Lobby del Juego en Escritorio"
+      "label": "Pantalla de Inicio"
     },
     {
       "src": "/images/screenshots/screenshot-desktop-2.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Resultados de la Partida en Escritorio"
+      "label": "Juego en Partida"
     },
     {
       "src": "/images/screenshots/screenshot-mobile-1.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Pantalla de Juego en Móvil"
+      "label": "Pantalla de Inicio Móvil"
     },
     {
       "src": "/images/screenshots/screenshot-mobile-2.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Ranking en Móvil"
+      "label": "Juego en Partida Móvil"
     }
   ],
   "categories": [
     "games",
-    "education"
+    "education",
+    "entertainment"
   ],
   "shortcuts": [
     {
-      "name": "Jugar vs IA",
+      "name": "Jugar Solo",
       "short_name": "Jugar",
-      "description": "Iniciar una nueva partida contra la IA",
+      "description": "Inicia una partida rápida contra la IA",
       "url": "/play-solo",
       "icons": [
         {
           "src": "/images/icons/shortcut-play.png",
-          "sizes": "96x96"
+          "sizes": "192x192"
         }
       ]
     },
     {
       "name": "Ver Ranking",
       "short_name": "Ranking",
-      "description": "Ver la tabla de clasificación global",
+      "description": "Ver las puntuaciones más altas",
       "url": "/leaderboard",
       "icons": [
         {
           "src": "/images/icons/shortcut-leaderboard.png",
-          "sizes": "96x96"
+          "sizes": "192x192"
         }
       ]
     }
   ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "",
   "share_target": {
-    "action": "/share-target",
+    "action": "/share-target/",
     "method": "GET",
     "params": {
       "title": "title",
@@ -107,9 +126,12 @@
       "url": "url"
     }
   },
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "iarc_rating_id": "",
+  "protocol_handlers": [
+    {
+      "protocol": "web+stop",
+      "url": "/?protocol=%s"
+    }
+  ],
   "launch_handler": {
     "client_mode": "navigate-new"
   },
@@ -123,28 +145,27 @@
       }
     }
   ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+stop",
-      "url": "/protocol-handler?q=%s",
-      "title": "Handler del Juego Stop"
-    }
-  ],
   "scope_extensions": [
-    {
-      "origin": "*"
-    }
+    { "origin": "*.netlify.app" },
+    { "origin": "*.firebaseapp.com" }
   ],
   "widgets": [
     {
-      "name": "Ranking Rápido de Stop",
-      "description": "Mira el top 3 del ranking directamente desde tu pantalla de inicio.",
+      "name": "Ranking Rápido",
+      "description": "Mira el top 3 del ranking",
       "tag": "ranking-widget",
-      "template": "ranking-widget-template",
+      "template": "ranking-template",
       "ms_ac_template": "widgets/ranking.json",
-      "data": "widgets/ranking-data.json",
+      "data": "widgets/ranking.json",
       "type": "application/json"
     }
   ],
-  "edge_side_panel": {}
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "note_taking": {
+    "new_note_url": "/new-note",
+    "accept": ["text/plain", "text/html"],
+    "action": "new-note"
+  }
 }
