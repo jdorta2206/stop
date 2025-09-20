@@ -26,89 +26,81 @@ interface SoundContextType {
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
 
-// State for audio players
-let audioPlayers: { [key in SoundEffect]?: HTMLAudioElement } = {};
-let musicPlayer: HTMLAudioElement | null = null;
-
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
+  const [audioPlayers, setAudioPlayers] = useState<Record<string, HTMLAudioElement>>({});
+  const [musicPlayer, setMusicPlayer] = useState<HTMLAudioElement | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    const storedMute = localStorage.getItem('globalStopMuted');
-    if (storedMute !== null) {
-      setIsMuted(JSON.parse(storedMute));
-    }
-
-    // Preload sounds on client
+    
+    // Solo ejecutar en el cliente
     if (typeof window !== 'undefined') {
-        // Preload effects
-        (Object.keys(SOUND_PATHS) as SoundEffect[]).forEach(sound => {
-            if (!audioPlayers[sound]) {
-                audioPlayers[sound] = new Audio(SOUND_PATHS[sound]);
-                audioPlayers[sound]!.volume = 0.5;
-            }
-        });
+      const storedMute = localStorage.getItem('globalStopMuted') === 'true';
+      setIsMuted(storedMute);
 
-        // Preload music
-        if (!musicPlayer) {
-            musicPlayer = new Audio(BACKGROUND_MUSIC_PATH);
-            musicPlayer.loop = true;
-            musicPlayer.volume = 0.3;
-        }
+      // Pre-cargar efectos de sonido
+      const players: Record<string, HTMLAudioElement> = {};
+      (Object.keys(SOUND_PATHS) as SoundEffect[]).forEach(sound => {
+        const audio = new Audio(SOUND_PATHS[sound]);
+        audio.volume = 0.5;
+        audio.muted = storedMute;
+        players[sound] = audio;
+      });
+      setAudioPlayers(players);
+      
+      // Pre-cargar música de fondo
+      const music = new Audio(BACKGROUND_MUSIC_PATH);
+      music.loop = true;
+      music.volume = 0.3;
+      music.muted = storedMute;
+      setMusicPlayer(music);
     }
   }, []);
 
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => {
-        const newMuteState = !prev;
-        localStorage.setItem('globalStopMuted', JSON.stringify(newMuteState));
-        if (musicPlayer) {
-            musicPlayer.muted = newMuteState;
-            if(newMuteState) {
-                musicPlayer.pause();
-                musicPlayer.currentTime = 0;
-            }
+    setIsMuted(prevMuted => {
+      const newMuteState = !prevMuted;
+      localStorage.setItem('globalStopMuted', String(newMuteState));
+      
+      // Actualizar estado de silencio de todos los audios
+      Object.values(audioPlayers).forEach(player => player.muted = newMuteState);
+      if (musicPlayer) {
+        musicPlayer.muted = newMuteState;
+        // Si se silencia, pausar música
+        if (newMuteState && !musicPlayer.paused) {
+          musicPlayer.pause();
         }
-        Object.values(audioPlayers).forEach(player => {
-            if (player) player.muted = newMuteState;
-        });
-        return newMuteState;
+      }
+      
+      return newMuteState;
     });
-  }, []);
-  
-  useEffect(() => {
-    if (isMounted) {
-      const currentMute = JSON.parse(localStorage.getItem('globalStopMuted') || 'false');
-      if (musicPlayer) musicPlayer.muted = currentMute;
-      Object.values(audioPlayers).forEach(player => {
-        if(player) player.muted = currentMute;
-      });
-    }
-  }, [isMounted]);
+  }, [audioPlayers, musicPlayer]);
 
   const playSound = useCallback((sound: SoundEffect) => {
-    if (isMuted || typeof window === 'undefined') return;
+    if (isMuted) return;
     const player = audioPlayers[sound];
     if (player) {
-      player.currentTime = 0;
+      player.currentTime = 0; // Reiniciar para poder repetir el sonido rápidamente
       player.play().catch(e => console.error(`Error playing sound ${sound}:`, e));
     }
-  }, [isMuted]);
+  }, [isMuted, audioPlayers]);
 
   const playMusic = useCallback(() => {
-    if (isMuted || typeof window === 'undefined' || !musicPlayer) return;
-    musicPlayer.play().catch(e => console.error("Error playing music:", e));
-  }, [isMuted]);
+    if (isMuted || !musicPlayer) return;
+    if (musicPlayer.paused) {
+      musicPlayer.play().catch(e => console.error("Error playing music:", e));
+    }
+  }, [isMuted, musicPlayer]);
 
   const stopMusic = useCallback(() => {
-    if (musicPlayer) {
+    if (musicPlayer && !musicPlayer.paused) {
       musicPlayer.pause();
       musicPlayer.currentTime = 0;
     }
-  }, []);
-  
+  }, [musicPlayer]);
+
   const value = useMemo(() => ({
     isMuted,
     toggleMute,
@@ -116,6 +108,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     playMusic,
     stopMusic,
   }), [isMuted, toggleMute, playSound, playMusic, stopMusic]);
+  
+  if (!isMounted) {
+    return null; // O un fallback de carga si es necesario
+  }
 
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;
 }
