@@ -4,8 +4,14 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { useSound } from '@/hooks/use-sound';
 import { cn } from '@/lib/utils';
+
+// Audio instance for the click sound
+let clickAudio: HTMLAudioElement | null = null;
+if (typeof window !== 'undefined') {
+  clickAudio = new Audio('/sounds/button-click.mp3');
+  clickAudio.volume = 0.5;
+}
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
@@ -40,16 +46,16 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, withSound = true, onClick, ...props }, ref) => {
   const Comp = asChild ? Slot : 'button';
-  const { playSound } = useSound();
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    // Primero, ejecutar la lógica original del botón de forma síncrona
+    if (withSound && clickAudio) {
+        clickAudio.currentTime = 0;
+        clickAudio.play().catch(error => {
+            console.error("Error playing sound:", error);
+        });
+    }
     if (onClick) {
       onClick(e);
-    }
-    // Luego, reproducir el sonido sin bloquear el evento principal
-    if (withSound) {
-      playSound('click');
     }
   }
 

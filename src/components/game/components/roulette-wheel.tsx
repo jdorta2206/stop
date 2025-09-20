@@ -5,7 +5,6 @@ import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Language } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
-import { useSound } from '@/hooks/use-sound';
 
 interface RouletteWheelProps {
   onSpinComplete: (letter: string) => void;
@@ -45,15 +44,13 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
   const [isAnimating, setIsAnimating] = useState(true);
   const [displayLetter, setDisplayLetter] = useState<string>('?');
   const wheelRef = useRef<HTMLDivElement>(null);
-  const { playSound } = useSound();
-
+  
   const translate = (textKey: keyof typeof ROULETTE_TEXTS) => {
     return ROULETTE_TEXTS[textKey][language] || ROULETTE_TEXTS[textKey]['en'];
   };
   
   useEffect(() => {
     if (alphabet.length > 0) {
-        playSound('spin-start');
 
         const wheel = wheelRef.current;
         if (!wheel) return;
@@ -83,7 +80,6 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
 
         setTimeout(() => {
             clearInterval(letterAnimationInterval);
-            playSound('spin-end');
             setDisplayLetter(finalLetter);
             
             // Wait a moment on the final letter before completing
@@ -94,7 +90,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
             
         }, 4000); // Stop letter animation at the same time the wheel stops
     }
-  }, [alphabet, onSpinComplete, playSound]);
+  }, [alphabet, onSpinComplete]);
 
   return (
     <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card/50 backdrop-blur-sm border-white/20 text-white rounded-2xl", className)}>

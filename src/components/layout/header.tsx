@@ -6,8 +6,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import { Volume2, VolumeX, Loader2 } from 'lucide-react';
-import { useSound } from '@/hooks/use-sound';
+import { Volume2, VolumeX } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
 import { onChatUpdate, sendMessageToRoom } from '@/lib/room-service';
 import { AuthStatus } from '../auth/auth-status';
@@ -16,7 +15,7 @@ import type { ChatMessage } from '../chat/chat-message-item';
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
   const { user } = useAuth();
-  const { isMuted, toggleMute } = useSound();
+  const [isMuted, setIsMuted] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -25,6 +24,8 @@ export function AppHeader() {
 
   useEffect(() => {
     setIsMounted(true);
+    const storedMute = localStorage.getItem('globalStopMuted') === 'true';
+    setIsMuted(storedMute);
   }, []);
 
   useEffect(() => {
@@ -39,6 +40,12 @@ export function AppHeader() {
   const handleLanguageChange = useCallback((langCode: LanguageOption['code']) => {
     setLanguage(langCode);
   }, [setLanguage]);
+
+  const toggleMute = () => {
+    const newMuteState = !isMuted;
+    setIsMuted(newMuteState);
+    localStorage.setItem('globalStopMuted', String(newMuteState));
+  };
 
   const handleSendMessage = (text: string) => {
     if (user && roomId) {
