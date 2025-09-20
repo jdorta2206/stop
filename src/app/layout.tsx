@@ -14,6 +14,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
+          <link rel="icon" href="/android-chrome-192x192.png" type="image/png" sizes="192x192" />
           <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#ef4444" />
           <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
