@@ -9,7 +9,7 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function UserAccount() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -19,18 +19,13 @@ export function UserAccount() {
 
   useEffect(() => {
     // Ensure this runs only on the client
-    if (isMounted) {
-      const savedAvatar = localStorage.getItem('user-avatar');
-      if (savedAvatar) {
-        setAvatarUrl(savedAvatar);
-      } else if (user?.photoURL) {
+    if (user?.photoURL) {
         setAvatarUrl(user.photoURL);
-      }
     }
-  }, [user?.photoURL, isMounted]);
+  }, [user?.photoURL]);
 
 
-  if (!user) {
+  if (!isMounted || !user) {
     return null;
   }
   
@@ -65,3 +60,4 @@ export function UserAccount() {
     </DropdownMenu>
   );
 }
+

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -134,6 +135,14 @@ export function LandingPageContent() {
     { key: 'scoringSystem', icon: <BrainCircuit className="h-10 w-10 text-white" /> },
     { key: 'free', icon: <Lightbulb className="h-10 w-10 text-white" /> }
   ];
+  
+  if (!isMounted) {
+      return (
+          <div className="flex h-screen w-full items-center justify-center">
+              <Loader2 className="h-16 w-16 animate-spin text-primary"/>
+          </div>
+      )
+  }
 
   return (
     <div className="flex flex-col min-h-screen text-white">

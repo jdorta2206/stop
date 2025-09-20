@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { LogIn, Loader2 } from 'lucide-react';
@@ -12,7 +12,21 @@ import { UserAccount } from './UserAccount';
 export function AuthStatus() {
   const { user, isLoading } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
+  if (!isMounted) {
+    return (
+      <Button variant="secondary" className="rounded-md" disabled>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Cargando...
+      </Button>
+    );
+  }
+
   if (isLoading) {
     return (
       <Button variant="secondary" className="rounded-md" disabled>
