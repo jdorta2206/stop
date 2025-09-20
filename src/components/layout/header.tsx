@@ -6,7 +6,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { useSound } from '@/hooks/use-sound';
 import { ChatPanel } from '../chat/chat-panel';
 import { onChatUpdate, sendMessageToRoom } from '@/lib/room-service';
@@ -28,13 +28,13 @@ export function AppHeader() {
   }, []);
 
   useEffect(() => {
-    if (isChatOpen && roomId) {
+    if (isMounted && isChatOpen && roomId) {
       const unsubscribe = onChatUpdate(roomId, (messages) => {
         setChatMessages(messages);
       });
       return () => unsubscribe();
     }
-  }, [isChatOpen, roomId]);
+  }, [isMounted, isChatOpen, roomId]);
 
   const handleLanguageChange = useCallback((langCode: LanguageOption['code']) => {
     setLanguage(langCode);
@@ -67,6 +67,10 @@ export function AppHeader() {
               />
               <span className="text-xl font-bold text-white">Stop</span>
             </Link>
+             <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="w-10 h-10 bg-muted/20 rounded-full animate-pulse"></div>
+                <div className="w-24 h-10 bg-muted/20 rounded-md animate-pulse"></div>
+            </div>
           </div>
       </header>
       )
