@@ -15,6 +15,11 @@
     "standalone",
     "minimal-ui"
   ],
+  "categories": [
+    "games",
+    "education",
+    "entertainment"
+  ],
   "icons": [
     {
       "src": "/images/icons/android-chrome-192x192.png",
@@ -47,15 +52,11 @@
     },
     {
       "src": "/images/screenshots/screenshot-mobile.png",
-      "sizes": "540x720",
+      "sizes": "640x1136",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Vista móvil del juego Stop"
     }
-  ],
-  "categories": [
-    "games",
-    "education"
   ],
   "shortcuts": [
     {
@@ -73,7 +74,7 @@
     {
       "name": "Ver Ranking",
       "short_name": "Ranking",
-      "description": "Ver la tabla de clasificación global",
+      "description": "Ver la tabla de clasificación global y de amigos",
       "url": "/leaderboard",
       "icons": [
         {
@@ -83,9 +84,27 @@
       ]
     }
   ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "iarc_rating_id": "",
+  "share_target": {
+    "action": "/share-target",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+stop",
+      "url": "/?protocol=%s"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": [
+      "navigate-new",
+      "focus-existing"
+    ]
+  },
   "file_handlers": [
     {
       "action": "/handle-file",
@@ -96,19 +115,28 @@
       }
     }
   ],
-  "launch_handler": {
-    "client_mode": "navigate-new"
-  },
-  "protocol_handlers": [
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "iarc_rating_id": "",
+  "widgets": [
     {
-      "protocol": "web+stop",
-      "url": "/?protocol=%s",
-      "title": "Protocolo de Juego Stop"
+      "name": "Ranking Rápido",
+      "description": "Ver el ranking actual del juego.",
+      "tag": "leaderboard",
+      "template": "leaderboard_template",
+      "ms_ac_template": "leaderboard_template.json",
+      "data": "leaderboard.json",
+      "type": "application/json",
+      "auth": false,
+      "update": 86400
     }
   ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
   "scope_extensions": [
-    { "origin": "*.netlify.app" },
-    { "origin": "*.firebaseapp.com" },
-    { "origin": "*" }
+    {
+      "origin": "*.juego-stop.netlify.app"
+    }
   ]
 }
