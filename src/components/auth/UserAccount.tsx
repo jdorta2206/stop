@@ -9,7 +9,7 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function UserAccount() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -60,4 +60,3 @@ export function UserAccount() {
     </DropdownMenu>
   );
 }
-
