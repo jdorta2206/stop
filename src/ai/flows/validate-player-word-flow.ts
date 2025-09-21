@@ -77,32 +77,39 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     // 2. Simular respuesta de la IA
     let aiWord = '';
     const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
-    if (Math.random() < 0.8 && possibleAiWords.length > 0) { // 80% de probabilidad de que la IA responda
+    // Aumentar la probabilidad de respuesta de la IA para hacer el juego más competitivo
+    if (Math.random() < 0.9 && possibleAiWords.length > 0) { 
         aiWord = possibleAiWords[Math.floor(Math.random() * possibleAiWords.length)];
     }
     const aiWordLower = aiWord.toLowerCase();
     const isAiWordValid = !!aiWord;
     
-    // 3. Calcular puntuaciones (Lógica corregida y simplificada)
+    // 3. Calcular puntuaciones - LÓGICA CORREGIDA Y REESTRUCTURADA
     let playerScore = 0;
     let aiScore = 0;
 
     if (isPlayerWordValid) {
-        if (isAiWordValid && playerWordLower === aiWordLower) {
-            playerScore = 5;
-            aiScore = 5;
-        } else if (isAiWordValid) {
-            playerScore = 10;
-            aiScore = 10;
+        if (isAiWordValid) {
+            if (playerWordLower === aiWordLower) {
+                // Ambos escriben la misma palabra válida
+                playerScore = 5;
+                aiScore = 5;
+            } else {
+                // Ambos escriben palabras válidas y diferentes
+                playerScore = 10;
+                aiScore = 10;
+            }
         } else {
+            // Solo el jugador escribe una palabra válida
             playerScore = 10;
         }
     } else {
         if (isAiWordValid) {
+            // Solo la IA escribe una palabra válida
             aiScore = 10;
         }
+        // Si ambos son inválidos, ambos obtienen 0 puntos (ya está inicializado)
     }
-
 
     // 4. Guardar resultados para la categoría
     results[playerResponse.category] = {
