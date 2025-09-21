@@ -51,14 +51,16 @@ export default function EnhancedRoomManager({
         setRoom(updatedRoom);
         setPlayers(Object.values(updatedRoom.players || {}));
       } else {
-        // No redirigir inmediatamente. El componente principal puede mostrar un estado de carga.
-        // Solo mostrar un toast si el estado persiste.
         setRoom(null);
       }
     });
 
-    return () => unsubscribe();
-  }, [roomId, onLeaveRoom, toast]);
+    return () => {
+      unsubscribe();
+      // Cuando el componente se desmonte, actualiza el estado del jugador a 'offline'
+      updatePlayerInRoom(roomId, currentUserId, { status: 'offline' });
+    };
+  }, [roomId, currentUserId]);
 
   const currentPlayer = players.find(p => p.id === currentUserId);
   const isHost = room?.hostId === currentUserId;
