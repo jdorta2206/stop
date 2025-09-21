@@ -66,16 +66,9 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const categoryLower = playerResponse.category.toLowerCase();
     const playerWord = playerResponse.word || '';
     const playerWordLower = playerWord.toLowerCase().trim();
-
     const categoryDictionary = aiDictionary[categoryLower] || [];
-
-    // 1. Validar palabra del jugador - LÓGICA CORREGIDA Y DEFINITIVA
-    const isPlayerWordValid = 
-        playerWordLower.length > 1 &&
-        playerWordLower.startsWith(letterLower) &&
-        categoryDictionary.includes(playerWordLower);
-
-    // 2. Simular respuesta de la IA
+    
+    // Simular respuesta de la IA
     let aiWord = '';
     const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
     if (Math.random() < 0.9 && possibleAiWords.length > 0) { 
@@ -83,31 +76,39 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     }
     const aiWordLower = aiWord.toLowerCase();
     const isAiWordValid = !!aiWord;
-    
-    // 3. Calcular puntuaciones - LÓGICA CORREGIDA Y REESTRUCTURADA
+
+    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN CORREGIDA ***
+
+    // 1. Validar palabra del jugador de forma estricta
+    const isPlayerWordValid = 
+        playerWordLower.length > 1 &&
+        playerWordLower.startsWith(letterLower) &&
+        categoryDictionary.includes(playerWordLower);
+
+    // 2. Calcular puntuaciones basadas en la validación
     let playerScore = 0;
     let aiScore = 0;
 
     if (isPlayerWordValid) {
-      if (!isAiWordValid || aiWordLower === '') {
-        playerScore = 10;
-      } else {
-        if (playerWordLower === aiWordLower) {
-          playerScore = 5;
-          aiScore = 5;
+        if (isAiWordValid) {
+            if (playerWordLower === aiWordLower) {
+                playerScore = 5;
+                aiScore = 5;
+            } else {
+                playerScore = 10;
+                aiScore = 10;
+            }
         } else {
-          playerScore = 10;
-          aiScore = 10;
+            playerScore = 10;
         }
-      }
-    } else { // La palabra del jugador es inválida o está vacía
-      playerScore = 0; // Aseguramos que la puntuación es 0
-      if (isAiWordValid) {
-        aiScore = 10;
-      }
+    } else { // Si la palabra del jugador es inválida, sus puntos son 0
+        playerScore = 0;
+        if (isAiWordValid) {
+            aiScore = 10;
+        }
     }
-
-    // 4. Guardar resultados para la categoría
+    
+    // 3. Guardar resultados para la categoría
     results[playerResponse.category] = {
       player: {
         response: playerWord,
@@ -115,7 +116,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         score: playerScore,
       },
       ai: {
-        response: aiWord ? aiWord.charAt(0).toUpperCase() + aiWord.slice(1) : '', // Capitalizar la palabra de la IA
+        response: aiWord ? aiWord.charAt(0).toUpperCase() + aiWord.slice(1) : '',
         isValid: isAiWordValid,
         score: aiScore,
       }
