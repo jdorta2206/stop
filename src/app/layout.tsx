@@ -13,8 +13,6 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
-          <link rel="manifest" href="/manifest.json" />
-          <link rel="apple-touch-icon" href="/android-chrome-192x192.png" />
           <meta name="theme-color" content="#ef4444" />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">
