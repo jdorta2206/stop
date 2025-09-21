@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -43,8 +42,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         title: translate('rooms.create.title'),
         description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
       });
-      onClose();
       router.push(`/multiplayer?roomId=${newRoom.id}`);
+      onClose();
     } catch (error) {
       toast({
         title: translate('common.error'),
@@ -65,8 +64,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       return;
     }
     setIsJoining(true);
-    onClose();
     router.push(`/multiplayer?roomId=${joinRoomId.trim().toUpperCase()}`);
+    onClose();
     // No need to set isJoining to false, as the component will unmount on navigation
   };
 
