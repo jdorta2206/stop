@@ -78,7 +78,7 @@ export const createRoom = async (creatorId: string, creatorName: string, creator
         createdAt: serverTimestamp(),
         status: 'waiting' as 'waiting' | 'playing' | 'finished',
         settings: {
-            maxPlayers: 8,
+            maxPlayers: 10,
             roundDuration: 60,
             isPrivate: true,
             language: 'es' as Language

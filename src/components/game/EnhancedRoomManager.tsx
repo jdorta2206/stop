@@ -96,8 +96,8 @@ export default function EnhancedRoomManager({
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
-  // Game can start if host is ready and at least 2 players total are ready
-  const canStartGame = isHost && readyPlayersCount >= 2 && players.length >= 2;
+  // Game can start if host is ready, there are at least 2 players, and ALL players are ready
+  const canStartGame = isHost && players.length >= 2 && readyPlayersCount === players.length;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -228,7 +228,7 @@ export default function EnhancedRoomManager({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {[2, 4, 6, 8].map(num => <SelectItem key={num} value={num.toString()}>{num} jugadores</SelectItem>)}
+                            {[2, 4, 6, 8, 10].map(num => <SelectItem key={num} value={num.toString()}>{num} jugadores</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -302,7 +302,7 @@ export default function EnhancedRoomManager({
                     className="w-full text-lg py-6"
                     size="lg"
                 >
-                    Iniciar ({readyPlayersCount}/2)
+                    Iniciar ({readyPlayersCount}/{players.length})
                 </Button>
                 
                 <Button
