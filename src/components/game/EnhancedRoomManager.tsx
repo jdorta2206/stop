@@ -86,7 +86,7 @@ export default function EnhancedRoomManager({
   const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
   // Game can start if host is ready and at least 2 players total are ready
-  const canStartGame = isHost && readyPlayersCount >= 2;
+  const canStartGame = isHost && readyPlayersCount >= 2 && players.length >= 2;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -162,8 +162,9 @@ export default function EnhancedRoomManager({
 
   if (!room) {
     return (
-      <div className="flex items-center justify-center p-8 text-center">
-          <p className="text-lg">La sala no existe o no se ha podido cargar.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+          <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+          <p className="text-lg">Entrando a la sala...</p>
       </div>
     );
   }
