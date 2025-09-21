@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Suspense, useEffect, useState } from 'react';
@@ -20,30 +19,26 @@ function MultiplayerLobbyContent() {
     const roomId = searchParams ? searchParams.get('roomId') : null;
 
     useEffect(() => {
-        // This effect handles the initial loading state and redirection logic.
+        // Este efecto maneja el estado de carga inicial y la lógica de redirección.
         if (!authLoading) {
-            setIsInitialLoading(false); // Authentication check is complete.
+            setIsInitialLoading(false); // La comprobación de autenticación ha finalizado.
             if (!user) {
-                // If auth is done and there's no user, redirect to home.
-                router.push('/');
-            } else if (!roomId) {
-                // If user is logged in but there's no roomId, redirect to home.
+                // Si la autenticación ha finalizado y no hay usuario, redirige al inicio.
                 router.push('/');
             }
         }
-    }, [authLoading, user, roomId, router]);
-
+    }, [authLoading, user, router]);
 
     const handleLeaveRoom = () => {
         router.push('/');
     };
 
     const handleStartGame = () => {
-        // This logic will be implemented in the future.
+        // Esta lógica se implementará en el futuro.
         console.log(`Starting game in room ${roomId}`);
     };
 
-    // Show a loading spinner during the initial authentication check.
+    // Muestra un spinner de carga durante la comprobación inicial de autenticación.
     if (isInitialLoading) {
         return (
             <div className="flex h-screen items-center justify-center bg-background">
@@ -53,8 +48,18 @@ function MultiplayerLobbyContent() {
         );
     }
     
-    // After loading, if we have a user and a room, show the manager.
-    // The redirection useEffect above will handle cases where user or roomId are null.
+    // Si no hay roomId, redirige también.
+    if (!roomId) {
+        router.push('/');
+        return (
+             <div className="flex h-screen items-center justify-center bg-background">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                <p className="ml-4 text-lg">Redirigiendo...</p>
+            </div>
+        );
+    }
+    
+    // Después de la carga, si tenemos un usuario y una sala, muestra el gestor.
     if (user && roomId) {
         return (
             <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
@@ -72,7 +77,7 @@ function MultiplayerLobbyContent() {
         );
     }
 
-    // Fallback for edge cases, though the useEffect should handle redirection.
+    // Fallback para casos extremos, aunque el useEffect debería manejar la redirección.
     return (
         <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -82,7 +87,7 @@ function MultiplayerLobbyContent() {
 }
 
 function MultiplayerLobby() {
-    // Suspense is necessary because useSearchParams is used in the child component.
+    // Suspense es necesario porque useSearchParams se utiliza en el componente hijo.
     return (
       <Suspense fallback={
         <div className="flex h-screen items-center justify-center bg-background">
