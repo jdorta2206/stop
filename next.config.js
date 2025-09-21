@@ -2,11 +2,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    // Esta configuración puede ser útil, pero por ahora se elimina para reducir complejidad.
-    // serviceWorker: false, 
-  },
+  output: 'export',
 };
 
 export default nextConfig;
-
