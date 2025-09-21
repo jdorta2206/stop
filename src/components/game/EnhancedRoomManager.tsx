@@ -20,20 +20,22 @@ import {
   Crown
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, type Player, type Room } from '@/lib/room-service';
+import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, addPlayerToRoom, type Player, type Room } from '@/lib/room-service';
 import type { Language } from '@/contexts/language-context';
 import ContactsManager from './ContactsManager';
+import type { User } from 'firebase/auth';
+
 
 interface EnhancedRoomManagerProps {
   roomId: string;
-  currentUserId: string;
+  currentUser: User;
   onLeaveRoom: () => void;
   onStartGame: () => void;
 }
 
 export default function EnhancedRoomManager({ 
   roomId, 
-  currentUserId, 
+  currentUser, 
   onLeaveRoom, 
   onStartGame 
 }: EnhancedRoomManagerProps) {
@@ -42,28 +44,39 @@ export default function EnhancedRoomManager({
   const [players, setPlayers] = useState<Player[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
-    if (!roomId) return;
-    
+    if (!roomId || !currentUser) return;
+
+    // Unirse a la sala o marcar como online al entrar
+    addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL)
+      .catch(err => {
+          console.error("Error joining room:", err);
+          setError((err as Error).message);
+          toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
+      });
+
     const unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
       if (updatedRoom) {
         setRoom(updatedRoom);
         setPlayers(Object.values(updatedRoom.players || {}));
+        setError(null);
       } else {
-        setRoom(null);
+        setError("La sala ya no existe o no se pudo cargar.");
       }
     });
 
     return () => {
       unsubscribe();
-      // Cuando el componente se desmonte, actualiza el estado del jugador a 'offline'
-      updatePlayerInRoom(roomId, currentUserId, { status: 'offline' });
+      // Marcar como offline al salir
+      updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
     };
-  }, [roomId, currentUserId]);
+  }, [roomId, currentUser, toast]);
 
-  const currentPlayer = players.find(p => p.id === currentUserId);
-  const isHost = room?.hostId === currentUserId;
+  const currentPlayer = players.find(p => p.id === currentUser.uid);
+  const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
   // Game can start if host is ready and at least 2 players total are ready
   const canStartGame = isHost && readyPlayersCount >= 2;
@@ -71,7 +84,7 @@ export default function EnhancedRoomManager({
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
     try {
-      await updatePlayerInRoom(roomId, currentUserId, { isReady: !currentPlayer.isReady });
+      await updatePlayerInRoom(roomId, currentUser.uid, { isReady: !currentPlayer.isReady });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo actualizar tu estado.', variant: 'destructive' });
     }
@@ -115,6 +128,21 @@ export default function EnhancedRoomManager({
         return null;
     }
   };
+
+  if (error) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-destructive">{error}</p>
+                <Button onClick={onLeaveRoom} className="mt-4">Volver al inicio</Button>
+            </CardContent>
+        </Card>
+    );
+  }
+
 
   if (!room) {
     return (
@@ -204,7 +232,7 @@ export default function EnhancedRoomManager({
                             {getStatusIcon(player.status)}
                             <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
                             <span className="font-medium flex items-center gap-2">
-                                {player.name} {player.id === currentUserId && "(Tú)"}
+                                {player.name} {player.id === currentUser.uid && "(Tú)"}
                                 {player.isHost && <Crown className="h-4 w-4 text-yellow-500"/>}
                             </span>
                         </div>
@@ -212,7 +240,7 @@ export default function EnhancedRoomManager({
                         <Badge variant={player.isReady ? "default" : "secondary"} className="text-xs w-20 justify-center">
                             {player.isReady ? "Listo" : "Esperando"}
                         </Badge>
-                        {isHost && player.id !== currentUserId && (
+                        {isHost && player.id !== currentUser.uid && (
                             <Button
                                 variant="ghost"
                                 size="icon"
