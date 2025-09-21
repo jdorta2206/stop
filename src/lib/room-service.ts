@@ -62,12 +62,13 @@ const generateRoomId = () => {
 export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
     const roomId = generateRoomId();
 
-    const playerProfile = await rankingManager.getPlayerRanking(creatorId, creatorName, creatorAvatar);
-    
+    const finalCreatorName = creatorName || 'Jugador Anónimo';
+    const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
+
     const creatorPlayer: Player = {
         id: creatorId,
-        name: playerProfile?.playerName || creatorName || 'Jugador Anónimo',
-        avatar: playerProfile?.photoURL || creatorAvatar,
+        name: finalCreatorName,
+        avatar: finalCreatorAvatar,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),
