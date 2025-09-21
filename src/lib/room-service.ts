@@ -62,13 +62,12 @@ const generateRoomId = () => {
 export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
     const roomId = generateRoomId();
 
-    // Primero, asegúrate de que el perfil del jugador está actualizado
     const playerProfile = await rankingManager.getPlayerRanking(creatorId, creatorName, creatorAvatar);
     
     const creatorPlayer: Player = {
         id: creatorId,
-        name: playerProfile.playerName, // Usar el nombre del perfil
-        avatar: playerProfile.photoURL, // Usar el avatar del perfil
+        name: playerProfile?.playerName || creatorName || 'Jugador Anónimo',
+        avatar: playerProfile?.photoURL || creatorAvatar,
         isReady: false,
         status: 'online',
         joinedAt: serverTimestamp(),
