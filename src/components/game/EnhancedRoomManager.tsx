@@ -55,6 +55,7 @@ export default function EnhancedRoomManager({
 
     const joinAndListen = async () => {
       try {
+        setIsLoading(true);
         // Step 1: Join the room. This will create the player or set them to online.
         await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL);
 
@@ -319,5 +320,3 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
-
-    
