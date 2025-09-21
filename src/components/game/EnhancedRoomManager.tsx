@@ -51,8 +51,9 @@ export default function EnhancedRoomManager({
         setRoom(updatedRoom);
         setPlayers(Object.values(updatedRoom.players || {}));
       } else {
-        toast({ title: 'Error', description: 'La sala ya no existe o fue eliminada.', variant: 'destructive' });
-        onLeaveRoom();
+        // No redirigir inmediatamente. El componente principal puede mostrar un estado de carga.
+        // Solo mostrar un toast si el estado persiste.
+        setRoom(null);
       }
     });
 
@@ -117,6 +118,7 @@ export default function EnhancedRoomManager({
     return (
       <div className="flex items-center justify-center p-8 text-center">
           <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          <p className="ml-4 text-lg">Cargando sala...</p>
       </div>
     );
   }
