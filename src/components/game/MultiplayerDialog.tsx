@@ -50,7 +50,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         description: (error as Error).message,
         variant: 'destructive',
       });
-      setIsCreating(false);
+    } finally {
+        setIsCreating(false);
     }
   };
 
