@@ -18,7 +18,11 @@ function MultiplayerLobbyContent() {
 
     if (!searchParams) {
         // This can happen during initial server render, client will have it.
-        return null;
+        return (
+            <div className="flex h-screen items-center justify-center bg-background">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        );
     }
     
     const roomId = searchParams.get('roomId');

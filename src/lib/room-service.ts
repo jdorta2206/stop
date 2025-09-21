@@ -99,7 +99,7 @@ export const createRoom = async (creatorId: string, creatorName: string, creator
 export const getRoom = async (roomId: string): Promise<Room | null> => {
     const roomDocRef = doc(roomsCollection, roomId);
     const docSnap = await getDoc(roomDocRef);
-    return docSnap.exists() ? docSnap.data() as Room : null;
+    return docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Room : null;
 };
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
@@ -186,7 +186,7 @@ export const updateRoomSettings = async (roomId: string, settings: Partial<Room[
 export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void) => {
     const roomDocRef = doc(roomsCollection, roomId);
     return onSnapshot(roomDocRef, (doc) => {
-        callback(doc.exists() ? doc.data() as Room : null);
+        callback(doc.exists() ? { id: doc.id, ...doc.data() } as Room : null);
     });
 };
 

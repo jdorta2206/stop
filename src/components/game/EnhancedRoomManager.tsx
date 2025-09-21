@@ -115,7 +115,7 @@ export default function EnhancedRoomManager({
 
   if (!room) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex items-center justify-center p-8 text-center">
           <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
