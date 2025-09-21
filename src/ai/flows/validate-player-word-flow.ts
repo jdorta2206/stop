@@ -88,7 +88,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     let aiScore = 0;
 
     if (isPlayerWordValid) {
-      if (!isAiWordValid) {
+      if (!isAiWordValid || aiWordLower === '') {
         playerScore = 10;
       } else {
         if (playerWordLower === aiWordLower) {
@@ -100,7 +100,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         }
       }
     } else { // El jugador introdujo una palabra inválida o la dejó en blanco
-      playerScore = 0;
+      playerScore = 0; // Aseguramos que la puntuación es 0 si la palabra no es válida
       if (isAiWordValid) {
         aiScore = 10;
       }
