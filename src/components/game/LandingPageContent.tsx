@@ -51,7 +51,6 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export function LandingPageContent() {
-  const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [multiplayerModalOpen, setMultiplayerModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
