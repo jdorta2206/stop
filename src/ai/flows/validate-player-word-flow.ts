@@ -99,8 +99,8 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         } else {
             playerScore = 10;
         }
-    } else { // Si la palabra del jugador no es válida, su puntuación es siempre 0
-        playerScore = 0;
+    } else {
+        playerScore = 0; // Se asegura que el jugador obtiene 0 si su palabra es inválida
         if (isAiWordValid) {
             aiScore = 10;
         }
