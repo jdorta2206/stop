@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2 } from 'lucide-react';
+import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/room-service';
+import MultiplayerDialog from './MultiplayerDialog';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -53,7 +54,7 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export function LandingPageContent() {
   const router = useRouter();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [multiplayerModalOpen, setMultiplayerModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const { user, isLoading: isAuthLoading } = useAuth();
   const { language, translate } = useLanguage();
@@ -84,34 +85,11 @@ export function LandingPageContent() {
     });
   };
   
-  const handlePrivateRoomClick = async () => {
+  const handlePrivateRoomClick = () => {
     if (!user) {
       setAuthModalOpen(true);
-      return;
-    }
-    
-    setIsCreatingRoom(true);
-    try {
-      const newRoom = await createRoom(
-        user.uid, 
-        user.displayName ?? 'Jugador', 
-        user.photoURL ?? null
-      );
-
-      toast({
-        title: translate('rooms.create.title'),
-        description: translate('rooms.create.success', { roomId: newRoom.id }),
-      });
-      router.push(`/multiplayer?roomId=${newRoom.id}`);
-
-    } catch (error) {
-      toast({
-        title: translate('errors.roomCreation'),
-        description: (error as Error).message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreatingRoom(false);
+    } else {
+      setMultiplayerModalOpen(true);
     }
   };
 
@@ -144,6 +122,11 @@ export function LandingPageContent() {
       <AuthModal 
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
+      />
+      
+      <MultiplayerDialog
+        isOpen={multiplayerModalOpen}
+        onClose={() => setMultiplayerModalOpen(false)}
       />
       
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
@@ -186,10 +169,9 @@ export function LandingPageContent() {
                 <Button 
                   variant="outline"
                   onClick={handlePrivateRoomClick}
-                  disabled={isCreatingRoom}
                   className="font-bold py-3 px-6 text-md rounded-full shadow-lg transition-transform hover:scale-105"
                 >
-                  {isCreatingRoom && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <PartyPopper className="mr-2 h-4 w-4" />
                   {translate('landing.privateRoom')}
                 </Button>
                 <Link href="/leaderboard">
