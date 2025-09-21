@@ -92,13 +92,16 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         if (isAiWordValid && playerWordLower === aiWordLower) {
             playerScore = 5;
             aiScore = 5;
+        } else if (isAiWordValid && playerWordLower !== aiWordLower) {
+            playerScore = 10;
+            aiScore = 10;
         } else {
             playerScore = 10;
         }
-    }
-
-    if (isAiWordValid && playerWordLower !== aiWordLower) {
-        aiScore = 10;
+    } else {
+         if (isAiWordValid) {
+            aiScore = 10;
+        }
     }
 
 
