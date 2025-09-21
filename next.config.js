@@ -9,8 +9,6 @@ const withPWA = withPWAInit({
   skipWaiting: true,
 });
 
-const nextConfig = {
-    output: 'export',
-};
+const nextConfig = {};
 
 export default withPWA(nextConfig);
