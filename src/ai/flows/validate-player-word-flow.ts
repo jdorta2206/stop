@@ -68,7 +68,10 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWordLower = playerWord.toLowerCase();
 
     // 1. Evaluar la palabra del jugador
-    const isPlayerWordValid = playerWord.trim() !== '' && playerWordLower.startsWith(letterLower);
+    const categoryDictionary = aiDictionary[categoryLower] || [];
+    const isPlayerWordValid = playerWord.trim() !== '' && 
+                               playerWordLower.startsWith(letterLower) &&
+                               categoryDictionary.includes(playerWordLower);
 
     // 2. Simular la respuesta de la IA
     let aiWord = '';
