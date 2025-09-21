@@ -67,7 +67,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWord = playerResponse.word || '';
     const playerWordLower = playerWord.toLowerCase().trim();
 
-    // 1. Validar palabra del jugador
+    // 1. Validar palabra del jugador - LÓGICA CORREGIDA Y DEFINITIVA
     const categoryDictionary = aiDictionary[categoryLower] || [];
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
@@ -99,7 +99,8 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         } else {
             playerScore = 10;
         }
-    } else {
+    } else { // Si la palabra del jugador no es válida, su puntuación es siempre 0
+        playerScore = 0;
         if (isAiWordValid) {
             aiScore = 10;
         }
