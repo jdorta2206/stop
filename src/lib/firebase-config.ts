@@ -6,10 +6,10 @@
 // Do not modify this file unless you are certain of the changes.
 
 export const firebaseConfig = {
-  "apiKey": "AIzaSyChgL6C45Yq2CQVzmcC4fnSCpWq4h2fE4E",
-  "authDomain": "global-stop.firebaseapp.com",
   "projectId": "global-stop",
-  "storageBucket": "global-stop.appspot.com",
-  "messagingSenderId": "902072408470",
-  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7"
+  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
+  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
+  "authDomain": "global-stop.firebaseapp.com",
+  "measurementId": "G-P41T2BEMKZ",
+  "messagingSenderId": "902072408470"
 };
