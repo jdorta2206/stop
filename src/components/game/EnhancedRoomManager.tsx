@@ -51,42 +51,52 @@ export default function EnhancedRoomManager({
   useEffect(() => {
     if (!roomId || !currentUser) return;
 
-    // Join room on mount
-    addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL)
-      .then(() => {
-        setIsLoading(false);
-      })
-      .catch(err => {
-          console.error("Error joining room:", err);
-          setError((err as Error).message);
-          toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
+    let unsubscribe: () => void = () => {};
+
+    const joinAndListen = async () => {
+      try {
+        // Step 1: Join the room. This will create the player or set them to online.
+        await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL);
+
+        // Step 2: Now that the player is in the room, start listening for updates.
+        unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
+          if (updatedRoom) {
+            setRoom(updatedRoom);
+            setPlayers(Object.values(updatedRoom.players || {}));
+            setError(null);
+          } else {
+            setError("La sala ya no existe o no se pudo cargar.");
+            toast({ title: 'Error', description: 'La sala ya no existe.', variant: 'destructive'});
+            onLeaveRoom();
+          }
           setIsLoading(false);
-      });
+        });
 
-    // Listen for room updates
-    const unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
-      if (updatedRoom) {
-        setRoom(updatedRoom);
-        setPlayers(Object.values(updatedRoom.players || {}));
-        setError(null);
-      } else {
-        setError("La sala ya no existe o no se pudo cargar.");
+      } catch (err) {
+        console.error("Error joining or listening to room:", err);
+        setError((err as Error).message);
+        toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    };
 
+    joinAndListen();
+
+    // Step 3: Define cleanup logic.
     return () => {
       unsubscribe();
-      // Set status to offline on unmount
-      updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
+      // When component unmounts (leaving page), set status to offline.
+      if (roomId && currentUser?.uid) {
+        updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
+      }
     };
-  }, [roomId, currentUser, toast]);
+  }, [roomId, currentUser, toast, onLeaveRoom]);
 
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
   // Game can start if host is ready and at least 2 players total are ready
-  const canStartGame = isHost && readyPlayersCount >= 2;
+  const canStartGame = isHost && readyPlayersCount >= 2 && players.length >= 2;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -140,7 +150,7 @@ export default function EnhancedRoomManager({
     return (
       <div className="flex items-center justify-center p-8 text-center">
           <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          <p className="ml-4 text-lg">Cargando sala...</p>
+          <p className="ml-4 text-lg">Entrando a la sala...</p>
       </div>
     );
   }
@@ -162,8 +172,9 @@ export default function EnhancedRoomManager({
 
   if (!room) {
     return (
-      <div className="flex items-center justify-center p-8 text-center">
-          <p className="text-lg">La sala no existe o no se ha podido cargar.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+          <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+          <p className="text-lg">Cargando datos de la sala...</p>
       </div>
     );
   }
@@ -308,3 +319,5 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
+
+    

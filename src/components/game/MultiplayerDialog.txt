@@ -1,0 +1,125 @@
+
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { useLanguage } from '@/contexts/language-context';
+import { useToast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { createRoom } from '@/lib/room-service';
+import { Loader2, PartyPopper, Users } from 'lucide-react';
+
+interface MultiplayerDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialogProps) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { translate } = useLanguage();
+  const { toast } = useToast();
+  
+  const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinRoomId, setJoinRoomId] = useState('');
+
+  const handleCreateRoom = async () => {
+    if (!user) {
+      toast({ title: "Error", description: "Debes iniciar sesión para crear una sala." });
+      return;
+    }
+    setIsCreating(true);
+    try {
+      const newRoom = await createRoom(
+        user.uid,
+        user.displayName ?? 'Jugador',
+        user.photoURL ?? null
+      );
+      toast({
+        title: translate('rooms.create.title'),
+        description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
+      });
+      onClose();
+      router.push(`/multiplayer?roomId=${newRoom.id}`);
+    } catch (error) {
+      toast({
+        title: translate('common.error'),
+        description: (error as Error).message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleJoinRoom = () => {
+    if (!joinRoomId.trim()) {
+      toast({
+        title: "Código de Sala Vacío",
+        description: "Por favor, introduce un código de sala para unirte.",
+        variant: 'destructive',
+      });
+      return;
+    }
+    setIsJoining(true);
+    onClose();
+    router.push(`/multiplayer?roomId=${joinRoomId.trim().toUpperCase()}`);
+    // No need to set isJoining to false, as the component will unmount on navigation
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <PartyPopper />
+            {translate('landing.privateRoom')}
+          </DialogTitle>
+          <DialogDescription>
+            Crea una sala para jugar con tus amigos o únete a una existente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <h3 className="font-semibold">Crear una nueva sala</h3>
+            <Button onClick={handleCreateRoom} disabled={isCreating} className="w-full">
+              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Crear y unirme
+            </Button>
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                O
+              </span>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="font-semibold">Unirse a una sala existente</h3>
+            <div className="flex w-full items-center space-x-2">
+              <Input
+                placeholder="Introducir código de sala..."
+                value={joinRoomId}
+                onChange={(e) => setJoinRoomId(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
+                className="uppercase"
+              />
+              <Button type="button" onClick={handleJoinRoom} disabled={isJoining} variant="secondary">
+                {isJoining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
