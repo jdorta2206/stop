@@ -60,8 +60,7 @@ const generateRoomId = () => {
 };
 
 export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
-    const roomId = generateRoomId();
-
+    
     const finalCreatorName = creatorName || 'Jugador Anónimo';
     const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
 
@@ -75,25 +74,27 @@ export const createRoom = async (creatorId: string, creatorName: string, creator
         isHost: true,
     };
 
-    const newRoom: Room = {
-        id: roomId,
+    const newRoomData = {
         players: {
             [creatorId]: creatorPlayer,
         },
         hostId: creatorId,
         createdAt: serverTimestamp(),
-        status: 'waiting',
+        status: 'waiting' as 'waiting' | 'playing' | 'finished',
         settings: {
             maxPlayers: 8,
             roundDuration: 60,
             isPrivate: true,
-            language: 'es'
+            language: 'es' as Language
         },
     };
 
-    const roomDocRef = doc(roomsCollection, roomId);
-    await setDoc(roomDocRef, newRoom);
-    return newRoom;
+    const roomDocRef = await addDoc(roomsCollection, newRoomData);
+    
+    return {
+        id: roomDocRef.id,
+        ...newRoomData,
+    } as Room;
 };
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
