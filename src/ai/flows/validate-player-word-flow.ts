@@ -88,22 +88,22 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     let aiScore = 0;
 
     if (isPlayerWordValid) {
-        if (isAiWordValid) {
-            if (playerWordLower === aiWordLower) {
-                playerScore = 5;
-                aiScore = 5;
-            } else {
-                playerScore = 10;
-                aiScore = 10;
-            }
+      if (!isAiWordValid) {
+        playerScore = 10;
+      } else {
+        if (playerWordLower === aiWordLower) {
+          playerScore = 5;
+          aiScore = 5;
         } else {
-            playerScore = 10;
+          playerScore = 10;
+          aiScore = 10;
         }
-    } else {
-        playerScore = 0; // Se asegura que el jugador obtiene 0 si su palabra es inválida
-        if (isAiWordValid) {
-            aiScore = 10;
-        }
+      }
+    } else { // El jugador introdujo una palabra inválida o la dejó en blanco
+      playerScore = 0;
+      if (isAiWordValid) {
+        aiScore = 10;
+      }
     }
 
     // 4. Guardar resultados para la categoría
