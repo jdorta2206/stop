@@ -75,17 +75,21 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         aiWord = possibleAiWords[Math.floor(Math.random() * possibleAiWords.length)];
     }
     const aiWordLower = aiWord.toLowerCase();
-    const isAiWordValid = !!aiWord;
+    
+    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN DEFINITIVA ***
 
-    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN CORREGIDA ***
-
-    // 1. Validar palabra del jugador de forma estricta
+    // 1. Validar palabra del jugador y de la IA
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
         playerWordLower.startsWith(letterLower) &&
         categoryDictionary.includes(playerWordLower);
 
-    // 2. Calcular puntuaciones basadas en la validación
+    const isAiWordValid =
+        aiWordLower.length > 1 &&
+        aiWordLower.startsWith(letterLower) &&
+        categoryDictionary.includes(aiWordLower);
+
+    // 2. Calcular puntuaciones
     let playerScore = 0;
     let aiScore = 0;
 
@@ -101,9 +105,11 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         } else {
             playerScore = 10;
         }
-    } else { // Si la palabra del jugador es inválida, sus puntos son 0
+    } else {
+        // La palabra del jugador NO es válida, su puntuación es 0.
         playerScore = 0;
         if (isAiWordValid) {
+            // Si la palabra del jugador es inválida, la IA obtiene 10 puntos si la suya es válida.
             aiScore = 10;
         }
     }
