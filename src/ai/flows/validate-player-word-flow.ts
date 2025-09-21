@@ -68,7 +68,6 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWordLower = playerWord.toLowerCase().trim();
     const categoryDictionary = aiDictionary[categoryLower] || [];
     
-    // Simular respuesta de la IA
     let aiWord = '';
     const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
     if (Math.random() < 0.9 && possibleAiWords.length > 0) { 
@@ -76,7 +75,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     }
     const aiWordLower = aiWord.toLowerCase();
     
-    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN DEFINITIVA ***
+    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN (CORREGIDA Y DEFINITIVA) ***
 
     // 1. Validar palabra del jugador y de la IA
     const isPlayerWordValid = 
@@ -89,27 +88,29 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         aiWordLower.startsWith(letterLower) &&
         categoryDictionary.includes(aiWordLower);
 
-    // 2. Calcular puntuaciones
+    // 2. Calcular puntuaciones (LÓGICA REESCRITA PARA CLARIDAD Y CORRECCIÓN)
     let playerScore = 0;
     let aiScore = 0;
 
     if (isPlayerWordValid) {
         if (isAiWordValid) {
             if (playerWordLower === aiWordLower) {
+                // Ambos aciertan con la misma palabra
                 playerScore = 5;
                 aiScore = 5;
             } else {
+                // Ambos aciertan con palabras diferentes
                 playerScore = 10;
                 aiScore = 10;
             }
         } else {
+            // Solo el jugador acierta
             playerScore = 10;
         }
     } else {
         // La palabra del jugador NO es válida, su puntuación es 0.
-        playerScore = 0;
+        // Se calcula la puntuación de la IA de forma independiente.
         if (isAiWordValid) {
-            // Si la palabra del jugador es inválida, la IA obtiene 10 puntos si la suya es válida.
             aiScore = 10;
         }
     }
@@ -121,7 +122,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         isValid: isPlayerWordValid,
         score: playerScore,
       },
-      ai: {
+ai: {
         response: aiWord ? aiWord.charAt(0).toUpperCase() + aiWord.slice(1) : '',
         isValid: isAiWordValid,
         score: aiScore,
