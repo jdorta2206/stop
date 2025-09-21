@@ -67,7 +67,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWord = playerResponse.word || '';
     const playerWordLower = playerWord.toLowerCase().trim();
 
-    // 1. Evaluar la palabra del jugador con lógica REFORZADA
+    // 1. Evaluar la palabra del jugador con lógica REFORZADA Y CORRECTA
     const categoryDictionary = aiDictionary[categoryLower] || [];
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
@@ -141,5 +141,3 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
   // Se usa la función de evaluación local en lugar de llamar a la IA
   return await localEvaluateRound(input);
 }
-
-    
