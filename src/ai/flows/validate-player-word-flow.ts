@@ -67,24 +67,23 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWord = playerResponse.word || '';
     const playerWordLower = playerWord.toLowerCase().trim();
 
-    // 1. Evaluar la palabra del jugador con lógica REFORZADA Y CORRECTA
+    // 1. Validar palabra del jugador
     const categoryDictionary = aiDictionary[categoryLower] || [];
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
         playerWordLower.startsWith(letterLower) &&
         categoryDictionary.includes(playerWordLower);
 
-    // 2. Simular la respuesta de la IA
+    // 2. Simular respuesta de la IA
     let aiWord = '';
-    const possibleWords = aiDictionary[categoryLower]?.filter(w => w.startsWith(letterLower)) || [];
-    if (Math.random() < 0.8 && possibleWords.length > 0) { // 80% chance for AI to know a word
-        aiWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
+    const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
+    if (Math.random() < 0.8 && possibleAiWords.length > 0) { // 80% de probabilidad de que la IA responda
+        aiWord = possibleAiWords[Math.floor(Math.random() * possibleAiWords.length)];
     }
     const aiWordLower = aiWord.toLowerCase();
-
     const isAiWordValid = !!aiWord;
     
-    // 3. Calcular puntuaciones
+    // 3. Calcular puntuaciones (Lógica corregida y simplificada)
     let playerScore = 0;
     let aiScore = 0;
 
@@ -92,14 +91,14 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         if (isAiWordValid && playerWordLower === aiWordLower) {
             playerScore = 5;
             aiScore = 5;
-        } else if (isAiWordValid && playerWordLower !== aiWordLower) {
+        } else if (isAiWordValid) {
             playerScore = 10;
             aiScore = 10;
         } else {
             playerScore = 10;
         }
     } else {
-         if (isAiWordValid) {
+        if (isAiWordValid) {
             aiScore = 10;
         }
     }
