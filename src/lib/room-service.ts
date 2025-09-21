@@ -103,11 +103,14 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
 };
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
-    const room = await getRoom(roomId);
-    if (!room) throw new Error("Room not found");
+    const roomDocRef = doc(roomsCollection, roomId);
+    const roomSnap = await getDoc(roomDocRef);
+    if (!roomSnap.exists()) throw new Error("Room not found");
+
+    const room = roomSnap.data() as Room;
 
     // Si el jugador ya existe, simplemente actualiza su estado a online y sus datos
-    if (room.players[playerId]) {
+    if (room.players && room.players[playerId]) {
         await updatePlayerInRoom(roomId, playerId, { 
             status: 'online', 
             name: playerName, 
@@ -129,7 +132,6 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
         joinedAt: serverTimestamp(),
     };
 
-    const roomDocRef = doc(roomsCollection, roomId);
     await updateDoc(roomDocRef, {
         [`players.${playerId}`]: newPlayer,
     });

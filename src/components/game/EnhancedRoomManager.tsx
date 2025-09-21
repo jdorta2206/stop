@@ -51,13 +51,16 @@ export default function EnhancedRoomManager({
         setRoom(updatedRoom);
         setPlayers(Object.values(updatedRoom.players || {}));
       } else {
-        toast({ title: 'Error', description: 'La sala ya no existe o fue eliminada.', variant: 'destructive' });
-        onLeaveRoom();
+        setRoom(null);
       }
     });
 
-    return () => unsubscribe();
-  }, [roomId, onLeaveRoom, toast]);
+    return () => {
+      unsubscribe();
+      // Cuando el componente se desmonte, actualiza el estado del jugador a 'offline'
+      updatePlayerInRoom(roomId, currentUserId, { status: 'offline' });
+    };
+  }, [roomId, currentUserId]);
 
   const currentPlayer = players.find(p => p.id === currentUserId);
   const isHost = room?.hostId === currentUserId;
@@ -117,6 +120,7 @@ export default function EnhancedRoomManager({
     return (
       <div className="flex items-center justify-center p-8 text-center">
           <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          <p className="ml-4 text-lg">Cargando sala...</p>
       </div>
     );
   }

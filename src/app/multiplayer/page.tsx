@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
@@ -9,25 +9,33 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { useLanguage } from '@/contexts/language-context';
+import { addPlayerToRoom } from '@/lib/room-service';
+import { useToast } from '@/components/ui/use-toast';
 
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, isLoading: authLoading } = useAuth();
     const { language } = useLanguage();
+    const { toast } = useToast();
 
-    if (!searchParams) {
-        // This can happen during initial server render, client will have it.
-        return (
-            <div className="flex h-screen items-center justify-center bg-background">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            </div>
-        );
-    }
-    
-    const roomId = searchParams.get('roomId');
+    const roomId = searchParams ? searchParams.get('roomId') : null;
 
-    if (authLoading) {
+    useEffect(() => {
+        if (user && roomId) {
+            addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador', user.photoURL)
+                .catch(error => {
+                    toast({
+                        title: 'Error al unirse a la sala',
+                        description: (error as Error).message,
+                        variant: 'destructive',
+                    });
+                    router.push('/');
+                });
+        }
+    }, [user, roomId, router, toast]);
+
+    if (authLoading || !searchParams) {
         return (
             <div className="flex h-screen items-center justify-center bg-background">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
