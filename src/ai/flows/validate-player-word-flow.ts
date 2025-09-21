@@ -51,10 +51,10 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
   let aiTotalScore = 0;
   const letterLower = input.letter.toLowerCase();
 
-  // Diccionario de la IA (ampliado)
+  // Diccionario de la IA (NORMALIZADO A MINÚSCULAS)
   const aiDictionary: Record<string, string[]> = {
-    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
-    lugar: ["alemania", "argentina", "atenas", "brasil", "bogotá", "barcelona", "canadá", "china", "copenhague", "dinamarca", "dublín", "ecuador", "españa", "estocolmo", "francia", "finlandia", "florencia", "grecia", "guatemala", "ginebra", "holanda", "honduras", "helsinki", "italia", "irlanda", "islandia", "japón", "jamaica", "jerusalén", "kenia", "kuwait", "kiev", "libia", "lisboa", "londres", "méxico", "madrid", "moscú", "noruega", "nairobi", "nueva york", "oslo", "ottawa", "omán", "parís", "perú", "praga", "qatar", "quito", "rumanía", "roma", "rusia", "suecia", "suiza", "santiago", "tokio", "turquía", "Toronto", "uruguay", "ucrania", "venecia", "vietnam", "varsovia", "washington", "wellington", "xalapa", "yemen", "zagreb", "zimbabue"],
+    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "kike", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "nuria", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
+    lugar: ["alemania", "argentina", "atenas", "brasil", "bogotá", "barcelona", "canadá", "china", "copenhague", "dinamarca", "dublín", "ecuador", "españa", "estocolmo", "francia", "finlandia", "florencia", "grecia", "guatemala", "ginebra", "holanda", "honduras", "helsinki", "italia", "irlanda", "islandia", "japón", "jamaica", "jerusalén", "kenia", "kuwait", "kiev", "libia", "lisboa", "londres", "méxico", "madrid", "moscú", "noruega", "nairobi", "nueva york", "oslo", "ottawa", "omán", "parís", "perú", "praga", "qatar", "quito", "rumanía", "roma", "rusia", "suecia", "suiza", "santiago", "tokio", "turquía", "toronto", "uruguay", "ucrania", "venecia", "vietnam", "varsovia", "washington", "wellington", "xalapa", "yemen", "zagreb", "zimbabue"],
     animal: ["araña", "águila", "avispa", "búho", "ballena", "buitre", "caballo", "canguro", "cocodrilo", "delfín", "dromedario", "dragón de komodo", "elefante", "erizo", "escorpión", "foca", "flamenco", "gato", "gacela", "gorila", "halcón", "hiena", "hipopótamo", "iguana", "impala", "jaguar", "jabalí", "jirafa", "koala", "krill", "león", "loro", "lobo", "mapache", "mariposa", "medusa", "nutria", "ñu", "orangután", "oso", "orca", "perro", "pingüino", "pantera", "quetzal", "rana", "ratón", "rinoceronte", "serpiente", "sapo", "tiburón", "tigre", "tortuga", "topo", "urraca", "urogallo", "vaca", "vicuña", "vívora", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote"],
     objeto: ["anillo", "aguja", "arco", "barco", "botella", "brújula", "cámara", "cuchillo", "copa", "dado", "destornillador", "diamante", "escalera", "escoba", "espejo", "flauta", "flecha", "foco", "guitarra", "gafas", "globo", "hacha", "hilo", "imán", "impresora", "jarrón", "jeringa", "juguete", "lámpara", "lápiz", "libro", "martillo", "mesa", "micrófono", "nube", "navaja", "ordenador", "olla", "paraguas", "pelota", "piano", "queso", "reloj", "regla", "rueda", "silla", "sofá", "sombrero", "teléfono", "tijeras", "tambor", "uniforme", "usb", "violín", "vela", "ventana", "xilófono", "yoyo", "zapato", "zapatilla"],
     color: ["azul", "amarillo", "añil", "blanco", "beige", "burdeos", "cian", "carmesí", "castaño", "dorado", "esmeralda", "escarlata", "fucsia", "grana", "gris", "hueso", "índigo", "jade", "kaki", "lavanda", "lila", "marrón", "magenta", "marfil", "naranja", "negro", "ocre", "oro", "púrpura", "plata", "perla", "rojo", "rosa", "salmón", "turquesa", "terracota", "ultramar", "verde", "violeta", "vino", "wengue", "xantico", "zafiro"],
@@ -65,58 +65,65 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
   for (const playerResponse of input.playerResponses) {
     const categoryLower = playerResponse.category.toLowerCase();
     const playerWord = playerResponse.word || '';
-    const playerWordLower = playerWord.toLowerCase();
-
-    // 1. Evaluar la palabra del jugador
-    const isPlayerWordValid = playerWord.trim() !== '' && playerWordLower.startsWith(letterLower);
-
-    // 2. Simular la respuesta de la IA
-    let aiWord = '';
-    let isAiWordValid = false;
-    // La IA tiene un 80% de probabilidad de "saber" una palabra
-    if (Math.random() < 0.8) {
-        const possibleWords = aiDictionary[categoryLower]?.filter(w => w.startsWith(letterLower));
-        if (possibleWords && possibleWords.length > 0) {
-            aiWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
-            isAiWordValid = true;
-        }
-    }
+    const playerWordLower = playerWord.toLowerCase().trim();
+    const categoryDictionary = aiDictionary[categoryLower] || [];
     
-    // Si no encontró una palabra, ahora no inventa, simplemente se queda en blanco.
-    // Esto es más realista que inventar "Qlgo".
-    if (!aiWord) {
-        aiWord = '';
-        isAiWordValid = false;
+    let aiWord = '';
+    const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
+    if (Math.random() < 0.9 && possibleAiWords.length > 0) { 
+        aiWord = possibleAiWords[Math.floor(Math.random() * possibleAiWords.length)];
     }
     const aiWordLower = aiWord.toLowerCase();
+    
+    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN (CORREGIDA Y DEFINITIVA) ***
 
-    // 3. Calcular puntuaciones
+    // 1. Validar palabra del jugador y de la IA
+    const isPlayerWordValid = 
+        playerWordLower.length > 1 &&
+        playerWordLower.startsWith(letterLower) &&
+        categoryDictionary.includes(playerWordLower);
+
+    const isAiWordValid =
+        aiWordLower.length > 1 &&
+        aiWordLower.startsWith(letterLower) &&
+        categoryDictionary.includes(aiWordLower);
+
+    // 2. Calcular puntuaciones (LÓGICA REESCRITA PARA CLARIDAD Y CORRECCIÓN)
     let playerScore = 0;
     let aiScore = 0;
 
-    if (isPlayerWordValid && isAiWordValid) {
-      if (playerWordLower === aiWordLower) {
-        playerScore = 5;
-        aiScore = 5;
-      } else {
-        playerScore = 10;
-        aiScore = 10;
-      }
-    } else if (isPlayerWordValid) {
-      playerScore = 10;
-    } else if (isAiWordValid) {
-      aiScore = 10;
+    if (isPlayerWordValid) {
+        if (isAiWordValid) {
+            if (playerWordLower === aiWordLower) {
+                // Ambos aciertan con la misma palabra
+                playerScore = 5;
+                aiScore = 5;
+            } else {
+                // Ambos aciertan con palabras diferentes
+                playerScore = 10;
+                aiScore = 10;
+            }
+        } else {
+            // Solo el jugador acierta
+            playerScore = 10;
+        }
+    } else {
+        // La palabra del jugador NO es válida, su puntuación es 0.
+        // Se calcula la puntuación de la IA de forma independiente.
+        if (isAiWordValid) {
+            aiScore = 10;
+        }
     }
-
-    // 4. Guardar resultados para la categoría
+    
+    // 3. Guardar resultados para la categoría
     results[playerResponse.category] = {
       player: {
         response: playerWord,
         isValid: isPlayerWordValid,
         score: playerScore,
       },
-      ai: {
-        response: aiWord.charAt(0).toUpperCase() + aiWord.slice(1), // Capitalizar la palabra de la IA
+ai: {
+        response: aiWord ? aiWord.charAt(0).toUpperCase() + aiWord.slice(1) : '',
         isValid: isAiWordValid,
         score: aiScore,
       }
@@ -135,6 +142,5 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
 
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
-  // Se usa la función de evaluación local en lugar de llamar a la IA
   return await localEvaluateRound(input);
 }
