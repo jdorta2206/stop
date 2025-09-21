@@ -37,12 +37,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   withSound?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, withSound = false, onClick, ...props }, ref) => {
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
   const Comp = asChild ? Slot : 'button';
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    // Sound playing logic is removed for now to fix errors.
-    // A proper implementation would check if the sound file exists.
     if (onClick) {
       onClick(e);
     }
