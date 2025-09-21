@@ -29,7 +29,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
 
   const handleCreateRoom = async () => {
     if (!user) {
-      toast({ title: "Error", description: "Debes iniciar sesión para crear una sala." });
+      toast({ title: "Error", description: "Debes iniciar sesión para crear una sala.", variant: "destructive" });
       return;
     }
     setIsCreating(true);
