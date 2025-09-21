@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
 import { useRouter } from 'next/navigation';
-import { createRoom } from '@/lib/room-service';
 import MultiplayerDialog from './MultiplayerDialog';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
