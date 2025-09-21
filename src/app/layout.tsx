@@ -1,3 +1,4 @@
+
 "use client";
 
 import './globals.css';
@@ -12,12 +13,18 @@ export default function RootLayout({
 }>) {
 
   useEffect(() => {
-    // Eliminar Service Workers para evitar conflictos de red con Firebase
+    // Eliminar CUALQUIER Service Worker activo para evitar conflictos de red con Firebase.
+    // Este es un paso crítico para asegurar que las peticiones a Firestore no sean interceptadas.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-          console.log('Service Worker unregistrado:', registration);
+        if (registrations.length > 0) {
+            console.log('Desregistrando Service Workers existentes...');
+            for(let registration of registrations) {
+              registration.unregister();
+              console.log('Service Worker desregistrado:', registration);
+            }
+            // Recargar la página una vez para asegurar que el SW se ha ido.
+            window.location.reload();
         }
       });
     }
