@@ -55,10 +55,6 @@ export interface Room {
 
 const roomsCollection = collection(db, 'rooms');
 
-const generateRoomId = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-};
-
 export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
     
     const finalCreatorName = creatorName || 'Jugador Anónimo';
