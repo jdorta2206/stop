@@ -247,7 +247,3 @@ export function LandingPageContent() {
     </div>
   );
 }
-
-    
-
-    
