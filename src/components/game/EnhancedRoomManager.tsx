@@ -44,20 +44,26 @@ export default function EnhancedRoomManager({
   const [players, setPlayers] = useState<Player[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
 
   useEffect(() => {
     if (!roomId || !currentUser) return;
 
-    // Unirse a la sala o marcar como online al entrar
+    // Join room on mount
     addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL)
+      .then(() => {
+        setIsLoading(false);
+      })
       .catch(err => {
           console.error("Error joining room:", err);
           setError((err as Error).message);
           toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
+          setIsLoading(false);
       });
 
+    // Listen for room updates
     const unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
       if (updatedRoom) {
         setRoom(updatedRoom);
@@ -66,11 +72,12 @@ export default function EnhancedRoomManager({
       } else {
         setError("La sala ya no existe o no se pudo cargar.");
       }
+      setIsLoading(false);
     });
 
     return () => {
       unsubscribe();
-      // Marcar como offline al salir
+      // Set status to offline on unmount
       updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
     };
   }, [roomId, currentUser, toast]);
@@ -129,6 +136,15 @@ export default function EnhancedRoomManager({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8 text-center">
+          <Loader2 className="h-16 w-16 animate-spin text-primary" />
+          <p className="ml-4 text-lg">Cargando sala...</p>
+      </div>
+    );
+  }
+
   if (error) {
     return (
         <Card>
@@ -147,8 +163,7 @@ export default function EnhancedRoomManager({
   if (!room) {
     return (
       <div className="flex items-center justify-center p-8 text-center">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          <p className="ml-4 text-lg">Cargando sala...</p>
+          <p className="text-lg">La sala no existe o no se ha podido cargar.</p>
       </div>
     );
   }
