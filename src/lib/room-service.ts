@@ -114,7 +114,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
         const room = roomSnap.data() as Room;
         const playerPath = `players.${playerId}`;
 
-        // Si el jugador ya existe, actualiza su estado. Si no, añádelo.
+        // If player exists, just update their status. Otherwise, add them.
         if (room.players && room.players[playerId]) {
             transaction.update(roomDocRef, {
                 [`${playerPath}.status`]: 'online',
@@ -122,7 +122,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 [`${playerPath}.avatar`]: playerAvatar,
             });
         } else {
-            if (Object.keys(room.players).length >= room.settings.maxPlayers) {
+            if (Object.keys(room.players || {}).length >= room.settings.maxPlayers) {
                 throw new Error("La sala está llena.");
             }
             const newPlayer: Player = {
@@ -132,12 +132,12 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 isReady: false,
                 status: 'online',
                 joinedAt: serverTimestamp(),
+                isHost: false, // Only the creator is host initially
             };
             transaction.update(roomDocRef, { [playerPath]: newPlayer });
         }
     });
 };
-
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
@@ -175,8 +175,16 @@ export const updatePlayerInRoom = async (roomId: string, playerId: string, data:
     for (const key in data) {
         updateData[`players.${playerId}.${key}`] = data[key as keyof typeof data];
     }
-    await updateDoc(roomDocRef, updateData);
+    
+    // Ensure the document exists before trying to update it
+    const docSnap = await getDoc(roomDocRef);
+    if (docSnap.exists()) {
+        await updateDoc(roomDocRef, updateData);
+    } else {
+        console.warn(`Attempted to update player in a room that does not exist: ${roomId}`);
+    }
 };
+
 
 export const updateRoomSettings = async (roomId: string, settings: Partial<Room['settings']>): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
