@@ -2,9 +2,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
-  // Se desactiva cualquier configuración PWA para evitar la generación de Service Workers
-  // que puedan interferir con las peticiones a la base de datos de Firebase.
+  // Se elimina la opción `output: 'export'` para permitir la comunicación
+  // en tiempo real con la base de datos de Firebase, solucionando
+  // los errores de red al crear salas.
 };
 
 export default nextConfig;
