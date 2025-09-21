@@ -37,16 +37,9 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   withSound?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, asChild = false, withSound, ...props }, ref) => {
   const Comp = asChild ? Slot : 'button';
-
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    if (onClick) {
-      onClick(e);
-    }
-  }
-
-  return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} onClick={handleClick} {...props} />;
+  return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
 });
 Button.displayName = 'Button';
 
