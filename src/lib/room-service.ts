@@ -1,4 +1,6 @@
 
+'use server';
+
 import { db } from './firebase';
 import { 
     doc, 
@@ -55,43 +57,10 @@ export interface Room {
 
 const roomsCollection = collection(db, 'rooms');
 
-export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
-    
-    const finalCreatorName = creatorName || 'Jugador Anónimo';
-    const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
-
-    const creatorPlayer: Player = {
-        id: creatorId,
-        name: finalCreatorName,
-        avatar: finalCreatorAvatar,
-        isReady: false,
-        status: 'online',
-        joinedAt: serverTimestamp(),
-        isHost: true,
-    };
-
-    const newRoomData = {
-        players: {
-            [creatorId]: creatorPlayer,
-        },
-        hostId: creatorId,
-        createdAt: serverTimestamp(),
-        status: 'waiting' as 'waiting' | 'playing' | 'finished',
-        settings: {
-            maxPlayers: 10,
-            roundDuration: 60,
-            isPrivate: true,
-            language: 'es' as Language
-        },
-    };
-
-    const roomDocRef = await addDoc(roomsCollection, newRoomData);
-    
-    return {
-        id: roomDocRef.id,
-        ...newRoomData,
-    } as Room;
-};
+// This function is now handled by a Genkit flow `create-room-flow.ts`
+// export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
+//     // ... implementation removed
+// };
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
     const roomDocRef = doc(roomsCollection, roomId);

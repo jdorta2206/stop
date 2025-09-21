@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createRoom } from '@/lib/room-service';
+import { createRoom } from '@/ai/flows/create-room-flow';
 import { Loader2, PartyPopper, Users } from 'lucide-react';
 
 interface MultiplayerDialogProps {
@@ -33,11 +33,16 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     }
     setIsCreating(true);
     try {
-      const newRoom = await createRoom(
-        user.uid,
-        user.displayName ?? 'Jugador',
-        user.photoURL ?? null
-      );
+      const newRoom = await createRoom({
+        creatorId: user.uid,
+        creatorName: user.displayName ?? 'Jugador',
+        creatorAvatar: user.photoURL ?? null
+      });
+
+      if (!newRoom || !newRoom.id) {
+        throw new Error("El flujo de creación de sala no devolvió un ID.");
+      }
+
       toast({
         title: translate('rooms.create.title'),
         description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
@@ -45,9 +50,10 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
+      console.error("Error creating room via flow:", error);
       toast({
         title: translate('common.error'),
-        description: (error as Error).message,
+        description: `No se pudo crear la sala: ${(error as Error).message}`,
         variant: 'destructive',
       });
     } finally {
