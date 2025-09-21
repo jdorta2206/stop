@@ -16,7 +16,6 @@ import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
 import { useRouter } from 'next/navigation';
 import { createRoom } from '@/lib/room-service';
-import { rankingManager } from '@/lib/ranking';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -93,16 +92,10 @@ export function LandingPageContent() {
     
     setIsCreatingRoom(true);
     try {
-      const playerProfile = await rankingManager.getPlayerRanking(
-        user.uid, 
-        user.displayName ?? 'Anonymous',
-        user.photoURL ?? null
-      );
-      
       const newRoom = await createRoom(
         user.uid, 
-        playerProfile.playerName ?? 'Anonymous', 
-        playerProfile.photoURL ?? null
+        user.displayName ?? 'Jugador', 
+        user.photoURL ?? null
       );
 
       toast({
