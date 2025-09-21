@@ -53,7 +53,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
   // Diccionario de la IA (NORMALIZADO A MINÚSCULAS)
   const aiDictionary: Record<string, string[]> = {
-    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
+    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "kike", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
     lugar: ["alemania", "argentina", "atenas", "brasil", "bogotá", "barcelona", "canadá", "china", "copenhague", "dinamarca", "dublín", "ecuador", "españa", "estocolmo", "francia", "finlandia", "florencia", "grecia", "guatemala", "ginebra", "holanda", "honduras", "helsinki", "italia", "irlanda", "islandia", "japón", "jamaica", "jerusalén", "kenia", "kuwait", "kiev", "libia", "lisboa", "londres", "méxico", "madrid", "moscú", "noruega", "nairobi", "nueva york", "oslo", "ottawa", "omán", "parís", "perú", "praga", "qatar", "quito", "rumanía", "roma", "rusia", "suecia", "suiza", "santiago", "tokio", "turquía", "toronto", "uruguay", "ucrania", "venecia", "vietnam", "varsovia", "washington", "wellington", "xalapa", "yemen", "zagreb", "zimbabue"],
     animal: ["araña", "águila", "avispa", "búho", "ballena", "buitre", "caballo", "canguro", "cocodrilo", "delfín", "dromedario", "dragón de komodo", "elefante", "erizo", "escorpión", "foca", "flamenco", "gato", "gacela", "gorila", "halcón", "hiena", "hipopótamo", "iguana", "impala", "jaguar", "jabalí", "jirafa", "koala", "krill", "león", "loro", "lobo", "mapache", "mariposa", "medusa", "nutria", "ñu", "orangután", "oso", "orca", "perro", "pingüino", "pantera", "quetzal", "rana", "ratón", "rinoceronte", "serpiente", "sapo", "tiburón", "tigre", "tortuga", "topo", "urraca", "urogallo", "vaca", "vicuña", "vívora", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote"],
     objeto: ["anillo", "aguja", "arco", "barco", "botella", "brújula", "cámara", "cuchillo", "copa", "dado", "destornillador", "diamante", "escalera", "escoba", "espejo", "flauta", "flecha", "foco", "guitarra", "gafas", "globo", "hacha", "hilo", "imán", "impresora", "jarrón", "jeringa", "juguete", "lámpara", "lápiz", "libro", "martillo", "mesa", "micrófono", "nube", "navaja", "ordenador", "olla", "paraguas", "pelota", "piano", "queso", "reloj", "regla", "rueda", "silla", "sofá", "sombrero", "teléfono", "tijeras", "tambor", "uniforme", "usb", "violín", "vela", "ventana", "xilófono", "yoyo", "zapato", "zapatilla"],
@@ -69,7 +69,6 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
     // 1. Evaluar la palabra del jugador con lógica REFORZADA Y CORRECTA
     const categoryDictionary = aiDictionary[categoryLower] || [];
-    // AHORA LA LÓGICA ES ESTRICTA: la palabra debe estar en el diccionario.
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
         playerWordLower.startsWith(letterLower) &&
@@ -77,40 +76,31 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
     // 2. Simular la respuesta de la IA
     let aiWord = '';
-    let isAiWordValid = false;
-    // La IA tiene un 80% de probabilidad de "saber" una palabra
-    if (Math.random() < 0.8) {
-        const possibleWords = aiDictionary[categoryLower]?.filter(w => w.startsWith(letterLower));
-        if (possibleWords && possibleWords.length > 0) {
-            aiWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
-            isAiWordValid = true;
-        }
-    }
-    
-    // Si no encontró una palabra, ahora no inventa, simplemente se queda en blanco.
-    if (!aiWord) {
-        aiWord = '';
-        isAiWordValid = false;
+    const possibleWords = aiDictionary[categoryLower]?.filter(w => w.startsWith(letterLower)) || [];
+    if (Math.random() < 0.8 && possibleWords.length > 0) { // 80% chance for AI to know a word
+        aiWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
     }
     const aiWordLower = aiWord.toLowerCase();
 
+    const isAiWordValid = !!aiWord;
+    
     // 3. Calcular puntuaciones
     let playerScore = 0;
     let aiScore = 0;
 
-    if (isPlayerWordValid && isAiWordValid) {
-      if (playerWordLower === aiWordLower) {
-        playerScore = 5;
-        aiScore = 5;
-      } else {
-        playerScore = 10;
-        aiScore = 10;
-      }
-    } else if (isPlayerWordValid) {
-      playerScore = 10;
-    } else if (isAiWordValid) {
-      aiScore = 10;
+    if (isPlayerWordValid) {
+        if (isAiWordValid && playerWordLower === aiWordLower) {
+            playerScore = 5;
+            aiScore = 5;
+        } else {
+            playerScore = 10;
+        }
     }
+
+    if (isAiWordValid && playerWordLower !== aiWordLower) {
+        aiScore = 10;
+    }
+
 
     // 4. Guardar resultados para la categoría
     results[playerResponse.category] = {
