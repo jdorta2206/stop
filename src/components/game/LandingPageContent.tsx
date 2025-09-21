@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
-import MultiplayerDialog from './MultiplayerDialog';
+import MultiplayerDialog from '@/components/game/MultiplayerDialog';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -247,3 +247,5 @@ export function LandingPageContent() {
     </div>
   );
 }
+
+    
