@@ -70,7 +70,6 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     // 1. Evaluar la palabra del jugador con lógica REFORZADA
     const categoryDictionary = aiDictionary[categoryLower] || [];
     const isPlayerWordValid = 
-        playerWordLower !== '' &&
         playerWordLower.length > 1 &&
         playerWordLower.startsWith(letterLower) &&
         categoryDictionary.includes(playerWordLower);
