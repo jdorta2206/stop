@@ -104,38 +104,40 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
-    const roomSnap = await getDoc(roomDocRef);
-    if (!roomSnap.exists()) throw new Error("Room not found");
 
-    const room = roomSnap.data() as Room;
+    await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomDocRef);
+        if (!roomSnap.exists()) {
+            throw new Error("La sala no existe.");
+        }
 
-    // Si el jugador ya existe, simplemente actualiza su estado a online y sus datos
-    if (room.players && room.players[playerId]) {
-        await updatePlayerInRoom(roomId, playerId, { 
-            status: 'online', 
-            name: playerName, 
-            avatar: playerAvatar 
-        });
-        return;
-    }
+        const room = roomSnap.data() as Room;
+        const playerPath = `players.${playerId}`;
 
-    if (Object.keys(room.players).length >= room.settings.maxPlayers) {
-        throw new Error("Room is full");
-    }
-
-    const newPlayer: Player = {
-        id: playerId,
-        name: playerName,
-        avatar: playerAvatar,
-        isReady: false,
-        status: 'online',
-        joinedAt: serverTimestamp(),
-    };
-
-    await updateDoc(roomDocRef, {
-        [`players.${playerId}`]: newPlayer,
+        // Si el jugador ya existe, actualiza su estado. Si no, añádelo.
+        if (room.players && room.players[playerId]) {
+            transaction.update(roomDocRef, {
+                [`${playerPath}.status`]: 'online',
+                [`${playerPath}.name`]: playerName,
+                [`${playerPath}.avatar`]: playerAvatar,
+            });
+        } else {
+            if (Object.keys(room.players).length >= room.settings.maxPlayers) {
+                throw new Error("La sala está llena.");
+            }
+            const newPlayer: Player = {
+                id: playerId,
+                name: playerName,
+                avatar: playerAvatar,
+                isReady: false,
+                status: 'online',
+                joinedAt: serverTimestamp(),
+            };
+            transaction.update(roomDocRef, { [playerPath]: newPlayer });
+        }
     });
 };
+
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId);
