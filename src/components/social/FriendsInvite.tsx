@@ -1,17 +1,17 @@
 
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  Users, 
-  Search,
   Loader2,
-  UserPlus
+  UserPlus,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Language } from '@/contexts/language-context';
-import { searchUsers, addFriend, Friend } from '@/lib/friends-service';
+import { searchUserById, addFriend, type Friend } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
 
 interface FriendsInviteProps {
@@ -21,22 +21,25 @@ interface FriendsInviteProps {
 
 export default function FriendsInvite({ language = 'es', onFriendAdded }: FriendsInviteProps) {
   const { user } = useAuth();
-  const [searchResults, setSearchResults] = useState<Friend[]>([]);
+  const [searchResult, setSearchResult] = useState<Friend | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
+      setSearchResult(null);
       return;
     };
     setIsLoading(true);
+    setSearchResult(null);
     try {
-      const results = await searchUsers(searchQuery);
-      // Filter out the current user from search results
-      const filteredResults = results.filter(p => p.id !== user?.uid);
-      setSearchResults(filteredResults);
+      const result = await searchUserById(searchQuery.trim());
+      if (result && result.id !== user?.uid) {
+        setSearchResult(result);
+      } else {
+        toast.info("No se encontró ningún jugador con ese ID o es tu propio ID.");
+      }
     } catch (error) {
       toast.error("No se pudo realizar la búsqueda.");
     } finally {
@@ -63,7 +66,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
     <div className="p-2">
         <div className="flex w-full items-center space-x-2">
             <Input
-                placeholder="Buscar por nombre de usuario..."
+                placeholder="Pegar ID de usuario..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -75,30 +78,34 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
         </div>
         
         <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
-            {searchResults.length === 0 && !isLoading ? (
-                <div className="text-center text-muted-foreground p-4">
-                    <p>Escribe un nombre para buscar jugadores.</p>
+            {isLoading && (
+                 <div className="flex justify-center items-center p-4">
+                    <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-            ) : (
-                searchResults.map(player => (
-                    <div key={player.id} className="flex items-center justify-between p-2 rounded-lg bg-card/50">
-                        <div className="flex items-center gap-3">
-                            <Avatar>
-                                <AvatarImage src={player.avatar || ''} data-ai-hint="avatar person" />
-                                <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{player.name}</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddFriend(player)}
-                          disabled={invitedFriends.has(player.id)}
-                        >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            {invitedFriends.has(player.id) ? 'Añadido' : 'Añadir'}
-                        </Button>
+            )}
+            {!searchResult && !isLoading && (
+                <div className="text-center text-muted-foreground p-4">
+                    <p>Busca a un jugador por su ID para añadirlo.</p>
+                </div>
+            )}
+            {searchResult && !isLoading && (
+                <div key={searchResult.id} className="flex items-center justify-between p-2 rounded-lg bg-card/50">
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src={searchResult.avatar || ''} data-ai-hint="avatar person" />
+                            <AvatarFallback>{searchResult.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{searchResult.name}</span>
                     </div>
-                ))
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddFriend(searchResult)}
+                      disabled={invitedFriends.has(searchResult.id)}
+                    >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        {invitedFriends.has(searchResult.id) ? 'Añadido' : 'Añadir'}
+                    </Button>
+                </div>
             )}
         </div>
     </div>

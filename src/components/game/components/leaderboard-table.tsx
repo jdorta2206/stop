@@ -2,12 +2,13 @@
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { UserCircle, UserPlus, Sword, Crown, Trophy } from 'lucide-react';
+import { UserCircle, UserPlus, Sword, Crown, Trophy, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PlayerScore } from '../types';
 import { type Language } from '@/contexts/language-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 interface LeaderboardTableProps {
   players: PlayerScore[];
@@ -30,6 +31,14 @@ export function LeaderboardTable({
 }: LeaderboardTableProps) {
     
   const localeForNumber = typeof window !== "undefined" ? window.navigator.language : 'en-US';
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("ID copiado al portapapeles");
+    }).catch(() => {
+      toast.error("No se pudo copiar el ID");
+    });
+  };
 
   const renderLoadingRows = () => (
     Array.from({ length: 5 }).map((_, i) => (
@@ -101,13 +110,16 @@ export function LeaderboardTable({
                         </Avatar>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          {player.playerName}
-                          {isCurrentUser && (
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              (Tú)
-                            </span>
-                          )}
+                        <div className="flex flex-col">
+                           <span className="font-medium">{player.playerName}{isCurrentUser && " (Tú)"}</span>
+                           <div 
+                              className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer hover:text-foreground"
+                              onClick={() => copyToClipboard(player.id)}
+                              title="Copiar ID"
+                            >
+                             <span>ID: {player.id.substring(0, 8)}...</span>
+                             <Copy className="h-3 w-3" />
+                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-semibold">

@@ -38,33 +38,26 @@ export interface GameInvitation {
   status: 'pending' | 'accepted' | 'declined' | 'expired';
 }
 
-// Function to search for users by name
-export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
-    if (!nameQuery) return [];
+// Function to search for users by user ID
+export const searchUserById = async (userId: string): Promise<Friend | null> => {
+    if (!userId) return null;
     
-    // Search in the 'users' collection where profiles are more likely to be stored
-    const usersRef = collection(db, 'users');
-    // Simplified query to avoid needing a composite index.
-    // This will search for exact matches of the displayName.
-    const q = query(
-      usersRef, 
-      where('displayName', '==', nameQuery),
-      limit(10)
-    );
+    const userDocRef = doc(db, 'users', userId);
+    const docSnap = await getDoc(userDocRef);
 
-    const querySnapshot = await getDocs(q);
-    const users: Friend[] = [];
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        users.push({
-            id: doc.id,
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
             name: data.displayName,
             avatar: data.photoURL,
-            addedAt: Timestamp.now()
-        });
-    });
-    return users;
+            addedAt: Timestamp.now() // This is temporary, not stored
+        };
+    }
+    
+    return null;
 };
+
 
 // Function to add a friend
 export const addFriend = async (currentUserId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
