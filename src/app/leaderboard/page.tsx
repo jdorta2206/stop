@@ -53,9 +53,32 @@ export default function LeaderboardPage() {
 
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
-            const friendRankings = await Promise.all(friendIds.map(id => rankingManager.getPlayerRanking(id)));
-            const validFriendRankings = friendRankings.filter(p => p !== null) as Awaited<ReturnType<typeof rankingManager.getPlayerRanking>>[];
-            const enrichedFriendRankings = validFriendRankings.map((p, index) => ({...p, id: friendIds[index] } as PlayerScore));
+            // Fetch rankings for all friends
+            const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
+            const friendRankings = await Promise.all(friendRankingsPromises);
+
+            // Combine friend data with their ranking data
+            const enrichedFriendRankings = friendsList.map(friend => {
+                const rankingData = friendRankings.find(r => r.id === friend.id);
+                return {
+                    ...rankingData, // this will be undefined if no ranking found, but that's ok
+                    id: friend.id, // Make sure friend ID is always correct
+                    playerName: friend.name,
+                    photoURL: friend.avatar,
+                    totalScore: rankingData?.totalScore ?? 0,
+                    level: rankingData?.level ?? 'Principiante',
+                    bestScore: rankingData?.bestScore ?? 0,
+                    gamesPlayed: rankingData?.gamesPlayed ?? 0,
+                    gamesWon: rankingData?.gamesWon ?? 0,
+                    averageScore: rankingData?.averageScore ?? 0,
+                    lastPlayed: rankingData?.lastPlayed ?? 'Nunca',
+                    achievements: rankingData?.achievements ?? [],
+                    coins: rankingData?.coins ?? 0,
+                    dailyMissions: rankingData?.dailyMissions ?? [],
+                    missionsLastReset: rankingData?.missionsLastReset ?? '',
+                };
+            }).filter(p => p !== null) as PlayerScore[];
+            
             setFriendsLeaderboard(enrichedFriendRankings);
         } else {
             setFriendsLeaderboard([]);
@@ -221,3 +244,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
