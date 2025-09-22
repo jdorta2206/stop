@@ -10,14 +10,13 @@ import { AppFooter } from '@/components/layout/footer';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { useLanguage } from '@/contexts/language-context';
 import { onRoomUpdate, addPlayerToRoom, type Room } from '@/lib/room-service';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, isLoading: authLoading } = useAuth();
     const { language } = useLanguage();
-    const { toast } = useToast();
     
     const [room, setRoom] = useState<Room | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +52,7 @@ function MultiplayerLobbyContent() {
                         setError(null);
                     } else {
                         setError("La sala ya no existe o no se pudo cargar.");
-                        toast({ title: 'Error', description: 'La sala ya no existe.', variant: 'destructive'});
+                        toast.error('La sala ya no existe.');
                         handleLeaveRoom();
                     }
                     setIsLoading(false);
@@ -61,7 +60,7 @@ function MultiplayerLobbyContent() {
             } catch (err) {
                 console.error("Error joining or listening to room:", err);
                 setError((err as Error).message);
-                toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
+                toast.error((err as Error).message, { title: 'Error al unirse' });
                 setIsLoading(false);
                 setTimeout(() => router.push('/'), 3000);
             }
@@ -72,7 +71,7 @@ function MultiplayerLobbyContent() {
         return () => {
             unsubscribe();
         };
-    }, [authLoading, user, router, roomId, toast]);
+    }, [authLoading, user, router, roomId]);
 
     const handleStartGame = () => {
         // This logic is now handled inside EnhancedRoomManager

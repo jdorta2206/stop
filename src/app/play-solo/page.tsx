@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -34,7 +34,6 @@ const ROUND_DURATION = 60; // seconds
 
 export default function PlaySoloPage() {
   const { language, translate } = useLanguage();
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const [gameState, setGameState] = useState<GameState>('IDLE');
@@ -123,26 +122,22 @@ export default function PlaySoloPage() {
           won: playerTotalScore > calculatedAiScore,
         }).catch(dbError => {
           console.error("Error saving game result:", dbError);
-          toast({
-            title: "Error de Guardado",
-            description: "No se pudo guardar tu puntuación, pero tus resultados están aquí.",
-            variant: 'destructive'
+          toast.error("No se pudo guardar tu puntuación, pero tus resultados están aquí.", {
+            title: "Error de Guardado"
           });
         });
       }
 
     } catch (error) {
       console.error("Error en handleStop:", error);
-      toast({
+      toast.error(`Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`, {
         title: translate('notifications.aiError.title'),
-        description: `Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`,
-        variant: 'destructive'
       });
       setGameState('PLAYING');
     } finally {
       isEvaluatingRef.current = false;
     }
-  }, [stopTimer, toast, translate]);
+  }, [stopTimer, translate]);
 
 
   const startNewRound = useCallback(() => {

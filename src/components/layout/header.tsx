@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
@@ -12,14 +13,13 @@ import { AuthStatus } from '../auth/auth-status';
 import type { ChatMessage } from '../chat/chat-message-item';
 import { usePathname, useRouter } from 'next/navigation';
 import PushNotifications from '../game/PushNotifications';
-import { useToast } from '../ui/use-toast';
+import { toast } from '../ui/use-toast';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { toast } = useToast();
 
   const [isMuted, setIsMuted] = useState(true);
   const [isMounted, setIsMounted] = useState(false);

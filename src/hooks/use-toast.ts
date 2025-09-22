@@ -1,11 +1,15 @@
+
 "use client";
+
+// Este archivo se deja por compatibilidad de importaciones, pero ya no se usa.
+// El sistema de notificaciones se maneja ahora con `sonner`.
+// La funcionalidad se ha movido a `src/components/ui/use-toast.ts`.
 
 import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
-// Constantes ajustadas para el juego
-const LIMITE_TOASTS = 1; // Solo 1 toast visible (ideal para notificaciones críticas)
-const RETRASO_ELIMINACION = 1_000_000; // toasts persistentes
+const LIMITE_TOASTS = 1;
+const RETRASO_ELIMINACION = 1_000_000;
 
 type ToastJuego = ToastProps & {
   id: string;
@@ -14,17 +18,14 @@ type ToastJuego = ToastProps & {
   action?: ToastActionElement;
 };
 
-// Generador de IDs mejorado (usa crypto si está disponible)
 function generarId() {
   return crypto.randomUUID?.() || Math.random().toString(36).slice(2, 9);
 }
 
-// Estado inicial y listeners
 let estadoInicial: EstadoToast = { toasts: [] };
 const listeners: Array<(state: EstadoToast) => void> = [];
 const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
-// Reductor con seguridad de tipos
 function reductor(state: EstadoToast, action: AccionToast): EstadoToast {
   switch (action.type) {
     case "AGREGAR_TOAST":
@@ -66,13 +67,11 @@ function reductor(state: EstadoToast, action: AccionToast): EstadoToast {
   }
 }
 
-// Dispatch para actualizar estado
 function dispatch(action: AccionToast) {
   estadoInicial = reductor(estadoInicial, action);
   listeners.forEach((listener) => listener(estadoInicial));
 }
 
-// Función para manejar la eliminación retardada
 function agregarAColaEliminacion(toastId: string) {
   if (timeouts.has(toastId)) return;
 
@@ -84,7 +83,6 @@ function agregarAColaEliminacion(toastId: string) {
   timeouts.set(toastId, timeout);
 }
 
-// API Pública
 export function toast({ ...props }: Omit<ToastJuego, "id">) {
   const id = generarId();
 
@@ -106,7 +104,6 @@ export function toast({ ...props }: Omit<ToastJuego, "id">) {
   return { id, descartar, actualizar };
 }
 
-// Hook para usar en componentes
 export function useToast() {
   const [state, setState] = React.useState<EstadoToast>(estadoInicial);
 
@@ -125,7 +122,6 @@ export function useToast() {
   };
 }
 
-// Tipos
 type AccionToast =
   | { type: "AGREGAR_TOAST"; toast: ToastJuego }
   | { type: "ACTUALIZAR_TOAST"; toast: Partial<ToastJuego> }

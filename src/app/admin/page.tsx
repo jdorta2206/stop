@@ -10,12 +10,11 @@ import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
 import { rankingManager, type PlayerScore } from '@/lib/ranking';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 export default function AdminPage() {
     const { language } = useLanguage();
     const { user, isLoading: authLoading } = useAuth();
-    const { toast } = useToast();
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,11 +30,7 @@ export default function AdminPage() {
                 gamesPlayedToday: 0 // Placeholder, this would require more complex querying
             });
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "No se pudieron cargar los datos del administrador.",
-                variant: 'destructive'
-            });
+            toast.error("No se pudieron cargar los datos del administrador.");
         } finally {
             setIsLoading(false);
         }
@@ -53,11 +48,7 @@ export default function AdminPage() {
     }, [user, authLoading]);
 
     const handleBanUser = (userId: string) => {
-        toast({
-            title: "Función no implementada",
-            description: `La lógica para banear al usuario ${userId} aún no está conectada.`,
-            variant: 'destructive'
-        });
+        toast.error(`La lógica para banear al usuario ${userId} aún no está conectada.`);
     };
 
     if (isLoading || authLoading) {

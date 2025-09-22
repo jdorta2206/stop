@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { onNotificationsUpdate, updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -25,7 +25,6 @@ export default function PushNotifications({
   const [notifications, setNotifications] = useState<GameInvitation[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  const { toast } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export default function PushNotifications({
 
         if (justReceived) {
           showPushNotification(justReceived);
-          toast({ description: `Nueva invitación de ${justReceived.fromUser}` });
+          toast.info(`Nueva invitación de ${justReceived.fromUser}`);
         }
 
         setNotifications(newNotifications);
@@ -55,9 +54,9 @@ export default function PushNotifications({
       setNotificationPermission(permission);
       
       if (permission === 'granted') {
-        toast({description:'Notificaciones activadas'});
+        toast.success('Notificaciones activadas');
       } else {
-        toast({description:'Notificaciones denegadas', variant: 'destructive'});
+        toast.error('Notificaciones denegadas');
       }
     }
   };
@@ -91,7 +90,7 @@ export default function PushNotifications({
     if (notification && notification.type === 'room_invite') {
       await updateNotificationStatus(user.uid, notificationId, 'accepted');
       onJoinRoom(notification.roomId);
-      toast({description: `Te uniste a la sala ${notification.roomId}`});
+      toast.success(`Te uniste a la sala ${notification.roomId}`);
       setShowNotifications(false);
     }
   };
@@ -99,7 +98,7 @@ export default function PushNotifications({
   const handleDeclineInvitation = async (notificationId: string) => {
      if (!user) return;
      await updateNotificationStatus(user.uid, notificationId, 'declined');
-     toast({description: 'Invitación rechazada'});
+     toast.info('Invitación rechazada');
   };
 
   const getNotificationIcon = (type: string) => {

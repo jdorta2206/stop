@@ -9,7 +9,7 @@ import {
   Loader2,
   UserPlus
 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import type { Language } from '@/contexts/language-context';
 import { searchUsers, addFriend, Friend } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
@@ -25,7 +25,6 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -39,7 +38,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
       const filteredResults = results.filter(p => p.id !== user?.uid);
       setSearchResults(filteredResults);
     } catch (error) {
-      toast({ title: "Error", description: "No se pudo realizar la búsqueda.", variant: "destructive"});
+      toast.error("No se pudo realizar la búsqueda.");
     } finally {
       setIsLoading(false);
     }
@@ -47,16 +46,16 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
   
   const handleAddFriend = async (friend: Friend) => {
     if (!user) {
-       toast({ title: "Error", description: "Debes iniciar sesión para añadir amigos.", variant: "destructive"});
+       toast.error("Debes iniciar sesión para añadir amigos.");
        return;
     }
     try {
       await addFriend(user.uid, friend.id, friend.name, friend.avatar);
-      toast({ title: "¡Éxito!", description: `${friend.name} ha sido añadido a tus amigos.` });
+      toast.success(`${friend.name} ha sido añadido a tus amigos.`, { title: "¡Éxito!" });
       setInvitedFriends(prev => new Set(prev).add(friend.id));
       onFriendAdded(); // Callback to refresh the friends list on the parent component
     } catch (error) {
-      toast({ title: "Error", description: (error as Error).message, variant: "destructive"});
+      toast.error((error as Error).message);
     }
   };
 
