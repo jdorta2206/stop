@@ -204,23 +204,24 @@ class RankingManager {
   
   async getMultiplePlayerRankings(playerIds: string[]): Promise<PlayerScore[]> {
     if (!playerIds || playerIds.length === 0) {
-      return [];
+        return [];
     }
 
-    const players: PlayerScore[] = [];
     // Firestore 'in' query is limited to 30 elements. We need to batch.
     const batches: string[][] = [];
     for (let i = 0; i < playerIds.length; i += 30) {
-      batches.push(playerIds.slice(i, i + 30));
+        batches.push(playerIds.slice(i, i + 30));
     }
+    
+    const players: PlayerScore[] = [];
 
     for (const batch of batches) {
-      if (batch.length === 0) continue;
-      const q = query(this.usersCollection, where(documentId(), "in", batch));
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        players.push({ id: doc.id, ...doc.data() } as PlayerScore);
-      });
+        if (batch.length === 0) continue;
+        const q = query(this.usersCollection, where(documentId(), 'in', batch));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            players.push({ id: doc.id, ...doc.data() } as PlayerScore);
+        });
     }
 
     // Sort by totalScore descending

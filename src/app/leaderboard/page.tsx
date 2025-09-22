@@ -36,32 +36,43 @@ export default function LeaderboardPage() {
   const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
+      // Fetch global leaderboard
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
       if (userId) {
-        const personalData = await rankingManager.getPlayerRanking(userId);
+        // Fetch user-specific data in parallel
+        const [personalData, historyData, friendsList] = await Promise.all([
+          rankingManager.getPlayerRanking(userId),
+          rankingManager.getGameHistory(userId, 5),
+          getFriends(userId)
+        ]);
+
         setPersonalStats(personalData);
-        
-        const historyData = await rankingManager.getGameHistory(userId, 5);
         setGameHistory(historyData);
-        
-        const friendsList = await getFriends(userId);
         
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
+            // Fetch rankings for all friends
             const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
-            // We need to add the friend's own data to the list if they are not already in it
-            const enrichedFriendRankings = friendRankings.map(f => {
-                const friendData = friendsList.find(fl => fl.id === f.id);
+            // Enrich friend rankings with names and avatars from the friends list
+            // This ensures we show the correct name even if the friend's profile name changes
+            const enrichedFriendRankings = friendRankings.map(ranking => {
+                const friendInfo = friendsList.find(f => f.id === ranking.id);
                 return {
-                    ...f,
-                    playerName: friendData?.name || f.playerName,
-                    photoURL: friendData?.avatar || f.photoURL,
+                    ...ranking,
+                    playerName: friendInfo?.name || ranking.playerName,
+                    photoURL: friendInfo?.avatar || ranking.photoURL,
                 };
             });
-            setFriendsLeaderboard(enrichedFriendRankings);
+
+            // Make sure the current user is also included if they are in the friends list (for context)
+            if (!enrichedFriendRankings.some(f => f.id === userId)) {
+               enrichedFriendRankings.push(personalData);
+            }
+             
+            setFriendsLeaderboard(enrichedFriendRankings.sort((a, b) => b.totalScore - a.totalScore));
         } else {
             setFriendsLeaderboard([]);
         }
