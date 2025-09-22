@@ -1,6 +1,4 @@
 
-'use server';
-
 import { db } from './firebase';
 import { 
     doc, 
@@ -8,11 +6,17 @@ import {
     setDoc, 
     collection,
     query,
+    where,
     getDocs,
+    limit,
     orderBy,
+    startAt,
+    endAt,
+    collectionGroup,
     Timestamp,
     addDoc,
-    updateDoc
+    updateDoc,
+    onSnapshot
 } from "firebase/firestore";
 
 export interface Friend {
@@ -33,37 +37,43 @@ export interface GameInvitation {
   status: 'pending' | 'accepted' | 'declined' | 'expired';
 }
 
-// Function to search for users by user ID
-export const searchUserById = async (userId: string): Promise<Friend | null> => {
-    if (!userId) return null;
+// Function to search for users by name
+export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
+    if (!nameQuery) return [];
     
-    const userDocRef = doc(db, 'users', userId);
-    const docSnap = await getDoc(userDocRef);
+    const usersRef = collection(db, 'rankings');
+    const q = query(
+      usersRef, 
+      orderBy('playerName'),
+      startAt(nameQuery),
+      endAt(nameQuery + '\uf8ff'),
+      limit(10)
+    );
 
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        return {
-            id: docSnap.id,
-            name: data.playerName || 'Jugador sin nombre', // Changed from displayName
+    const querySnapshot = await getDocs(q);
+    const users: Friend[] = [];
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        users.push({
+            id: doc.id,
+            name: data.playerName,
             avatar: data.photoURL,
-            addedAt: Timestamp.now() // This is temporary, not stored
-        };
-    }
-    
-    return null;
+            addedAt: Timestamp.now() // This is just for the type, not stored here
+        });
+    });
+    return users;
 };
-
 
 // Function to add a friend
 export const addFriend = async (currentUserId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
     if (currentUserId === friendId) {
-        throw new Error("No puedes añadirte a ti mismo como amigo.");
+        throw new Error("You cannot add yourself as a friend.");
     }
-    const friendDocRef = doc(db, `users/${currentUserId}/friends`, friendId);
+    const friendDocRef = doc(db, `rankings/${currentUserId}/friends`, friendId);
     const friendDoc = await getDoc(friendDocRef);
 
     if (friendDoc.exists()) {
-        throw new Error(`${friendName} ya está en tu lista de amigos.`);
+        throw new Error(`${friendName} is already your friend.`);
     }
 
     await setDoc(friendDocRef, {
@@ -76,7 +86,7 @@ export const addFriend = async (currentUserId: string, friendId: string, friendN
 
 // Function to get a user's friends
 export const getFriends = async (userId: string): Promise<Friend[]> => {
-    const friendsRef = collection(db, `users/${userId}/friends`);
+    const friendsRef = collection(db, `rankings/${userId}/friends`);
     const q = query(friendsRef, orderBy('addedAt', 'desc'));
 
     const querySnapshot = await getDocs(q);
@@ -88,10 +98,9 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 };
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
-    if (!recipientId) throw new Error("ID del destinatario requerido.");
-    if (!senderName) throw new Error("El nombre del remitente es requerido.");
+    if (!recipientId) throw new Error("Recipient ID is required.");
     
-    const notificationsRef = collection(db, `users/${recipientId}/notifications`);
+    const notificationsRef = collection(db, `rankings/${recipientId}/notifications`);
     
     const newNotification = {
         fromUserId: senderId,
@@ -106,7 +115,20 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
     await addDoc(notificationsRef, newNotification);
 };
 
+export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
+    const notificationsRef = collection(db, `rankings/${userId}/notifications`);
+    const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
+
+    return onSnapshot(q, (snapshot) => {
+        const notifications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as GameInvitation));
+        callback(notifications);
+    });
+};
+
 export const updateNotificationStatus = async (userId: string, notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
-    const notificationDocRef = doc(db, `users/${userId}/notifications`, notificationId);
+    const notificationDocRef = doc(db, `rankings/${userId}/notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };
