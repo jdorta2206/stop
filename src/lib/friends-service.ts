@@ -15,7 +15,8 @@ import {
     collectionGroup,
     Timestamp,
     addDoc,
-    updateDoc
+    updateDoc,
+    onSnapshot
 } from "firebase/firestore";
 
 export interface Friend {
