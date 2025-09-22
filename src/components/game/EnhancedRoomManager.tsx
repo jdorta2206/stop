@@ -18,7 +18,9 @@ import {
   LogOut,
   Play,
   Loader2,
-  Crown
+  Crown,
+  UserPlus,
+  Send
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { 
@@ -32,6 +34,7 @@ import {
     type Player, 
     type Room 
 } from '@/lib/room-service';
+import { getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
 import type { Language } from '@/contexts/language-context';
 import ContactsManager from './ContactsManager';
 import type { User } from 'firebase/auth';
@@ -39,6 +42,8 @@ import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
 import { RouletteWheel } from './components/roulette-wheel';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
@@ -74,6 +79,8 @@ export default function EnhancedRoomManager({
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
 
   const players = useMemo(() => Object.values(room.players || {}), [room.players]);
   const roomSettings = useMemo(() => room.settings, [room.settings]);
@@ -82,6 +89,16 @@ export default function EnhancedRoomManager({
 
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room.hostId === currentUser.uid;
+
+  useEffect(() => {
+    async function fetchFriends() {
+        if(currentUser) {
+            const userFriends = await getFriends(currentUser.uid);
+            setFriends(userFriends);
+        }
+    }
+    fetchFriends();
+  }, [currentUser]);
 
   useEffect(() => {
     if (room.gameState === 'PLAYING' && room.roundStartedAt) {
@@ -168,6 +185,17 @@ export default function EnhancedRoomManager({
       toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
     }
   };
+  
+  const handleInviteFriend = async (friendId: string) => {
+    if (!currentUser.displayName) return;
+    try {
+      await sendChallengeNotification(currentUser.uid, currentUser.displayName, friendId, roomId);
+      toast({ description: `Invitación enviada.` });
+      setInvitedFriends(prev => new Set(prev).add(friendId));
+    } catch (error) {
+      toast({ title: 'Error', description: `No se pudo enviar la invitación.`, variant: 'destructive' });
+    }
+  };
 
   const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
     if (!isHost) {
@@ -244,7 +272,7 @@ export default function EnhancedRoomManager({
 
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
-    <div className="space-y-4 max-w-3xl mx-auto w-full">
+    <div className="space-y-4 max-w-4xl mx-auto w-full">
       <Card className="overflow-hidden shadow-2xl bg-card/70 backdrop-blur-md border-white/20">
         <CardHeader className="bg-black/20 p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
@@ -262,7 +290,7 @@ export default function EnhancedRoomManager({
                     <DialogTrigger asChild>
                        <Button variant="outline" className="bg-transparent hover:bg-white/10 border-white/30">
                         <Share2 className="h-4 w-4 mr-2" />
-                        Invitar
+                        Invitar por Contacto
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none p-0">
@@ -311,37 +339,70 @@ export default function EnhancedRoomManager({
         
         <CardContent className="p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-                <h4 className="font-semibold mb-3 flex items-center gap-2"><Users className="h-5 w-5" />Jugadores</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                    {players.map((player) => (
-                    <div key={player.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg animate-fade-in">
-                        <div className="flex items-center gap-3">
-                            {getStatusIcon(player.status)}
-                            <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
-                            <span className="font-medium flex items-center gap-2">
-                                {player.name} {player.id === currentUser.uid && "(Tú)"}
-                                {player.isHost && <Crown className="h-4 w-4 text-yellow-500"/>}
-                            </span>
+            <div className="md:col-span-2 space-y-6">
+                <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2"><Users className="h-5 w-5" />Jugadores en la Sala</h4>
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        {players.map((player) => (
+                        <div key={player.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg animate-fade-in">
+                            <div className="flex items-center gap-3">
+                                {getStatusIcon(player.status)}
+                                <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
+                                <span className="font-medium flex items-center gap-2">
+                                    {player.name} {player.id === currentUser.uid && "(Tú)"}
+                                    {player.isHost && <Crown className="h-4 w-4 text-yellow-500"/>}
+                                </span>
+                            </div>
+                            <div className='flex items-center gap-2'>
+                            <Badge variant={player.isReady ? "default" : "secondary"} className="text-xs w-20 justify-center">
+                                {player.isReady ? "Listo" : "Esperando"}
+                            </Badge>
+                            {isHost && player.id !== currentUser.uid && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleKickPlayer(player.id)}
+                                    title="Expulsar jugador"
+                                    className="text-muted-foreground hover:text-destructive h-7 w-7"
+                                >
+                                    <UserX className="h-4 w-4" />
+                                </Button>
+                            )}
+                            </div>
                         </div>
-                        <div className='flex items-center gap-2'>
-                        <Badge variant={player.isReady ? "default" : "secondary"} className="text-xs w-20 justify-center">
-                            {player.isReady ? "Listo" : "Esperando"}
-                        </Badge>
-                        {isHost && player.id !== currentUser.uid && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleKickPlayer(player.id)}
-                                title="Expulsar jugador"
-                                className="text-muted-foreground hover:text-destructive h-7 w-7"
-                            >
-                                <UserX className="h-4 w-4" />
-                            </Button>
-                        )}
-                        </div>
+                        ))}
                     </div>
-                    ))}
+                </div>
+
+                <div>
+                    <h4 className="font-semibold mb-3 flex items-center gap-2"><UserPlus className="h-5 w-5" />Invitar Amigos</h4>
+                    <ScrollArea className="h-40">
+                      <div className="space-y-2 pr-4">
+                        {friends.length > 0 ? friends.map(friend => (
+                          <div key={friend.id} className="flex items-center justify-between p-2 bg-black/10 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={friend.avatar || undefined} />
+                                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium">{friend.name}</span>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="bg-transparent"
+                              onClick={() => handleInviteFriend(friend.id)}
+                              disabled={invitedFriends.has(friend.id)}
+                            >
+                              <Send className="h-3 w-3 mr-2"/>
+                              {invitedFriends.has(friend.id) ? 'Invitado' : 'Invitar'}
+                            </Button>
+                          </div>
+                        )) : (
+                          <p className="text-sm text-center text-white/60 p-4">No tienes amigos añadidos. Ve al ranking para añadir amigos.</p>
+                        )}
+                      </div>
+                    </ScrollArea>
                 </div>
             </div>
             
