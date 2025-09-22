@@ -1,11 +1,4 @@
-
-'use server';
-/**
- * @fileOverview A flow to create a new game room in Firestore.
- */
-
-import { ai } from '@/lib/genkit';
-import { z } from 'zod';
+import { NextResponse } from 'next/server';
 import {
   collection,
   addDoc,
@@ -15,34 +8,27 @@ import { db } from '@/lib/firebase';
 import type { Player, Room } from '@/lib/room-service';
 import type { Language } from '@/contexts/language-context';
 
-
-const CreateRoomInputSchema = z.object({
-  creatorId: z.string().describe('The ID of the user creating the room.'),
-  creatorName: z.string().describe('The display name of the creator.'),
-  creatorAvatar: z.string().nullable().describe('The avatar URL of the creator.'),
-});
-
-const CreateRoomOutputSchema = z.object({
-    id: z.string(),
-    hostId: z.string(),
-    status: z.string(),
-});
-
-export type CreateRoomInput = z.infer<typeof CreateRoomInputSchema>;
-export type CreateRoomOutput = z.infer<typeof CreateRoomOutputSchema>;
-
-export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
-  return await createRoomFlow(input);
+// Define input and output types for clarity, mirroring the old flow structure
+export interface CreateRoomInput {
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string | null;
 }
 
-const createRoomFlow = ai.defineFlow(
-  {
-    name: 'createRoomFlow',
-    inputSchema: CreateRoomInputSchema,
-    outputSchema: CreateRoomOutputSchema,
-  },
-  async (input: CreateRoomInput) => {
+export interface CreateRoomOutput {
+  id: string;
+  hostId: string;
+  status: string;
+}
+
+export async function POST(request: Request) {
+  try {
+    const input: CreateRoomInput = await request.json();
     const { creatorId, creatorName, creatorAvatar } = input;
+
+    if (!creatorId || !creatorName) {
+      return NextResponse.json({ error: 'Missing creator ID or name' }, { status: 400 });
+    }
 
     const finalCreatorName = creatorName || 'Jugador Anónimo';
     const finalCreatorAvatar =
@@ -77,10 +63,16 @@ const createRoomFlow = ai.defineFlow(
     const roomsCollection = collection(db, 'rooms');
     const roomDocRef = await addDoc(roomsCollection, newRoomData);
 
-    return {
+    const response: CreateRoomOutput = {
       id: roomDocRef.id,
       hostId: newRoomData.hostId,
       status: newRoomData.status,
     };
+    
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("Error creating room:", error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-);
+}
