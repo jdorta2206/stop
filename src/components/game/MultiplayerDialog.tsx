@@ -134,9 +134,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
               <Input
                 placeholder="Introducir código de sala..."
                 value={joinRoomId}
-                onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                onChange={(e) => setJoinRoomId(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
-                className="uppercase"
               />
               <Button type="button" onClick={handleJoinRoom} disabled={isJoining || !joinRoomId.trim()} variant="secondary">
                 {isJoining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
