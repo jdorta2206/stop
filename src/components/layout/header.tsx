@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
@@ -6,27 +5,38 @@ import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, MessageSquare, Gamepad2 } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
-import { onChatUpdate, sendMessageToRoom } from '@/lib/room-service';
+import { onChatUpdate, sendMessageToRoom, getRoom } from '@/lib/room-service';
 import { AuthStatus } from '../auth/auth-status';
 import type { ChatMessage } from '../chat/chat-message-item';
+import { usePathname, useRouter } from 'next/navigation';
+import PushNotifications from '../game/PushNotifications';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
   const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [isMuted, setIsMuted] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [roomId, setRoomId] = useState<string | null>('global');
   const [logoSrc, setLogoSrc] = useState('/android-chrome-192x192.png');
-
+  
   useEffect(() => {
     setIsMounted(true);
     const storedMute = localStorage.getItem('globalStopMuted') === 'true';
     setIsMuted(storedMute);
-  }, []);
+
+    const currentRoomId = pathname.includes('/multiplayer') 
+      ? pathname.split('roomId=')[1] 
+      : 'global';
+    setRoomId(currentRoomId);
+    
+  }, [pathname]);
 
   useEffect(() => {
     if (isMounted && isChatOpen && roomId) {
@@ -59,6 +69,10 @@ export function AppHeader() {
       });
     }
   };
+
+  const handleJoinRoomFromNotification = (roomIdToJoin: string) => {
+    router.push(`/multiplayer?roomId=${roomIdToJoin}`);
+  }
   
   if (!isMounted) {
       return (
@@ -98,6 +112,19 @@ export function AppHeader() {
             <span className="text-xl font-bold text-white">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
+             {user && (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(true)} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
+                <PushNotifications 
+                  userId={user.uid}
+                  username={user.displayName || 'Jugador'}
+                  onJoinRoom={handleJoinRoomFromNotification}
+                  onOpenChat={() => setIsChatOpen(true)}
+                />
+              </div>
+            )}
             <div className="hidden sm:flex items-center gap-1 bg-black/20 p-1 rounded-full border border-white/20">
               {(['es', 'en', 'fr', 'pt'] as const).map(langCode => (
                 <Button
@@ -112,7 +139,7 @@ export function AppHeader() {
               ))}
             </div>
             
-            <Button withSound variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
+            <Button variant="ghost" size="icon" onClick={toggleMute} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
                 {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
             
