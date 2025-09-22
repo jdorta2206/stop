@@ -20,6 +20,7 @@ import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { createRoom } from '@/lib/room-service';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -107,11 +108,35 @@ export default function LeaderboardPage() {
       if(user) fetchData(user.uid);
   }
 
-  const handleChallenge = (player: PlayerScore) => {
-    toast({
-      title: translate('social.challenge.comingSoon.title'),
-      description: translate('social.challenge.comingSoon.description', { name: player.playerName }),
-    });
+  const handleChallenge = async (player: PlayerScore) => {
+    if (!user) {
+      toast({ title: 'Error', description: "Debes iniciar sesión para desafiar a alguien.", variant: "destructive" });
+      return;
+    }
+
+    try {
+        const newRoom = await createRoom({
+            creatorId: user.uid,
+            creatorName: user.displayName ?? 'Jugador',
+            creatorAvatar: user.photoURL ?? null
+        });
+
+        if (!newRoom || !newRoom.id) {
+            throw new Error("La función no devolvió un ID de sala.");
+        }
+
+        toast({
+            title: '¡Sala de desafío creada!',
+            description: `Código: ${newRoom.id}. Compártelo con ${player.playerName}.`,
+        });
+        router.push(`/multiplayer?roomId=${newRoom.id.toUpperCase()}`);
+    } catch (error) {
+        toast({
+            title: "Error al crear la sala",
+            description: (error as Error).message,
+            variant: 'destructive',
+        });
+    }
   };
 
   if (isAuthLoading && isLoading) {

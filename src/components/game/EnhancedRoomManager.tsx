@@ -21,11 +21,21 @@ import {
   Crown
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { onRoomUpdate, updatePlayerInRoom, updateRoomSettings, removePlayerFromRoom, addPlayerToRoom, type Player, type Room } from '@/lib/room-service';
+import { 
+    onRoomUpdate, 
+    updatePlayerInRoom, 
+    updateRoomSettings, 
+    removePlayerFromRoom, 
+    addPlayerToRoom, 
+    startGame, 
+    type Player, 
+    type Room 
+} from '@/lib/room-service';
 import type { Language } from '@/contexts/language-context';
 import ContactsManager from './ContactsManager';
 import type { User } from 'firebase/auth';
-
+import { GameArea } from './components/game-area';
+import { useLanguage } from '@/contexts/language-context';
 
 interface EnhancedRoomManagerProps {
   roomId: string;
@@ -38,16 +48,17 @@ export default function EnhancedRoomManager({
   roomId, 
   currentUser, 
   onLeaveRoom, 
-  onStartGame 
+  onStartGame: initialOnStartGame 
 }: EnhancedRoomManagerProps) {
   const { toast } = useToast();
+  const { translate } = useLanguage();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (!roomId || !currentUser) return;
@@ -64,6 +75,7 @@ export default function EnhancedRoomManager({
           if (updatedRoom) {
             setRoom(updatedRoom);
             setPlayers(Object.values(updatedRoom.players || {}));
+            setIsPlaying(updatedRoom.status === 'playing');
             setError(null);
           } else {
             setError("La sala ya no existe o no se pudo cargar.");
@@ -78,7 +90,6 @@ export default function EnhancedRoomManager({
         setError((err as Error).message);
         toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
         setIsLoading(false);
-        // If there's an error (like room not found), redirect
         setTimeout(onLeaveRoom, 2000);
       }
     };
@@ -96,8 +107,7 @@ export default function EnhancedRoomManager({
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
-  // Game can start if host is ready, there are at least 2 players, and ALL players are ready
-  const canStartGame = isHost && players.length >= 2 && readyPlayersCount === players.length;
+  const canStartGame = isHost && players.length >= 1 && readyPlayersCount === players.length;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -105,6 +115,15 @@ export default function EnhancedRoomManager({
       await updatePlayerInRoom(roomId, currentUser.uid, { isReady: !currentPlayer.isReady });
     } catch (error) {
       toast({ title: 'Error', description: 'No se pudo actualizar tu estado.', variant: 'destructive' });
+    }
+  };
+
+  const handleStartGame = async () => {
+    if (!canStartGame) return;
+    try {
+        await startGame(roomId);
+    } catch (error) {
+        toast({ title: 'Error', description: `No se pudo iniciar el juego: ${(error as Error).message}`, variant: 'destructive' });
     }
   };
 
@@ -180,9 +199,20 @@ export default function EnhancedRoomManager({
     );
   }
 
+  // Renderiza la interfaz de juego si el estado de la sala es 'playing'
+  if (isPlaying) {
+      // Esta es una vista simplificada, necesitarás un componente de juego más complejo
+      return (
+          <div>
+              <h2 className="text-2xl font-bold text-center">¡El juego ha comenzado!</h2>
+              <p className="text-center">Letra: {room.currentLetter}</p>
+              {/* Aquí iría el componente GameArea para el modo multijugador */}
+          </div>
+      );
+  }
+
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
-      {/* Room Header */}
       <Card className="overflow-hidden">
         <CardHeader className="bg-card-foreground/5 p-4 border-b">
           <div className="flex items-center justify-between">
@@ -249,7 +279,6 @@ export default function EnhancedRoomManager({
         
         <CardContent className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {/* Players List */}
             <div className="md:col-span-2">
                 <h4 className="font-semibold mb-3 flex items-center gap-2"><Users className="h-5 w-5" />Jugadores</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
@@ -284,7 +313,6 @@ export default function EnhancedRoomManager({
                 </div>
             </div>
             
-            {/* Game Controls */}
             <div className="flex flex-col justify-between space-y-3">
                  <h4 className="font-semibold mb-3 flex items-center gap-2"><Play className="h-5 w-5" />Acciones</h4>
                  <Button
@@ -297,7 +325,7 @@ export default function EnhancedRoomManager({
                 </Button>
                 
                 <Button
-                    onClick={onStartGame}
+                    onClick={handleStartGame}
                     disabled={!canStartGame}
                     className="w-full text-lg py-6"
                     size="lg"
