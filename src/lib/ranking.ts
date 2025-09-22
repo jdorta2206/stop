@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -141,9 +140,8 @@ class RankingManager {
     const updatedPlayerStats = {
         totalScore: newTotalScore,
         gamesPlayed: newGamesPlayed,
-        gamesWon: playerRanking.gamesWon + (gameResult.won ? 1 : 0),
-        bestScore: Math.max(playerRanking.bestScore, gameResult.score),
         averageScore: Math.round(newTotalScore / newGamesPlayed),
+        bestScore: Math.max(playerRanking.bestScore, gameResult.score),
         level: this.calculateLevel(newTotalScore),
     };
     
