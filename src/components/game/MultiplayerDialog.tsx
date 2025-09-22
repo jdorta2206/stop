@@ -8,8 +8,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { createRoom } from '@/ai/flows/create-room-flow';
 import { Loader2, PartyPopper, Users } from 'lucide-react';
+import type { CreateRoomOutput } from '@/app/api/create-room/route';
+
 
 interface MultiplayerDialogProps {
   isOpen: boolean;
@@ -33,14 +34,27 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     }
     setIsCreating(true);
     try {
-      const newRoom = await createRoom({
-        creatorId: user.uid,
-        creatorName: user.displayName ?? 'Jugador',
-        creatorAvatar: user.photoURL ?? null
+      const response = await fetch('/api/create-room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          creatorId: user.uid,
+          creatorName: user.displayName ?? 'Jugador',
+          creatorAvatar: user.photoURL ?? null
+        }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create room');
+      }
+
+      const newRoom = (await response.json()) as CreateRoomOutput;
+
       if (!newRoom || !newRoom.id) {
-        throw new Error("El flujo de creación de sala no devolvió un ID.");
+        throw new Error("API did not return a room ID.");
       }
 
       toast({
@@ -50,7 +64,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
-      console.error("Error creating room via flow:", error);
+      console.error("Error creating room via API route:", error);
       toast({
         title: translate('common.error'),
         description: `No se pudo crear la sala: ${(error as Error).message}`,
