@@ -99,7 +99,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
     id: creatorId,
     name: finalCreatorName,
     avatar: finalCreatorAvatar,
-    isReady: false,
+    isReady: true,
     status: 'online',
     joinedAt: serverTimestamp(),
     isHost: true,
