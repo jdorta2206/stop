@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from './firebase';
@@ -11,9 +12,7 @@ import {
     orderBy,
     Timestamp,
     addDoc,
-    updateDoc,
-    onSnapshot,
-    limit
+    updateDoc
 } from "firebase/firestore";
 
 export interface Friend {
@@ -104,19 +103,6 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
     };
     
     await addDoc(notificationsRef, newNotification);
-};
-
-export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
-    const notificationsRef = collection(db, `users/${userId}/notifications`);
-    const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
-
-    return onSnapshot(q, (snapshot) => {
-        const notifications = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        } as GameInvitation));
-        callback(notifications);
-    });
 };
 
 export const updateNotificationStatus = async (userId: string, notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {

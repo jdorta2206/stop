@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { onNotificationsUpdate, updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
+import { updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
+import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface PushNotificationsProps {
   userId: string;
@@ -32,33 +34,33 @@ export default function PushNotifications({
       setNotificationPermission(Notification.permission);
     }
 
-    let unsubscribe: (() => void) | null = null;
-    
-    const setupListener = async () => {
-        if (user) {
-            unsubscribe = await onNotificationsUpdate(user.uid, (newNotifications) => {
-                // Check for new pending notifications compared to the current state
-                const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
-                const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));
+    if (user) {
+      const notificationsRef = collection(db, `users/${user.uid}/notifications`);
+      const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
 
-                if (newPendingNotification) {
-                    showPushNotification(newPendingNotification);
-                    toast.info(`Nueva invitación de ${newPendingNotification.fromUser}`);
-                }
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newNotifications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as GameInvitation));
 
-                setNotifications(newNotifications);
-            });
+        // Check for new pending notifications compared to the current state
+        const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
+        const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));
+
+        if (newPendingNotification) {
+            showPushNotification(newPendingNotification);
+            toast.info(`Nueva invitación de ${newPendingNotification.fromUser}`);
         }
-    };
 
-    setupListener();
+        setNotifications(newNotifications);
+      });
 
-    return () => {
-        if (unsubscribe) {
-            unsubscribe();
-        }
-    };
-}, [user]); // Removed `notifications` from dependency array to prevent re-subscribing on every update
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user]);
 
 
   const requestNotificationPermission = async () => {
