@@ -44,7 +44,7 @@ export const searchUserById = async (userId: string): Promise<Friend | null> => 
         const data = docSnap.data();
         return {
             id: docSnap.id,
-            name: data.displayName || 'Jugador sin nombre',
+            name: data.playerName || 'Jugador sin nombre', // Changed from displayName
             avatar: data.photoURL,
             addedAt: Timestamp.now() // This is temporary, not stored
         };

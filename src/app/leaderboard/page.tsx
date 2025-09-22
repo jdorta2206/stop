@@ -52,7 +52,16 @@ export default function LeaderboardPage() {
             const friendIds = friendsList.map(f => f.id);
             const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
-            setFriendsLeaderboard(friendRankings);
+            // We need to add the friend's own data to the list if they are not already in it
+            const enrichedFriendRankings = friendRankings.map(f => {
+                const friendData = friendsList.find(fl => fl.id === f.id);
+                return {
+                    ...f,
+                    playerName: friendData?.name || f.playerName,
+                    photoURL: friendData?.avatar || f.photoURL,
+                };
+            });
+            setFriendsLeaderboard(enrichedFriendRankings);
         } else {
             setFriendsLeaderboard([]);
         }
