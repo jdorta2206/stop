@@ -186,12 +186,18 @@ export default function EnhancedRoomManager({
   };
   
   const handleInviteFriend = async (friendId: string) => {
-    if (!currentUser.displayName) return;
+    if (!currentUser.displayName) {
+        toast.error("Tu nombre no está disponible. Por favor, vuelve a iniciar sesión.", {
+            description: "No se puede enviar una invitación sin un nombre de remitente.",
+        });
+        return;
+    }
     try {
       await sendChallengeNotification(currentUser.uid, currentUser.displayName, friendId, roomId);
-      toast.info(`Invitación enviada.`);
+      toast.success(`Invitación enviada.`);
       setInvitedFriends(prev => new Set(prev).add(friendId));
     } catch (error) {
+      console.error("Error sending invitation:", error);
       toast.error(`No se pudo enviar la invitación.`);
     }
   };
