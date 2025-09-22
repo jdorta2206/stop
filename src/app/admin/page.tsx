@@ -9,36 +9,56 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
-import type { AppUser } from '@/hooks/use-auth';
-
-// Mock data for admin panel
-const MOCK_USERS = [
-    { id: '1', name: 'Alice', email: 'alice@example.com', score: 1250, games: 15, status: 'active' },
-    { id: '2', name: 'Bob', email: 'bob@example.com', score: 800, games: 10, status: 'active' },
-    { id: '3', name: 'Charlie', email: 'charlie@example.com', score: 2500, games: 25, status: 'banned' },
-];
-
-const MOCK_STATS = {
-    totalUsers: 150,
-    onlineUsers: 25,
-    gamesPlayedToday: 340,
-    averageScore: 115,
-};
+import { rankingManager, type PlayerScore } from '@/lib/ranking';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function AdminPage() {
-    const { language, translate } = useLanguage();
+    const { language } = useLanguage();
     const { user, isLoading: authLoading } = useAuth();
+    const { toast } = useToast();
+
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [users, setUsers] = useState<PlayerScore[]>([]);
+    const [stats, setStats] = useState({ totalUsers: 0, gamesPlayedToday: 0 });
+
+    const fetchAdminData = async () => {
+        try {
+            const allUsers = await rankingManager.getTopRankings(100); // Fetch top 100 users
+            setUsers(allUsers);
+            setStats({
+                totalUsers: allUsers.length,
+                gamesPlayedToday: 0 // Placeholder, this would require more complex querying
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudieron cargar los datos del administrador.",
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!authLoading) {
             if (user?.email === 'jdorta2206@gmail.com') {
                 setIsAdmin(true);
+                fetchAdminData();
+            } else {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         }
     }, [user, authLoading]);
+
+    const handleBanUser = (userId: string) => {
+        toast({
+            title: "Función no implementada",
+            description: `La lógica para banear al usuario ${userId} aún no está conectada.`,
+            variant: 'destructive'
+        });
+    };
 
     if (isLoading || authLoading) {
         return (
@@ -81,7 +101,7 @@ export default function AdminPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{MOCK_STATS.totalUsers}</div>
+                            <div className="text-2xl font-bold">{stats.totalUsers}</div>
                         </CardContent>
                     </Card>
                     <Card>
@@ -90,7 +110,8 @@ export default function AdminPage() {
                             <BarChart2 className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{MOCK_STATS.gamesPlayedToday}</div>
+                            <div className="text-2xl font-bold">{stats.gamesPlayedToday}</div>
+                             <p className="text-xs text-muted-foreground">(Funcionalidad pendiente)</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -105,25 +126,19 @@ export default function AdminPage() {
                                 <thead className="bg-muted">
                                     <tr>
                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nombre</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Email</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Puntuación</th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Estado</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Puntuación Total</th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nivel</th>
                                         <th scope="col" className="relative px-6 py-3"><span className="sr-only">Acciones</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-card divide-y divide-border">
-                                    {MOCK_USERS.map((u) => (
+                                    {users.map((u) => (
                                         <tr key={u.id}>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{u.name}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{u.email}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{u.score}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {u.status}
-                                                </span>
-                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{u.playerName}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{u.totalScore}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{u.level}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700"><Trash2 className="h-4 w-4 mr-2" /> Banear</Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleBanUser(u.id)} className="text-red-500 hover:text-red-700"><Trash2 className="h-4 w-4 mr-2" /> Banear</Button>
                                             </td>
                                         </tr>
                                     ))}
