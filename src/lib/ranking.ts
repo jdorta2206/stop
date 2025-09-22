@@ -63,7 +63,7 @@ const COINS_PER_GAME = 10;
 const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 
 class RankingManager {
-  private rankingsCollection = collection(db, 'rankings');
+  private usersCollection = collection(db, 'users');
 
   async getPlayerRanking(
     playerId: string,
@@ -73,7 +73,7 @@ class RankingManager {
     if (!playerId) {
       throw new Error("getPlayerRanking requiere un playerId válido.");
     }
-    const playerDocRef = doc(this.rankingsCollection, playerId);
+    const playerDocRef = doc(this.usersCollection, playerId);
     
     let docSnap = await getDoc(playerDocRef);
 
@@ -82,7 +82,7 @@ class RankingManager {
       const finalDisplayName = displayName || 'Jugador Anónimo';
       const newPlayer: Omit<PlayerScore, 'id'> = {
           playerName: finalDisplayName,
-          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalDisplayName || 'player'}`,
+          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalDisplayName || 'player')}`,
           totalScore: 0,
           gamesPlayed: 0,
           gamesWon: 0,
@@ -114,7 +114,7 @@ class RankingManager {
     }
 
 
-    return { id: playerId, ...playerData };
+    return { id: playerId, ...playerData, playerName: playerData.playerName || displayName || 'Jugador Anónimo', photoURL: playerData.photoURL || photoURL };
   }
   
   async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
@@ -122,8 +122,8 @@ class RankingManager {
         console.error("saveGameResult requires a valid playerId.");
         return null;
     }
-    const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
-    const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
+    const playerDocRef = doc(this.usersCollection, gameResult.playerId);
+    const gameHistoryCollectionRef = collection(db, `users/${gameResult.playerId}/gameHistory`);
     
     // Ensure player profile exists and missions are up-to-date before saving
     const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
@@ -168,7 +168,7 @@ class RankingManager {
   }
 
   async claimMissionReward(playerId: string, missionId: string): Promise<void> {
-    const playerDocRef = doc(this.rankingsCollection, playerId);
+    const playerDocRef = doc(this.usersCollection, playerId);
     const player = await this.getPlayerRanking(playerId);
 
     if (!player || !player.dailyMissions) throw new Error("Jugador o misiones no encontrados");
@@ -208,13 +208,13 @@ class RankingManager {
 
   async getGameHistory(playerId: string, historyLimit: number = 5): Promise<GameResult[]> {
     if (!playerId) return [];
-    const q = query(collection(db, `rankings/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
+    const q = query(collection(db, `users/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GameResult));
   }
 
   async getTopRankings(limitCount: number = 50): Promise<PlayerScore[]> {
-    const q = query(this.rankingsCollection, orderBy("totalScore", "desc"), limit(limitCount));
+    const q = query(this.usersCollection, orderBy("totalScore", "desc"), limit(limitCount));
     const querySnapshot = await getDocs(q);
     const players = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PlayerScore));
     return players;

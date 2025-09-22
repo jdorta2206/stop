@@ -1,41 +1,48 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users can read public profiles, but only write to their own.
+    
+    // Perfiles de Usuario y Ranking
     match /users/{userId} {
+      // Cualquiera puede leer perfiles (para buscar amigos y ver rankings)
       allow read: if request.auth != null;
+      // El usuario solo puede escribir en su propio documento
       allow write: if request.auth.uid == userId;
 
-      // Rules for subcollections
+      // Sub-colección de amigos
       match /friends/{friendId} {
+        // El usuario solo puede leer y escribir su propia lista de amigos
         allow read, write: if request.auth.uid == userId;
       }
 
+      // Sub-colección de notificaciones
       match /notifications/{notificationId} {
+        // Cualquiera puede crear una notificación para un usuario (para enviar invitaciones)
         allow create: if request.auth != null;
+        // El usuario solo puede leer y actualizar sus propias notificaciones
         allow read, update, delete: if request.auth.uid == userId;
       }
-    }
-    
-    match /rooms/{roomId} {
-        allow read, create: if request.auth != null;
-        // Allow updates only if the user is in the room's player list
-        allow update: if request.auth != null && exists(/databases/$(database)/documents/rooms/$(roomId)) && request.auth.uid in resource.data.players;
 
-        match /chat/{messageId} {
-            allow read, create: if request.auth != null && get(/databases/$(database)/documents/rooms/$(roomId)).data.players[request.auth.uid] != null;
-        }
-    }
-
-
-    match /rankings/{userId} {
-      allow read: if true;
-      allow write: if request.auth.uid == userId;
-      
+      // Sub-colección de historial de partidas
       match /gameHistory/{gameId} {
-        allow read, create: if request.auth.uid == userId;
+        // El usuario solo puede crear y leer su propio historial de partidas
+        allow create, read: if request.auth.uid == userId;
+      }
+    }
+
+    // Salas de Juego
+    match /rooms/{roomId} {
+      // Cualquiera autenticado puede leer o crear una sala
+      allow read, create: if request.auth != null;
+      // Solo un jugador autenticado puede actualizar una sala (unirse, cambiar estado, etc.)
+      allow update: if request.auth != null;
+      
+      // Sub-colección de chat de la sala
+      match /chat/{messageId} {
+        // Cualquiera autenticado puede leer y escribir en el chat de una sala
+        allow read, write: if request.auth != null;
       }
     }
   }
