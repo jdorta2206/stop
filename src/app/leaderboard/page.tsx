@@ -9,18 +9,19 @@ import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
+import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
 import { rankingManager } from '@/lib/ranking';
 import type { PlayerScore, GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend, getFriends, sendChallengeNotification, type Friend, searchUserById } from '@/lib/friends-service';
+import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createRoom } from '@/lib/room-service';
+import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -36,12 +37,10 @@ export default function LeaderboardPage() {
   const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
-      // Fetch global leaderboard
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
       if (userId) {
-        // Fetch user-specific data in parallel
         const [personalData, historyData, friendsList] = await Promise.all([
           rankingManager.getPlayerRanking(userId),
           rankingManager.getGameHistory(userId, 5),
@@ -53,10 +52,8 @@ export default function LeaderboardPage() {
         
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
-            // Fetch rankings for all friends
             const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
-            // Enrich friend rankings with names and avatars from the friends list
             const enrichedFriendRankings = friendRankings.map(ranking => {
                 const friendInfo = friendsList.find(f => f.id === ranking.id);
                 return {
@@ -64,9 +61,9 @@ export default function LeaderboardPage() {
                     playerName: friendInfo?.name || ranking.playerName,
                     photoURL: friendInfo?.avatar || ranking.photoURL,
                 };
-            });
+            }).sort((a, b) => b.totalScore - a.totalScore);
             
-             setFriendsLeaderboard(enrichedFriendRankings.sort((a, b) => b.totalScore - a.totalScore));
+             setFriendsLeaderboard(enrichedFriendRankings);
         } else {
             setFriendsLeaderboard([]);
         }
@@ -185,6 +182,7 @@ export default function LeaderboardPage() {
               <>
                 <PersonalHighScoreCard highScore={personalStats.bestScore} translateUi={translate} />
                 <GameHistoryCard gameHistory={gameHistory} translateUi={translate} />
+                <DailyMissionsCard />
                 <AchievementsCard achievements={personalStats.achievements || []} translateUi={translate} />
                  <Card>
                   <CardHeader>
