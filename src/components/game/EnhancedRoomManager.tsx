@@ -22,7 +22,7 @@ import {
   UserPlus,
   Send
 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { 
     updatePlayerInRoom, 
     updateRoomSettings, 
@@ -74,7 +74,6 @@ export default function EnhancedRoomManager({
   onLeaveRoom, 
   onStartGame: initialOnStartGame 
 }: EnhancedRoomManagerProps) {
-  const { toast } = useToast();
   const { translate, language } = useLanguage();
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
@@ -135,7 +134,7 @@ export default function EnhancedRoomManager({
     try {
       await updatePlayerInRoom(roomId, currentUser.uid, { isReady: !currentPlayer.isReady });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo actualizar tu estado.', variant: 'destructive' });
+      toast.error('No se pudo actualizar tu estado.');
     }
   };
 
@@ -144,7 +143,7 @@ export default function EnhancedRoomManager({
     try {
         await startGame(roomId);
     } catch (error) {
-        toast({ title: 'Error', description: `No se pudo iniciar el juego: ${(error as Error).message}`, variant: 'destructive' });
+        toast.error(`No se pudo iniciar el juego: ${(error as Error).message}`);
     }
   };
 
@@ -153,7 +152,7 @@ export default function EnhancedRoomManager({
       try {
         await startNextRound(roomId);
       } catch (error) {
-         toast({ title: 'Error', description: `No se pudo iniciar la siguiente ronda: ${(error as Error).message}`, variant: 'destructive' });
+         toast.error(`No se pudo iniciar la siguiente ronda: ${(error as Error).message}`);
       }
   }
 
@@ -161,7 +160,7 @@ export default function EnhancedRoomManager({
     try {
       await triggerGlobalStop(roomId);
     } catch (error) {
-       toast({ title: 'Error', description: `No se pudo detener la ronda: ${(error as Error).message}`, variant: 'destructive' });
+       toast.error(`No se pudo detener la ronda: ${(error as Error).message}`);
     }
   };
 
@@ -169,20 +168,20 @@ export default function EnhancedRoomManager({
      try {
        await submitPlayerAnswers(roomId, currentUser.uid, { [category]: value });
      } catch(error) {
-        toast({ title: 'Error', description: 'No se pudo guardar tu respuesta.', variant: 'destructive' });
+        toast.error('No se pudo guardar tu respuesta.');
      }
   };
 
   const handleKickPlayer = async (playerId: string) => {
     if (!isHost) {
-      toast({ title: 'Acción no permitida', description: 'Solo el anfitrión puede expulsar jugadores.', variant: 'destructive' });
+      toast.error('Solo el anfitrión puede expulsar jugadores.', { title: 'Acción no permitida' });
       return;
     }
     try {
       await removePlayerFromRoom(roomId, playerId);
-      toast({ title: 'Éxito', description: 'Jugador expulsado de la sala' });
+      toast.success('Jugador expulsado de la sala');
     } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
+      toast.error((error as Error).message);
     }
   };
   
@@ -190,23 +189,23 @@ export default function EnhancedRoomManager({
     if (!currentUser.displayName) return;
     try {
       await sendChallengeNotification(currentUser.uid, currentUser.displayName, friendId, roomId);
-      toast({ description: `Invitación enviada.` });
+      toast.info(`Invitación enviada.`);
       setInvitedFriends(prev => new Set(prev).add(friendId));
     } catch (error) {
-      toast({ title: 'Error', description: `No se pudo enviar la invitación.`, variant: 'destructive' });
+      toast.error(`No se pudo enviar la invitación.`);
     }
   };
 
   const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
     if (!isHost) {
-      toast({ title: 'Acción no permitida', description: 'Solo el anfitrión puede cambiar la configuración.', variant: 'destructive' });
+      toast.error('Solo el anfitrión puede cambiar la configuración.', { title: 'Acción no permitida' });
       return;
     }
     try {
         await updateRoomSettings(roomId, newSettings);
-        toast({ title: 'Éxito', description: 'Configuración de sala actualizada' });
+        toast.success('Configuración de sala actualizada');
     } catch (error) {
-        toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
+        toast.error((error as Error).message);
     }
   };
 

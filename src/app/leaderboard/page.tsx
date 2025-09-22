@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,6 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
   const { user, isLoading: isAuthLoading } = useAuth();
-  const { toast } = useToast();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -85,10 +84,8 @@ export default function LeaderboardPage() {
         }
       }
     } catch (error) {
-      toast({ 
-        title: translate('error'), 
-        description: (error as Error).message,
-        variant: "destructive" 
+      toast.error((error as Error).message, {
+        description: translate('common.error'),
       });
     } finally {
       setIsLoading(false);
@@ -105,25 +102,17 @@ export default function LeaderboardPage() {
 
   const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
-      toast({ 
-        title: translate('actionRequired'), 
-        description: translate('leaderboards.loginRequired') 
+      toast.warning(translate('leaderboards.loginRequired'), {
+        description: translate('actionRequired'),
       });
       return;
     }
     try {
       await addFriend(user.uid, player.id, player.playerName, player.photoURL);
-      toast({ 
-        title: translate('success'), 
-        description: translate('leaderboards.friendAdded', { name: player.playerName }) 
-      });
+      toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
       fetchData(user.uid); // Refresh friends list
     } catch (error) {
-      toast({ 
-        title: translate('error'), 
-        description: (error as Error).message, 
-        variant: "destructive" 
-      });
+      toast.error((error as Error).message);
     }
   };
   
@@ -133,7 +122,7 @@ export default function LeaderboardPage() {
 
   const handleChallenge = async (playerToChallenge: PlayerScore) => {
     if (!user || !user.displayName) {
-      toast({ title: 'Error', description: "Debes iniciar sesión para desafiar a alguien.", variant: "destructive" });
+      toast.error("Debes iniciar sesión para desafiar a alguien.");
       return;
     }
 
@@ -151,19 +140,16 @@ export default function LeaderboardPage() {
         // Send notification to the challenged player
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
 
-        toast({
+        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`, {
             title: '¡Desafío enviado!',
-            description: `Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`,
         });
 
         // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
-        toast({
-            title: "Error al crear el desafío",
-            description: (error as Error).message,
-            variant: 'destructive',
+        toast.error((error as Error).message, {
+          title: "Error al crear el desafío",
         });
     }
   };
@@ -244,5 +230,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-

@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/language-context';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,6 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
   const router = useRouter();
   const { user } = useAuth();
   const { translate } = useLanguage();
-  const { toast } = useToast();
   
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -29,7 +29,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
 
   const handleCreateRoom = async () => {
     if (!user) {
-      toast({ title: "Error", description: "Debes iniciar sesión para crear una sala.", variant: "destructive" });
+      toast.error("Debes iniciar sesión para crear una sala.");
       return;
     }
     setIsCreating(true);
@@ -44,18 +44,15 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         throw new Error("La función `createRoom` no devolvió un ID de sala.");
       }
 
-      toast({
+      toast.success(`¡Sala creada con éxito! Código: ${newRoom.id}`, {
         title: translate('rooms.create.title'),
-        description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
       });
       router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
       console.error("Error creating room:", error);
-      toast({
+      toast.error(`No se pudo crear la sala: ${(error as Error).message}`, {
         title: translate('common.error'),
-        description: `No se pudo crear la sala: ${(error as Error).message}`,
-        variant: 'destructive',
       });
     } finally {
         setIsCreating(false);
@@ -65,10 +62,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
   const handleJoinRoom = async () => {
     const roomIdToJoin = joinRoomId.trim().toUpperCase();
     if (!roomIdToJoin) {
-      toast({
+      toast.error("Por favor, introduce un código de sala para unirte.", {
         title: "Código de Sala Vacío",
-        description: "Por favor, introduce un código de sala para unirte.",
-        variant: 'destructive',
       });
       return;
     }
@@ -79,17 +74,13 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
             router.push(`/multiplayer?roomId=${roomIdToJoin}`);
             onClose();
         } else {
-            toast({
+            toast.error("No se encontró ninguna sala con ese código. Verifica que sea correcto.", {
                 title: "Sala no encontrada",
-                description: "No se encontró ninguna sala con ese código. Verifica que sea correcto.",
-                variant: "destructive"
             });
         }
     } catch (error) {
-         toast({
+         toast.error((error as Error).message, {
             title: "Error al unirse a la sala",
-            description: (error as Error).message,
-            variant: "destructive"
         });
     } finally {
         setIsJoining(false);

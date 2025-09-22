@@ -12,7 +12,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import ContactsManager from './ContactsManager';
 import MultiplayerDialog from '@/components/game/MultiplayerDialog';
 
@@ -56,7 +56,6 @@ export function LandingPageContent() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { language, translate } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -76,9 +75,8 @@ export function LandingPageContent() {
     }
 
     window.open(shareUrl, '_blank');
-    toast({
+    toast.info(translate('social.shareDescription', { platform }), {
       title: translate('social.shareTitle'),
-      description: translate('social.shareDescription', { platform })
     });
   };
   

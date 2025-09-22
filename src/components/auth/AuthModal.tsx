@@ -5,8 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth'; 
 import { Loader2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
-import { rankingManager } from '@/lib/ranking';
+import { toast } from "@/components/ui/use-toast";
 import type { User } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -31,7 +30,6 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, loginWithGoogle, loginWithFacebook, isLoading, error } = useAuth();
-  const { toast } = useToast();
   
   useEffect(() => {
     if (user && isOpen) {
@@ -41,26 +39,21 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   
   useEffect(() => {
     if (error) {
-       toast({
-        title: "Error de inicio de sesión",
-        description: error.message || "No se pudo completar el inicio de sesión.",
-        variant: 'destructive'
-      });
+       toast.error(error.message || "No se pudo completar el inicio de sesión.", {
+         title: "Error de inicio de sesión",
+       });
     }
-  }, [error, toast]);
+  }, [error]);
 
   const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
     try {
         const firebaseUser = await loginMethod();
         if (firebaseUser?.uid) {
-            // After successful login, ensure the user profile exists in Firestore.
-            // This is CRITICAL to ensure all subsequent operations have a player profile to work with.
-            await rankingManager.getPlayerRanking(firebaseUser.uid, firebaseUser.displayName, firebaseUser.photoURL);
-            toast({ title: "¡Bienvenido!", description: "Has iniciado sesión correctamente." });
+            toast.success("Has iniciado sesión correctamente.", { title: "¡Bienvenido!" });
             onClose();
         }
     } catch (e: any) {
-        toast({ title: "Error", description: `Error al iniciar sesión: ${e.message}`, variant: 'destructive'});
+        toast.error(`Error al iniciar sesión: ${e.message}`, { title: "Error" });
     }
   }
 
