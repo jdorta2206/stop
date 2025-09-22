@@ -14,9 +14,11 @@ import {
     addDoc,
     query,
     orderBy,
-    limit
+    limit,
+    where
 } from "firebase/firestore";
-import type { GameState, PlayerResponses, RoundResults } from '@/components/game/types/game-types';
+import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '@/components/game/types/game-types';
+import type { EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
 import { evaluateRound } from '@/ai/flows/validate-player-word-flow';
 import type { Language } from '@/contexts/language-context';
 import { rankingManager } from './ranking';
@@ -45,7 +47,6 @@ export interface Room {
         language: Language;
         password?: string;
     };
-    // State for the actual game
     gameState?: GameState;
     currentLetter?: string | null;
     playerResponses?: PlayerResponses;
@@ -55,6 +56,8 @@ export interface Room {
 }
 
 const roomsCollection = collection(db, 'rooms');
+const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+
 
 export interface CreateRoomInput {
   creatorId: string;
@@ -106,6 +109,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
         isPrivate: true,
         language: 'es' as Language,
       },
+      gameScores: { [creatorId]: 0 },
     };
     
     transaction.set(newRoomDocRef, newRoomData);
@@ -125,7 +129,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
 };
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const docSnap = await getDoc(roomDocRef);
     return docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Room : null;
 };
@@ -163,7 +167,10 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 joinedAt: serverTimestamp(),
                 isHost: false,
             };
-            transaction.update(roomDocRef, { [playerPath]: newPlayer });
+            transaction.update(roomDocRef, { 
+                [playerPath]: newPlayer,
+                [`gameScores.${playerId}`]: 0 // Initialize score for new player
+            });
         }
     });
 };
@@ -231,38 +238,28 @@ export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => vo
 
 export const startGame = async (roomId: string) => {
     const roomDocRef = doc(roomsCollection, roomId);
+    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+
     await updateDoc(roomDocRef, {
         status: 'playing',
-        gameState: 'SPINNING',
+        gameState: 'PLAYING',
+        currentLetter: letter,
         playerResponses: {},
         roundResults: null,
+        roundStartedAt: serverTimestamp(),
     });
 };
-
-export const setLetterForRound = async (roomId: string, letter: string) => {
-    const roomDocRef = doc(roomsCollection, roomId);
-    
-    await runTransaction(db, async (transaction) => {
-        const roomDoc = await transaction.get(roomDocRef);
-        if (!roomDoc.exists()) throw "Document does not exist!";
-        
-        if (roomDoc.data().gameState === 'SPINNING') {
-            transaction.update(roomDocRef, { 
-                currentLetter: letter,
-                gameState: 'PLAYING',
-                roundStartedAt: serverTimestamp(),
-            });
-        }
-    });
-};
-
 
 export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: Record<string, string>) => {
     const roomDocRef = doc(roomsCollection, roomId);
-    await updateDoc(roomDocRef, {
-        [`playerResponses.${playerId}`]: answers,
-    });
+    // Use dot notation for nested fields
+    const updatePayload: { [key: string]: any } = {};
+    for (const category in answers) {
+        updatePayload[`playerResponses.${playerId}.${category}`] = answers[category];
+    }
+    await updateDoc(roomDocRef, updatePayload);
 };
+
 
 export const triggerGlobalStop = async (roomId: string) => {
     const roomDocRef = doc(roomsCollection, roomId);
@@ -273,10 +270,9 @@ export const triggerGlobalStop = async (roomId: string) => {
     }
 };
 
-
 export const evaluateRoundForRoom = async (roomId: string) => {
-     const room = await getRoom(roomId);
-    if (!room || !room.currentLetter || !room.playerResponses) {
+    const room = await getRoom(roomId);
+    if (!room || !room.currentLetter || !room.players) {
         throw new Error("Room data is incomplete for evaluation.");
     }
     
@@ -284,59 +280,84 @@ export const evaluateRoundForRoom = async (roomId: string) => {
     await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
 
     const allPlayerIds = Object.keys(room.players);
-    const finalResults: Record<string, any> = {};
-    const roundScores: Record<string, number> = {};
-
+    const allWordsByCategory: Record<string, string[]> = {};
+    
+    // 1. Collect all valid words from all players
     for (const playerId of allPlayerIds) {
-        const playerAnswers = room.playerResponses[playerId] || {};
-        const payload = Object.keys(playerAnswers).map(category => ({
-            category,
-            word: playerAnswers[category] || ""
-        }));
+        const playerAnswers = room.playerResponses?.[playerId] || {};
+        const categories = Object.keys(playerAnswers);
 
-        try {
-            const result = await evaluateRound({
-                letter: room.currentLetter,
-                language: room.settings.language,
-                playerResponses: payload,
-            });
-            
-            let playerScore = 0;
-            if (result.results) {
-                for (const category in result.results) {
-                    playerScore += result.results[category].player.score;
+        for (const category of categories) {
+            const word = playerAnswers[category]?.trim().toLowerCase();
+            if (word) {
+                // Simplified validation: just check if it starts with the letter
+                // A full implementation would use a dictionary or an AI call here
+                if (word.startsWith(room.currentLetter.toLowerCase())) {
+                    if (!allWordsByCategory[category]) {
+                        allWordsByCategory[category] = [];
+                    }
+                    allWordsByCategory[category].push(word);
                 }
             }
-            finalResults[playerId] = result.results;
-            roundScores[playerId] = playerScore;
-            
-        } catch (e) {
-            finalResults[playerId] = {};
-            roundScores[playerId] = 0;
         }
     }
+    
+    // 2. Calculate scores
+    const finalResults: Record<string, Record<string, { response: string; score: number; isValid: boolean }>> = {};
+    const roundScores: Record<string, number> = {};
+    const newGameScores: Record<string, number> = room.gameScores || {};
 
-    const winnerId = Object.keys(roundScores).reduce((a, b) => roundScores[a] > roundScores[b] ? a : b);
+    for (const playerId of allPlayerIds) {
+        finalResults[playerId] = {};
+        roundScores[playerId] = 0;
+        const playerAnswers = room.playerResponses?.[playerId] || {};
+        const categories = Object.keys(playerAnswers);
 
-     for (const playerId of allPlayerIds) {
+        for (const category of categories) {
+            const word = playerAnswers[category]?.trim().toLowerCase() || '';
+            let score = 0;
+            let isValid = false;
+
+            if (word.startsWith(room.currentLetter.toLowerCase())) {
+                 const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
+                 if(wordOccurrences > 0) { // Should be at least 1 if submitted
+                    isValid = true;
+                    if (wordOccurrences === 1) {
+                        score = 10; // Unique word
+                    } else {
+                        score = 5; // Repeated word
+                    }
+                 }
+            }
+
+            finalResults[playerId][category] = { response: playerAnswers[category] || '', score, isValid };
+            roundScores[playerId] += score;
+        }
+        newGameScores[playerId] = (newGameScores[playerId] || 0) + roundScores[playerId];
+    }
+    
+    // 3. Save results to Firestore and update game state
+    await updateDoc(roomDocRef, { 
+        roundResults: finalResults,
+        gameScores: newGameScores,
+        gameState: 'RESULTS'
+    });
+
+    // 4. Save individual game results for player history (optional but good for stats)
+    for (const playerId of allPlayerIds) {
         const playerInfo = room.players[playerId];
         await rankingManager.saveGameResult({
             playerId,
             playerName: playerInfo.name,
             photoURL: playerInfo.avatar,
             score: roundScores[playerId] || 0,
-            categories: room.playerResponses[playerId] || {},
+            categories: room.playerResponses?.[playerId] || {},
             letter: room.currentLetter,
             gameMode: 'private',
             roomId: roomId,
-            won: playerId === winnerId,
+            won: false // Win/loss logic for multiplayer can be more complex
         });
-     }
-    
-    await updateDoc(roomDocRef, { 
-        roundResults: finalResults,
-        gameState: 'RESULTS'
-    });
+    }
 };
 
 // CHAT FUNCTIONS
@@ -366,3 +387,4 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
+
