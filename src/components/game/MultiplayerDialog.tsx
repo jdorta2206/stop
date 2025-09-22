@@ -47,7 +47,13 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+            errorData = await response.json();
+        } catch (e) {
+            // If the response is not JSON, use the status text.
+            throw new Error(response.statusText);
+        }
         throw new Error(errorData.error || 'Failed to create room');
       }
 
