@@ -1,4 +1,4 @@
-
+'use server';
 
 import { db } from './firebase';
 import { 
@@ -7,17 +7,13 @@ import {
     setDoc, 
     collection,
     query,
-    where,
     getDocs,
-    limit,
     orderBy,
-    startAt,
-    endAt,
-    collectionGroup,
     Timestamp,
     addDoc,
     updateDoc,
-    onSnapshot
+    onSnapshot,
+    limit
 } from "firebase/firestore";
 
 export interface Friend {
@@ -62,13 +58,13 @@ export const searchUserById = async (userId: string): Promise<Friend | null> => 
 // Function to add a friend
 export const addFriend = async (currentUserId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
     if (currentUserId === friendId) {
-        throw new Error("You cannot add yourself as a friend.");
+        throw new Error("No puedes añadirte a ti mismo como amigo.");
     }
     const friendDocRef = doc(db, `users/${currentUserId}/friends`, friendId);
     const friendDoc = await getDoc(friendDocRef);
 
     if (friendDoc.exists()) {
-        throw new Error(`${friendName} is already your friend.`);
+        throw new Error(`${friendName} ya está en tu lista de amigos.`);
     }
 
     await setDoc(friendDocRef, {
@@ -93,7 +89,7 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 };
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
-    if (!recipientId) throw new Error("Recipient ID is required.");
+    if (!recipientId) throw new Error("ID del destinatario requerido.");
     
     const notificationsRef = collection(db, `users/${recipientId}/notifications`);
     

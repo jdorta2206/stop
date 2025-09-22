@@ -10,16 +10,14 @@ import {
   Search
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Language } from '@/contexts/language-context';
 import { searchUserById, addFriend, type Friend } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
 
 interface FriendsInviteProps {
-  language?: Language;
   onFriendAdded: () => void;
 }
 
-export default function FriendsInvite({ language = 'es', onFriendAdded }: FriendsInviteProps) {
+export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
   const { user } = useAuth();
   const [searchResult, setSearchResult] = useState<Friend | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,14 +25,15 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
   const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
+    const query = searchQuery.trim();
+    if (!query) {
       setSearchResult(null);
       return;
     };
     setIsLoading(true);
     setSearchResult(null);
     try {
-      const result = await searchUserById(searchQuery.trim());
+      const result = await searchUserById(query);
       if (result && result.id !== user?.uid) {
         setSearchResult(result);
       } else {
@@ -57,6 +56,8 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
       toast.success(`${friend.name} ha sido añadido a tus amigos.`);
       setInvitedFriends(prev => new Set(prev).add(friend.id));
       onFriendAdded(); // Callback to refresh the friends list on the parent component
+      setSearchResult(null); // Clear search result after adding
+      setSearchQuery('');
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -72,7 +73,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 className="flex-grow"
             />
-            <Button type="button" onClick={handleSearch} disabled={isLoading}>
+            <Button type="button" onClick={handleSearch} disabled={isLoading || !searchQuery.trim()}>
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
         </div>
@@ -81,11 +82,6 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
             {isLoading && (
                  <div className="flex justify-center items-center p-4">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-            )}
-            {!searchResult && !isLoading && (
-                <div className="text-center text-muted-foreground p-4">
-                    <p>Busca a un jugador por su ID para añadirlo.</p>
                 </div>
             )}
             {searchResult && !isLoading && (

@@ -28,7 +28,6 @@ export default function LeaderboardPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
-  const [friends, setFriends] = useState<Friend[]>([]);
   const [friendsLeaderboard, setFriendsLeaderboard] = useState<PlayerScore[]>([]);
   const [personalStats, setPersonalStats] = useState<PlayerScore | null>(null);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
@@ -48,44 +47,19 @@ export default function LeaderboardPage() {
         setGameHistory(historyData);
         
         const friendsList = await getFriends(userId);
-        setFriends(friendsList);
-
+        
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
-            // Fetch rankings for all friends
-            const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
-            const friendRankings = await Promise.all(friendRankingsPromises);
-
-            // Combine friend data with their ranking data
-            const enrichedFriendRankings = friendsList.map(friend => {
-                const rankingData = friendRankings.find(r => r.id === friend.id);
-                return {
-                    ...rankingData, // this will be undefined if no ranking found, but that's ok
-                    id: friend.id, // Make sure friend ID is always correct
-                    playerName: friend.name,
-                    photoURL: friend.avatar,
-                    totalScore: rankingData?.totalScore ?? 0,
-                    level: rankingData?.level ?? 'Principiante',
-                    bestScore: rankingData?.bestScore ?? 0,
-                    gamesPlayed: rankingData?.gamesPlayed ?? 0,
-                    gamesWon: rankingData?.gamesWon ?? 0,
-                    averageScore: rankingData?.averageScore ?? 0,
-                    lastPlayed: rankingData?.lastPlayed ?? 'Nunca',
-                    achievements: rankingData?.achievements ?? [],
-                    coins: rankingData?.coins ?? 0,
-                    dailyMissions: rankingData?.dailyMissions ?? [],
-                    missionsLastReset: rankingData?.missionsLastReset ?? '',
-                };
-            }).filter(p => p !== null) as PlayerScore[];
+            const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
-            setFriendsLeaderboard(enrichedFriendRankings);
+            setFriendsLeaderboard(friendRankings);
         } else {
             setFriendsLeaderboard([]);
         }
       }
     } catch (error) {
-      toast.error((error as Error).message, {
-        description: translate('common.error'),
+      toast.error("Error al cargar los datos", {
+        description: (error as Error).message,
       });
     } finally {
       setIsLoading(false);
@@ -93,12 +67,10 @@ export default function LeaderboardPage() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchData(user.uid);
-    } else {
-      fetchData(); // Fetch global data even if not logged in
+    if (!isAuthLoading) {
+        fetchData(user?.uid);
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
@@ -137,17 +109,15 @@ export default function LeaderboardPage() {
             throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
 
-        // Send notification to the challenged player
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
 
-        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`);
+        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}.`);
 
-        // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
-        toast.error((error as Error).message, {
-          description: "Error al crear el desafío",
+        toast.error("No se pudo crear el desafío.", {
+          description: (error as Error).message,
         });
     }
   };
@@ -213,7 +183,7 @@ export default function LeaderboardPage() {
                   </CardContent>
                 </Card>
               </>
-            ) : !user && !isLoading && (
+            ) : !user && !isAuthLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
                 <Button onClick={() => router.push('/')}>
