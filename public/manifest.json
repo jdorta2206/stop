@@ -1,11 +1,7 @@
 {
-  "name": "Stop Game",
+  "name": "Stop - Juego de Palabras",
   "short_name": "Stop",
   "description": "Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ef4444",
-  "theme_color": "#ef4444",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -17,5 +13,10 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "theme_color": "#ef4444",
+  "background_color": "#ef4444",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
 }
