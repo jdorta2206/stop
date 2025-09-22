@@ -95,7 +95,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const finalCreatorName = creatorName || 'Jugador Anónimo';
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
   
-  const newRoomData = {
+  const newRoomData: Omit<Room, 'id'> = {
       players: {
         [creatorId]: {
           id: creatorId,
@@ -167,7 +167,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 isReady: false,
                 status: 'online',
                 joinedAt: serverTimestamp(),
-                isHost: false,
+                isHost: room.hostId === playerId, // Maintain host status if rejoining
             };
             transaction.update(roomDocRef, { 
                 [playerPath]: newPlayer,
