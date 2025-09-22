@@ -50,9 +50,10 @@ export interface Room {
     gameState?: GameState;
     currentLetter?: string | null;
     playerResponses?: PlayerResponses;
-    roundResults?: RoundResults | null;
+    roundResults?: Record<string, Record<string, { response: string; score: number; isValid: boolean; }>>;
     gameScores?: Record<string, number>;
     roundStartedAt?: any;
+    roundNumber: number;
 }
 
 const roomsCollection = collection(db, 'rooms');
@@ -120,6 +121,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
         language: 'es' as Language,
       },
       gameScores: { [creatorId]: 0 },
+      roundNumber: 0,
     };
     
     transaction.set(newRoomDocRef, newRoomData);
@@ -146,7 +148,7 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
 };
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
 
     await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomDocRef);
@@ -187,7 +189,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
 };
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
 
@@ -214,7 +216,7 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
 
 
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
     for (const key in data) {
         updateData[`players.${playerId}.${key}`] = data[key as keyof typeof data];
@@ -230,7 +232,7 @@ export const updatePlayerInRoom = async (roomId: string, playerId: string, data:
 
 
 export const updateRoomSettings = async (roomId: string, settings: Partial<Room['settings']>): Promise<void> => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
      for (const key in settings) {
         updateData[`settings.${key}`] = settings[key as keyof typeof settings];
@@ -239,7 +241,7 @@ export const updateRoomSettings = async (roomId: string, settings: Partial<Room[
 };
 
 export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void) => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     return onSnapshot(roomDocRef, (doc) => {
         callback(doc.exists() ? { id: doc.id, ...doc.data() } as Room : null);
     });
@@ -248,13 +250,33 @@ export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => vo
 // GAME LOGIC FUNCTIONS
 
 export const startGame = async (roomId: string) => {
-    const roomDocRef = doc(roomsCollection, roomId);
-    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-
-    // Reset player responses and set game state to PLAYING
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
     
+    const playerIds = Object.keys(room.players);
+    const initialScores: Record<string, number> = {};
+    playerIds.forEach(id => {
+      initialScores[id] = 0;
+    });
+
+    await updateDoc(roomDocRef, {
+        status: 'playing',
+        gameState: 'SPINNING',
+        roundNumber: 1,
+        gameScores: initialScores,
+    });
+    // Start the first round after a short delay
+    setTimeout(() => startNextRound(roomId), 1000);
+};
+
+export const startNextRound = async (roomId: string) => {
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const room = await getRoom(roomId);
+    if (!room) return;
+
+    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+
     const playerIds = Object.keys(room.players);
     const initialResponses: PlayerResponses = {};
     playerIds.forEach(id => {
@@ -262,17 +284,16 @@ export const startGame = async (roomId: string) => {
     });
 
     await updateDoc(roomDocRef, {
-        status: 'playing',
         gameState: 'PLAYING',
         currentLetter: letter,
         playerResponses: initialResponses,
         roundResults: null,
         roundStartedAt: serverTimestamp(),
     });
-};
+}
 
 export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: PlayerResponseSet) => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     // Use dot notation for nested fields for atomic updates
     const updatePayload: { [key: string]: any } = {};
     for (const category in answers) {
@@ -284,7 +305,7 @@ export const submitPlayerAnswers = async (roomId: string, playerId: string, answ
 
 
 export const triggerGlobalStop = async (roomId: string) => {
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if(room?.gameState === 'PLAYING') {
       await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
@@ -293,12 +314,12 @@ export const triggerGlobalStop = async (roomId: string) => {
 };
 
 export const evaluateRoundForRoom = async (roomId: string) => {
-    const room = await getRoom(roomId);
+    const room = await getRoom(roomId.toUpperCase());
     if (!room || !room.currentLetter || !room.players) {
         throw new Error("Room data is incomplete for evaluation.");
     }
     
-    const roomDocRef = doc(roomsCollection, roomId);
+    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
 
     const allPlayerIds = Object.keys(room.players);
@@ -340,7 +361,7 @@ export const evaluateRoundForRoom = async (roomId: string) => {
             let score = 0;
             let isValid = false;
 
-            if (word.startsWith(room.currentLetter.toLowerCase())) {
+            if (word && word.startsWith(room.currentLetter.toLowerCase())) {
                  const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
                  if(wordOccurrences > 0) { // Should be at least 1 if submitted
                     isValid = true;
@@ -368,23 +389,26 @@ export const evaluateRoundForRoom = async (roomId: string) => {
     // 4. Save individual game results for player history (optional but good for stats)
     for (const playerId of allPlayerIds) {
         const playerInfo = room.players[playerId];
+        const playerRoundScore = roundScores[playerId] || 0;
+        const won = playerRoundScore > 0 && playerRoundScore === Math.max(...Object.values(roundScores));
+
         await rankingManager.saveGameResult({
             playerId,
             playerName: playerInfo.name,
             photoURL: playerInfo.avatar,
-            score: roundScores[playerId] || 0,
+            score: playerRoundScore,
             categories: room.playerResponses?.[playerId] || {},
             letter: room.currentLetter,
             gameMode: 'private',
             roomId: roomId,
-            won: false // Win/loss logic for multiplayer can be more complex
+            won
         });
     }
 };
 
 // CHAT FUNCTIONS
 export const sendMessageToRoom = async (roomId: string, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<void> => {
-    const chatCollectionRef = collection(db, `rooms/${roomId}/chat`);
+    const chatCollectionRef = collection(db, `rooms/${roomId.toUpperCase()}/chat`);
     await addDoc(chatCollectionRef, {
         ...message,
         timestamp: serverTimestamp(),
@@ -392,7 +416,7 @@ export const sendMessageToRoom = async (roomId: string, message: Omit<ChatMessag
 };
 
 export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[]) => void) => {
-    const chatCollectionRef = collection(db, `rooms/${roomId}/chat`);
+    const chatCollectionRef = collection(db, `rooms/${roomId.toUpperCase()}/chat`);
     const q = query(chatCollectionRef, orderBy('timestamp', 'asc'), limit(50));
 
     return onSnapshot(q, (querySnapshot) => {

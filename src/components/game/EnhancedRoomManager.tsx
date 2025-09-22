@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,6 +30,7 @@ import {
     startGame, 
     submitPlayerAnswers,
     triggerGlobalStop,
+    startNextRound,
     type Player, 
     type Room 
 } from '@/lib/room-service';
@@ -37,13 +38,22 @@ import type { Language } from '@/contexts/language-context';
 import ContactsManager from './ContactsManager';
 import type { User } from 'firebase/auth';
 import { GameArea } from './components/game-area';
+import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
+import { RouletteWheel } from './components/roulette-wheel';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
   en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit", "Brand"],
   fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit", "Marque"],
   pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta", "Marca"],
+};
+
+const ALPHABET_BY_LANG: Record<string, string[]> = {
+  es: "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split(""),
+  en: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+  fr: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+  pt: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
 };
 
 interface EnhancedRoomManagerProps {
@@ -67,11 +77,11 @@ export default function EnhancedRoomManager({
   const [showContacts, setShowContacts] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
 
   const roomSettings = useMemo(() => room?.settings || { roundDuration: 60, language: 'es' }, [room]);
   const categories = useMemo(() => CATEGORIES_BY_LANG[roomSettings.language] || CATEGORIES_BY_LANG.es, [roomSettings.language]);
+  const alphabet = useMemo(() => ALPHABET_BY_LANG[roomSettings.language] || ALPHABET_BY_LANG.es, [roomSettings.language]);
 
   useEffect(() => {
     if (!roomId || !currentUser) return;
@@ -88,10 +98,8 @@ export default function EnhancedRoomManager({
           if (updatedRoom) {
             setRoom(updatedRoom);
             setPlayers(Object.values(updatedRoom.players || {}));
-            const gameIsPlaying = updatedRoom.status === 'playing' && updatedRoom.gameState === 'PLAYING';
-            setIsPlaying(gameIsPlaying);
-
-            if (gameIsPlaying && updatedRoom.roundStartedAt) {
+            
+            if (updatedRoom.gameState === 'PLAYING' && updatedRoom.roundStartedAt) {
               const startTime = updatedRoom.roundStartedAt.toMillis();
               const now = Date.now();
               const elapsed = Math.floor((now - startTime) / 1000);
@@ -127,18 +135,27 @@ export default function EnhancedRoomManager({
     };
   }, [roomId, currentUser, toast, onLeaveRoom]);
   
+  const currentPlayer = players.find(p => p.id === currentUser.uid);
+  const isHost = room?.hostId === currentUser.uid;
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isPlaying && timeLeft > 0) {
+    if (room?.gameState === 'PLAYING' && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft(prev => Math.max(0, prev - 1));
+        setTimeLeft(prev => {
+            const newTime = prev - 1;
+            if (newTime <= 0) {
+                // Let only the host trigger the stop to avoid multiple triggers
+                if(isHost) triggerGlobalStop(roomId);
+                return 0;
+            }
+            return newTime;
+        });
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isPlaying, timeLeft]);
+  }, [room?.gameState, timeLeft, isHost, roomId]);
 
-  const currentPlayer = players.find(p => p.id === currentUser.uid);
-  const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
   const canStartGame = isHost && players.length >= 1 && readyPlayersCount === players.length;
 
@@ -159,6 +176,15 @@ export default function EnhancedRoomManager({
         toast({ title: 'Error', description: `No se pudo iniciar el juego: ${(error as Error).message}`, variant: 'destructive' });
     }
   };
+
+  const handleNextRound = async () => {
+      if (!isHost) return;
+      try {
+        await startNextRound(roomId);
+      } catch (error) {
+         toast({ title: 'Error', description: `No se pudo iniciar la siguiente ronda: ${(error as Error).message}`, variant: 'destructive' });
+      }
+  }
 
   const handleStop = async () => {
     try {
@@ -247,21 +273,50 @@ export default function EnhancedRoomManager({
     );
   }
 
-  if (isPlaying) {
-      return (
-          <GameArea
-            currentLetter={room.currentLetter || null}
-            categories={categories}
-            playerResponses={room.playerResponses?.[currentUser.uid] || {}}
-            onInputChange={handleMultiplayerInputChange}
-            translateUi={translate}
-            onStop={handleStop}
-            timeLeft={timeLeft}
-            roundDuration={room.settings.roundDuration}
-          />
-      );
+  // --- RENDERIZADO CONDICIONAL POR ESTADO DE JUEGO ---
+  
+  if (room.status === 'playing') {
+      switch (room.gameState) {
+          case 'SPINNING':
+              return <RouletteWheel alphabet={alphabet} language={room.settings.language} onSpinComplete={() => {}} />;
+          case 'PLAYING':
+              return (
+                  <GameArea
+                    currentLetter={room.currentLetter || null}
+                    categories={categories}
+                    playerResponses={room.playerResponses?.[currentUser.uid] || {}}
+                    onInputChange={handleMultiplayerInputChange}
+                    translateUi={translate}
+                    onStop={handleStop}
+                    timeLeft={timeLeft}
+                    roundDuration={room.settings.roundDuration}
+                  />
+              );
+          case 'EVALUATING':
+               return (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-white h-96">
+                    <Loader2 className="h-16 w-16 animate-spin mb-4" />
+                    <h2 className="text-2xl font-bold">{translate('game.loadingAI.title')}</h2>
+                    <p className="text-white/80 mt-2">{translate('game.loadingAI.description')}</p>
+                  </div>
+                );
+          case 'RESULTS':
+                return (
+                    <MultiplayerResultsArea 
+                        room={room}
+                        currentUserId={currentUser.uid}
+                        onNextRound={handleNextRound}
+                        isHost={isHost}
+                        onLeaveRoom={onLeaveRoom}
+                    />
+                );
+          default:
+              // Fallback para estado de juego inesperado
+              return <p>Estado de juego desconocido...</p>
+      }
   }
 
+  // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO) ---
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
       <Card className="overflow-hidden">
@@ -399,3 +454,5 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
+
+    
