@@ -145,7 +145,7 @@ export default function LeaderboardPage() {
         });
 
         if (!newRoom || !newRoom.id) {
-            throw new Error("La función no devolvió un ID de sala.");
+            throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
 
         // Send notification to the challenged player
@@ -244,3 +244,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+

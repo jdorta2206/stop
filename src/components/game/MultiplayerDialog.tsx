@@ -41,7 +41,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       });
 
       if (!newRoom || !newRoom.id) {
-        throw new Error("La función no devolvió un ID de sala.");
+        throw new Error("La función `createRoom` no devolvió un ID de sala.");
       }
 
       toast({

@@ -78,11 +78,9 @@ export interface CreateRoomInput {
 
 export interface CreateRoomOutput {
   id: string;
-  hostId: string;
-  status: string;
 }
 
-export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutput> => {
+export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
   const { creatorId, creatorName, creatorAvatar } = input;
 
   if (!creatorId) {
@@ -92,8 +90,8 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomId = generateRoomId();
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
-  // Safely handle nullable user data to prevent Firestore errors
   const finalCreatorName = creatorName || 'Jugador Anónimo';
+  // Ensure avatar is never null or undefined
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalCreatorName)}`;
 
   const hostPlayer: Player = {
@@ -121,15 +119,12 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
       roundNumber: 0,
   };
 
-  // CRITICAL: Use await to ensure the document is created before returning
   await setDoc(newRoomDocRef, newRoomData);
 
   return {
     id: newRoomId,
-    hostId: creatorId,
-    status: 'waiting',
   };
-};
+}
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
     if (!roomId) return null;
@@ -453,3 +448,8 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
+
+    
+
+    
+
