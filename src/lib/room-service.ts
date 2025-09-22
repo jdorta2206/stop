@@ -71,8 +71,8 @@ export interface CreateRoomOutput {
 export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutput> => {
   const { creatorId, creatorName, creatorAvatar } = input;
 
-  if (!creatorId || !creatorName) {
-    throw new Error('Missing creator ID or name');
+  if (!creatorId) {
+    throw new Error('User is not authenticated.');
   }
 
   const finalCreatorName = creatorName || 'Jugador Anónimo';
@@ -89,6 +89,8 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
     joinedAt: serverTimestamp(),
     isHost: true,
   };
+  
+  const newRoomDocRef = doc(collection(db, "rooms"));
 
   const newRoomData: Omit<Room, 'id'> = {
     players: {
@@ -104,11 +106,11 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
       language: 'es' as Language,
     },
   };
-
-  const roomDocRef = await addDoc(roomsCollection, newRoomData);
+  
+  await setDoc(newRoomDocRef, newRoomData);
 
   return {
-    id: roomDocRef.id,
+    id: newRoomDocRef.id,
     hostId: newRoomData.hostId,
     status: newRoomData.status,
   };
