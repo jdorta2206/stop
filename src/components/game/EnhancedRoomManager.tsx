@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,10 +57,11 @@ export default function EnhancedRoomManager({
     const joinAndListen = async () => {
       try {
         setIsLoading(true);
-        // Step 1: Join the room. This will create the player or set them to online.
+        // La creación de la sala ya añade al host. Esta función ahora solo unirá
+        // a jugadores adicionales o actualizará su estado si ya están dentro.
         await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL);
 
-        // Step 2: Now that the player is in the room, start listening for updates.
+        // Ahora que el jugador está en la sala, escucha las actualizaciones.
         unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
           if (updatedRoom) {
             setRoom(updatedRoom);
@@ -83,10 +85,8 @@ export default function EnhancedRoomManager({
 
     joinAndListen();
 
-    // Step 3: Define cleanup logic.
     return () => {
       unsubscribe();
-      // When component unmounts (leaving page), set status to offline.
       if (roomId && currentUser?.uid) {
         updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
       }
@@ -158,13 +158,13 @@ export default function EnhancedRoomManager({
 
   if (error) {
     return (
-        <Card>
+        <Card className="w-full max-w-md">
             <CardHeader>
-                <CardTitle>Error</CardTitle>
+                <CardTitle className="text-destructive">Error</CardTitle>
+                 <CardDescription>{error}</CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="text-destructive">{error}</p>
-                <Button onClick={onLeaveRoom} className="mt-4">Volver al inicio</Button>
+                <Button onClick={onLeaveRoom} className="w-full">Volver al inicio</Button>
             </CardContent>
         </Card>
     );
