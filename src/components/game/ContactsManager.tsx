@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { Users, Search, X, Plus, Phone, MessageSquare, BookUser, Check } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 
 interface Contact {
   id: string;
@@ -104,7 +104,6 @@ const content = {
 };
 
 export default function ContactsManager({ language, roomCode, onClose }: ContactsManagerProps) {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
@@ -132,10 +131,10 @@ export default function ContactsManager({ language, roomCode, onClose }: Contact
         }
       } catch (ex) {
         setHasPermission(false);
-        toast({ title: t.errorLoading, variant: 'destructive'});
+        toast.error(t.errorLoading);
       }
     } else {
-        toast({ title: t.browserNotSupported, variant: 'destructive'});
+        toast.error(t.browserNotSupported);
     }
   };
 
@@ -255,3 +254,4 @@ export default function ContactsManager({ language, roomCode, onClose }: Contact
   );
 }
 
+    

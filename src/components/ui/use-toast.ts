@@ -1,9 +1,9 @@
 
-"use client";
-import { toast } from 'sonner';
+"use client"
+import { toast as sonnerToast } from 'sonner';
 
 // Re-export `toast` from sonner directly
-export { toast };
+export const toast = sonnerToast;
 
 // The old `useToast` hook is deprecated, but we keep the file for imports.
 // New components should import `toast` from here and use it directly.
@@ -12,8 +12,10 @@ export { toast };
 // This function is kept for backward compatibility if needed, but not actively used.
 export const useToast = () => {
     return {
-        toast: toast,
+        toast: sonnerToast,
         // The dismiss function from sonner is just toast.dismiss()
-        dismiss: (toastId?: string | number) => toast.dismiss(toastId),
+        dismiss: (toastId?: string | number) => sonnerToast.dismiss(toastId),
     };
 };
+
+    
