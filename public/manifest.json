@@ -1,18 +1,18 @@
 {
   "name": "Stop - El Juego de Palabras",
   "short_name": "Stop",
-  "description": "Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías.",
-  "start_url": ".",
+  "description": "El clásico juego de Stop, ahora en tu dispositivo. Juega solo o con amigos, pon a prueba tu vocabulario y rapidez mental.",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#dc2626",
+  "background_color": "#ef4444",
   "theme_color": "#ef4444",
   "orientation": "any",
-  "id": "/",
   "scope": "/",
-  "dir": "auto",
+  "id": "/",
   "lang": "es-ES",
+  "dir": "auto",
+  "iarc_rating_id": "e5c89f2a-d2d7-4c07-b2f5-303a9b752252",
   "prefer_related_applications": false,
-  "iarc_rating_id": "e5c84f3c-54a8-4375-835d-25a835694297",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -25,45 +25,45 @@
       "type": "image/png"
     }
   ],
+  "screenshots": [
+    {
+      "src": "https://www.pwabuilder.com/assets/screenshots/screen1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Juego en Escritorio"
+    },
+    {
+      "src": "https://www.pwabuilder.com/assets/screenshots/screen2.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Juego en Móvil"
+    }
+  ],
   "categories": [
+    "games",
     "entertainment",
-    "games"
+    "education"
   ],
   "shortcuts": [
     {
       "name": "Jugar Solo",
-      "short_name": "Jugar",
-      "description": "Iniciar una partida individual contra la IA",
+      "short_name": "Solo",
+      "description": "Iniciar una partida rápida contra la IA.",
       "url": "/play-solo",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Ver Ranking",
       "short_name": "Ranking",
-      "description": "Ver la tabla de clasificación global",
+      "description": "Ver la tabla de clasificación global.",
       "url": "/leaderboard",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     }
   ],
-  "screenshots": [
-    {
-      "src": "https://placehold.co/1080x1920.png?text=Bienvenido+a+Stop",
-      "type": "image/png",
-      "sizes": "1080x1920"
-    },
-    {
-      "src": "https://placehold.co/1080x1920.png?text=Juega+con+la+letra+P",
-      "type": "image/png",
-      "sizes": "1080x1920"
-    },
-    {
-      "src": "https://placehold.co/1080x1920.png?text=Resultados+de+la+Ronda",
-      "type": "image/png",
-      "sizes": "1080x1920"
-    }
-  ],
    "share_target": {
-    "action": "/share-target",
+    "action": "/share-target/",
     "method": "GET",
     "params": {
       "title": "title",
