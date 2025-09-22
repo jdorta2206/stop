@@ -44,7 +44,7 @@ export const searchUserById = async (userId: string): Promise<Friend | null> => 
         const data = docSnap.data();
         return {
             id: docSnap.id,
-            name: data.displayName,
+            name: data.displayName || 'Jugador sin nombre',
             avatar: data.photoURL,
             addedAt: Timestamp.now() // This is temporary, not stored
         };
@@ -89,6 +89,7 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
     if (!recipientId) throw new Error("ID del destinatario requerido.");
+    if (!senderName) throw new Error("El nombre del remitente es requerido.");
     
     const notificationsRef = collection(db, `users/${recipientId}/notifications`);
     

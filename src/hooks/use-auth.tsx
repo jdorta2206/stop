@@ -7,6 +7,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import type { User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
+import { rankingManager } from "@/lib/ranking";
 
 export interface AppUser extends FirebaseUser {
   totalScore?: number;
@@ -38,24 +39,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const updateUserProfile = async (user: FirebaseUser) => {
     if (!user) return;
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
-      await setDoc(userDocRef, {
-        displayName: user.displayName,
-        email: user.email,
-        photoURL: user.photoURL,
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp(),
-      });
-    } else {
-      await setDoc(userDocRef, {
-        lastLogin: serverTimestamp(),
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-      }, { merge: true });
-    }
+    // Instead of directly writing, we use the rankingManager to ensure consistency
+    // This will create the player profile if it doesn't exist.
+    await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
   };
 
   useEffect(() => {
