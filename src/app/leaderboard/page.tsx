@@ -16,7 +16,7 @@ import { GlobalLeaderboardCard } from '@/components/game/components/global-leade
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
+import { addFriend, getFriends, sendChallengeNotification, type Friend, searchUserById } from '@/lib/friends-service';
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +57,6 @@ export default function LeaderboardPage() {
             const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
             // Enrich friend rankings with names and avatars from the friends list
-            // This ensures we show the correct name even if the friend's profile name changes
             const enrichedFriendRankings = friendRankings.map(ranking => {
                 const friendInfo = friendsList.find(f => f.id === ranking.id);
                 return {
@@ -66,13 +65,8 @@ export default function LeaderboardPage() {
                     photoURL: friendInfo?.avatar || ranking.photoURL,
                 };
             });
-
-            // Make sure the current user is also included if they are in the friends list (for context)
-            if (!enrichedFriendRankings.some(f => f.id === userId)) {
-               enrichedFriendRankings.push(personalData);
-            }
-             
-            setFriendsLeaderboard(enrichedFriendRankings.sort((a, b) => b.totalScore - a.totalScore));
+            
+             setFriendsLeaderboard(enrichedFriendRankings.sort((a, b) => b.totalScore - a.totalScore));
         } else {
             setFriendsLeaderboard([]);
         }
@@ -93,7 +87,7 @@ export default function LeaderboardPage() {
     }
   }, [user, isAuthLoading]);
 
-  const handleAddFriend = async (player: PlayerScore) => {
+    const handleAddFriend = async (friendId: string, friendName: string, friendAvatar: string | null) => {
     if (!user) {
       toast.warning(translate('leaderboards.loginRequired'), {
         description: translate('actionRequired'),
@@ -101,8 +95,8 @@ export default function LeaderboardPage() {
       return;
     }
     try {
-      await addFriend(user.uid, player.id, player.playerName, player.photoURL);
-      toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
+      await addFriend(user.uid, friendId, friendName, friendAvatar);
+      toast.success(translate('leaderboards.friendAdded', { name: friendName }));
       fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast.error((error as Error).message);
@@ -152,11 +146,11 @@ export default function LeaderboardPage() {
   }
   
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
+          <h1 className="text-4xl font-bold text-white">Ranking & Amigos</h1>
           <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? translate('loading') : translate('refresh')}
@@ -168,7 +162,7 @@ export default function LeaderboardPage() {
             <GlobalLeaderboardCard 
               leaderboardData={globalLeaderboard}
               currentUserId={user?.uid}
-              onAddFriend={handleAddFriend}
+              onAddFriend={(player) => handleAddFriend(player.id, player.playerName, player.photoURL || null)}
               onChallenge={handleChallenge}
               language={language}
               translateUi={translate}

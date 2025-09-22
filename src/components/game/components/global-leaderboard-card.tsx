@@ -15,7 +15,7 @@ export function GlobalLeaderboardCard({
 }: GlobalLeaderboardCardProps) {
   return (
     <Card className={`shadow-lg rounded-xl overflow-hidden ${className}`}>
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
+      <CardHeader className="bg-blue-600 text-white p-4">
         <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg font-bold">
                 <Trophy className="h-5 w-5" />
