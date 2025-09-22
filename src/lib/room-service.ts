@@ -72,7 +72,7 @@ function generateRoomId(length: number = 6): string {
 
 export interface CreateRoomInput {
   creatorId: string;
-  creatorName: string;
+  creatorName: string | null;
   creatorAvatar: string | null;
 }
 
@@ -95,26 +95,26 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const finalCreatorName = creatorName || 'Jugador Anónimo';
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
   
+  const hostPlayer: Player = {
+    id: creatorId,
+    name: finalCreatorName,
+    avatar: finalCreatorAvatar,
+    isReady: false, // Host doesn't need to be ready
+    status: 'online',
+    joinedAt: serverTimestamp(),
+    isHost: true,
+  };
+
   const newRoomData: Omit<Room, 'id'> = {
-      players: {
-        [creatorId]: {
-          id: creatorId,
-          name: finalCreatorName,
-          avatar: finalCreatorAvatar,
-          isReady: false,
-          status: 'online',
-          joinedAt: serverTimestamp(),
-          isHost: true,
-        },
-      },
+      players: { [creatorId]: hostPlayer },
       hostId: creatorId,
       createdAt: serverTimestamp(),
-      status: 'waiting' as 'waiting',
+      status: 'waiting',
       settings: {
         maxPlayers: 10,
         roundDuration: 60,
         isPrivate: true,
-        language: 'es' as Language,
+        language: 'es',
       },
       gameScores: { [creatorId]: 0 },
       roundNumber: 0,
@@ -148,15 +148,27 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
         const room = roomSnap.data() as Room;
         const playerPath = `players.${playerId}`;
         const finalPlayerName = playerName || 'Jugador Anónimo';
-        const finalPlayerAvatar = playerAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalPlayerName}`;
+        
+        let finalPlayerAvatar = playerAvatar;
+        if (!finalPlayerAvatar) {
+            finalPlayerAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalPlayerName}`;
+        }
+
 
         if (room.players && room.players[playerId]) {
-            transaction.update(roomDocRef, {
+            // Player exists, just update status and info
+             const updates: Record<string, any> = {
                 [`${playerPath}.status`]: 'online',
                 [`${playerPath}.name`]: finalPlayerName,
                 [`${playerPath}.avatar`]: finalPlayerAvatar,
-            });
+            };
+            // If the player joining is the host, ensure their host status is preserved.
+            if(room.hostId === playerId){
+                updates[`${playerPath}.isHost`] = true;
+            }
+            transaction.update(roomDocRef, updates);
         } else {
+            // New player joining
             if (Object.keys(room.players || {}).length >= room.settings.maxPlayers) {
                 throw new Error("La sala está llena.");
             }
@@ -167,7 +179,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 isReady: false,
                 status: 'online',
                 joinedAt: serverTimestamp(),
-                isHost: room.hostId === playerId, // Maintain host status if rejoining
+                isHost: false, // A new player joining is never the host initially
             };
             transaction.update(roomDocRef, { 
                 [playerPath]: newPlayer,
@@ -422,6 +434,7 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
+
 
 
 
