@@ -422,3 +422,4 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
+
