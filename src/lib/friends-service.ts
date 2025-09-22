@@ -92,7 +92,7 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
     const querySnapshot = await getDocs(q);
     const friends: Friend[] = [];
     querySnapshot.forEach((doc) => {
-        friends.push(doc.data() as Friend);
+        friends.push({ id: doc.id, ...doc.data() } as Friend);
     });
     return friends;
 };
