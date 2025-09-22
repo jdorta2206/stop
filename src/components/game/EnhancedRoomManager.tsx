@@ -22,7 +22,7 @@ import {
   UserPlus,
   Send
 } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { 
     updatePlayerInRoom, 
     updateRoomSettings, 
@@ -174,7 +174,7 @@ export default function EnhancedRoomManager({
 
   const handleKickPlayer = async (playerId: string) => {
     if (!isHost) {
-      toast.error('Solo el anfitrión puede expulsar jugadores.', { title: 'Acción no permitida' });
+      toast.error('Solo el anfitrión puede expulsar jugadores.');
       return;
     }
     try {
@@ -198,7 +198,7 @@ export default function EnhancedRoomManager({
 
   const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
     if (!isHost) {
-      toast.error('Solo el anfitrión puede cambiar la configuración.', { title: 'Acción no permitida' });
+      toast.error('Solo el anfitrión puede cambiar la configuración.');
       return;
     }
     try {

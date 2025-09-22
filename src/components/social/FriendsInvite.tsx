@@ -9,7 +9,7 @@ import {
   Loader2,
   UserPlus
 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import type { Language } from '@/contexts/language-context';
 import { searchUsers, addFriend, Friend } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
@@ -51,7 +51,7 @@ export default function FriendsInvite({ language = 'es', onFriendAdded }: Friend
     }
     try {
       await addFriend(user.uid, friend.id, friend.name, friend.avatar);
-      toast.success(`${friend.name} ha sido añadido a tus amigos.`, { title: "¡Éxito!" });
+      toast.success(`${friend.name} ha sido añadido a tus amigos.`);
       setInvitedFriends(prev => new Set(prev).add(friend.id));
       onFriendAdded(); // Callback to refresh the friends list on the parent component
     } catch (error) {

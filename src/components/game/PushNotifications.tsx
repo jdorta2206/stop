@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import { onNotificationsUpdate, updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
 

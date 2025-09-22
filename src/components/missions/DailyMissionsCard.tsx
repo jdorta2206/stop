@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MissionItem } from "./MissionItem";
 import { Loader2, Gift } from "lucide-react";
 import { rankingManager } from "@/lib/ranking";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import type { MissionProgress } from "@/lib/missions";
 
@@ -33,10 +33,10 @@ export function DailyMissionsCard() {
         if (!user) return;
         try {
             await rankingManager.claimMissionReward(user.uid, missionId);
-            toast.success("Has recibido tus monedas.", { title: "¡Recompensa Reclamada!" });
+            toast.success("Has recibido tus monedas.", { description: "¡Recompensa Reclamada!" });
             fetchMissions(); // Refresh missions state
         } catch (error) {
-            toast.error((error as Error).message, { title: "Error" });
+            toast.error((error as Error).message);
         }
     };
 

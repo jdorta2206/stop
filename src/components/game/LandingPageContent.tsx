@@ -12,7 +12,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import ContactsManager from './ContactsManager';
 import MultiplayerDialog from '@/components/game/MultiplayerDialog';
 
@@ -75,9 +75,7 @@ export function LandingPageContent() {
     }
 
     window.open(shareUrl, '_blank');
-    toast.info(translate('social.shareDescription', { platform }), {
-      title: translate('social.shareTitle'),
-    });
+    toast.info(translate('social.shareDescription', { platform }));
   };
   
   const handlePrivateRoomClick = () => {

@@ -13,7 +13,7 @@ import { AuthStatus } from '../auth/auth-status';
 import type { ChatMessage } from '../chat/chat-message-item';
 import { usePathname, useRouter } from 'next/navigation';
 import PushNotifications from '../game/PushNotifications';
-import { toast } from '../ui/use-toast';
+import { toast } from 'sonner';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
