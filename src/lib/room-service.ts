@@ -99,7 +99,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
     id: creatorId,
     name: finalCreatorName,
     avatar: finalCreatorAvatar,
-    isReady: false, // Host doesn't need to be ready
+    isReady: false,
     status: 'online',
     joinedAt: serverTimestamp(),
     isHost: true,
@@ -434,8 +434,3 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
-
-
-
-
-
