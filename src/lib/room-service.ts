@@ -78,8 +78,6 @@ export interface CreateRoomInput {
 
 export interface CreateRoomOutput {
   id: string;
-  hostId: string;
-  status: string;
 }
 
 export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
@@ -93,6 +91,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
   const finalCreatorName = creatorName || 'Jugador Anónimo';
+  // Ensure avatar is never null or undefined
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalCreatorName)}`;
 
   const hostPlayer: Player = {
@@ -124,8 +123,6 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
 
   return {
     id: newRoomId,
-    hostId: creatorId,
-    status: 'waiting',
   };
 }
 
@@ -455,3 +452,4 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
     
 
     
+
