@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export function ServiceWorkerRegistrar() {
-  const { toast } = useToast();
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -20,8 +19,7 @@ export function ServiceWorkerRegistrar() {
                   if (installingWorker.state === 'installed') {
                     if (navigator.serviceWorker.controller) {
                       // Hay contenido nuevo disponible, notificar al usuario.
-                       toast({
-                        title: "Actualización Disponible",
+                       toast("Actualización Disponible", {
                         description: "Hay una nueva versión de la aplicación. Cierra y vuelve a abrir la app para ver los cambios.",
                         duration: 10000,
                       });
@@ -44,7 +42,7 @@ export function ServiceWorkerRegistrar() {
         window.removeEventListener('load', handleServiceWorker);
       };
     }
-  }, [toast]);
+  }, []);
 
   return null; // Este componente no renderiza nada
 }
