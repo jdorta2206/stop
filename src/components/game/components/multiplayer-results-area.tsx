@@ -65,7 +65,7 @@ export function MultiplayerResultsArea({ room, currentUserId, isHost, onNextRoun
                     {sortedPlayers.map((player, index) => (
                         <div key={player.id} className="bg-black/20 p-4 rounded-lg text-center border border-white/10 relative">
                              {index === 0 && <Crown className="absolute -top-3 -right-3 h-7 w-7 text-yellow-400 transform rotate-12" />}
-                             <img src={player.avatar} alt={player.name} className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-primary" data-ai-hint="avatar person" />
+                             <img src={player.avatar || undefined} alt={player.name} className="w-16 h-16 rounded-full mx-auto mb-2 border-2 border-primary" data-ai-hint="avatar person" />
                              <p className="font-semibold truncate">{player.name}</p>
                              <p className="text-2xl font-bold text-green-400">
                                 {room.gameScores?.[player.id]?.toLocaleString() || 0}
