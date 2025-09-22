@@ -12,13 +12,12 @@ export default function RootLayout({
 }>) {
 
   useEffect(() => {
-    // Script para registrar el Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('Service Worker registrado con éxito:', registration.scope);
-        }).catch(error => {
-          console.log('Fallo en el registro del Service Worker:', error);
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (const registration of registrations) {
+            registration.unregister();
+          }
         });
       });
     }
