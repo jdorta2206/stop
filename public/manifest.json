@@ -1,18 +1,7 @@
 {
-  "name": "Stop - El Juego de Palabras",
+  "name": "Stop - Juego de Palabras",
   "short_name": "Stop",
-  "description": "El clásico juego de Stop, ahora en tu dispositivo. Juega solo o con amigos, pon a prueba tu vocabulario y rapidez mental.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ef4444",
-  "theme_color": "#ef4444",
-  "orientation": "any",
-  "scope": "/",
-  "id": "/",
-  "lang": "es-ES",
-  "dir": "auto",
-  "iarc_rating_id": "e5c89f2a-d2d7-4c07-b2f5-303a9b752252",
-  "prefer_related_applications": false,
+  "description": "Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -25,44 +14,49 @@
       "type": "image/png"
     }
   ],
+  "theme_color": "#ef4444",
+  "background_color": "#ef4444",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["games", "entertainment"],
+  "id": "/",
+  "scope": "/",
+  "dir": "auto",
+  "lang": "es-ES",
+  "prefer_related_applications": false,
+  "iarc_rating_id": "e84b072d-8686-4386-86d3-9377461957de",
   "screenshots": [
     {
-      "src": "https://www.pwabuilder.com/assets/screenshots/screen1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Juego en Escritorio"
+      "src": "https://picsum.photos/seed/1/1080/1920",
+      "type": "image/jpeg",
+      "sizes": "1080x1920",
+      "form_factor": "narrow"
     },
     {
-      "src": "https://www.pwabuilder.com/assets/screenshots/screen2.png",
-      "sizes": "720x1280",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Juego en Móvil"
+      "src": "https://picsum.photos/seed/2/1920/1080",
+      "type": "image/jpeg",
+      "sizes": "1920x1080",
+      "form_factor": "wide"
     }
-  ],
-  "categories": [
-    "games",
-    "entertainment",
-    "education"
   ],
   "shortcuts": [
     {
       "name": "Jugar Solo",
-      "short_name": "Solo",
-      "description": "Iniciar una partida rápida contra la IA.",
+      "short_name": "Jugar",
+      "description": "Iniciar una partida contra la IA",
       "url": "/play-solo",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Ver Ranking",
       "short_name": "Ranking",
-      "description": "Ver la tabla de clasificación global.",
+      "description": "Ver la tabla de clasificación global",
       "url": "/leaderboard",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     }
   ],
-   "share_target": {
+  "share_target": {
     "action": "/share-target/",
     "method": "GET",
     "params": {
@@ -70,5 +64,22 @@
       "text": "text",
       "url": "url"
     }
+  },
+  "file_handlers": [
+    {
+      "action": "/handle-file",
+      "accept": {
+        "text/plain": [".txt", ".stopgame"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+stopgame",
+      "url": "/protocol-handler?q=%s"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
   }
 }
