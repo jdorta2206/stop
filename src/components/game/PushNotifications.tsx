@@ -32,21 +32,34 @@ export default function PushNotifications({
       setNotificationPermission(Notification.permission);
     }
 
-    if (user) {
-      const unsubscribe = onNotificationsUpdate(user.uid, (newNotifications) => {
-        const oldNotifications = new Set(notifications.map(n => n.id));
-        const justReceived = newNotifications.find(n => !oldNotifications.has(n.id) && n.status === 'pending');
+    let unsubscribe: (() => void) | null = null;
+    
+    const setupListener = async () => {
+        if (user) {
+            unsubscribe = await onNotificationsUpdate(user.uid, (newNotifications) => {
+                // Check for new pending notifications compared to the current state
+                const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
+                const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));
 
-        if (justReceived) {
-          showPushNotification(justReceived);
-          toast.info(`Nueva invitación de ${justReceived.fromUser}`);
+                if (newPendingNotification) {
+                    showPushNotification(newPendingNotification);
+                    toast.info(`Nueva invitación de ${newPendingNotification.fromUser}`);
+                }
+
+                setNotifications(newNotifications);
+            });
         }
+    };
 
-        setNotifications(newNotifications);
-      });
-      return () => unsubscribe();
-    }
-  }, [user, notifications]);
+    setupListener();
+
+    return () => {
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+}, [user]); // Removed `notifications` from dependency array to prevent re-subscribing on every update
+
 
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
