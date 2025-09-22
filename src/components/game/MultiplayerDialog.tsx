@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, PartyPopper, Users } from 'lucide-react';
-import type { CreateRoomOutput } from '@/app/api/create-room/route';
+import { createRoom } from '@/lib/room-service';
 
 
 interface MultiplayerDialogProps {
@@ -34,33 +34,14 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     }
     setIsCreating(true);
     try {
-      const response = await fetch('/api/create-room', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          creatorId: user.uid,
-          creatorName: user.displayName ?? 'Jugador',
-          creatorAvatar: user.photoURL ?? null
-        }),
+      const newRoom = await createRoom({
+        creatorId: user.uid,
+        creatorName: user.displayName ?? 'Jugador',
+        creatorAvatar: user.photoURL ?? null
       });
 
-      if (!response.ok) {
-        let errorData;
-        try {
-            errorData = await response.json();
-        } catch (e) {
-            // If the response is not JSON, use the status text.
-            throw new Error(response.statusText);
-        }
-        throw new Error(errorData.error || 'Failed to create room');
-      }
-
-      const newRoom = (await response.json()) as CreateRoomOutput;
-
       if (!newRoom || !newRoom.id) {
-        throw new Error("API did not return a room ID.");
+        throw new Error("La función no devolvió un ID de sala.");
       }
 
       toast({
@@ -70,7 +51,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
-      console.error("Error creating room via API route:", error);
+      console.error("Error creating room:", error);
       toast({
         title: translate('common.error'),
         description: `No se pudo crear la sala: ${(error as Error).message}`,

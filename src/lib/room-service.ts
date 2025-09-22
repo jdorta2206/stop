@@ -56,10 +56,63 @@ export interface Room {
 
 const roomsCollection = collection(db, 'rooms');
 
-// This function is now handled by a Genkit flow `create-room-flow.ts`
-// export const createRoom = async (creatorId: string, creatorName: string, creatorAvatar: string | null): Promise<Room> => {
-//     // ... implementation removed
-// };
+export interface CreateRoomInput {
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string | null;
+}
+
+export interface CreateRoomOutput {
+  id: string;
+  hostId: string;
+  status: string;
+}
+
+export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutput> => {
+  const { creatorId, creatorName, creatorAvatar } = input;
+
+  if (!creatorId || !creatorName) {
+    throw new Error('Missing creator ID or name');
+  }
+
+  const finalCreatorName = creatorName || 'Jugador Anónimo';
+  const finalCreatorAvatar =
+    creatorAvatar ||
+    `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
+
+  const creatorPlayer: Player = {
+    id: creatorId,
+    name: finalCreatorName,
+    avatar: finalCreatorAvatar,
+    isReady: false,
+    status: 'online',
+    joinedAt: serverTimestamp(),
+    isHost: true,
+  };
+
+  const newRoomData: Omit<Room, 'id'> = {
+    players: {
+      [creatorId]: creatorPlayer,
+    },
+    hostId: creatorId,
+    createdAt: serverTimestamp(),
+    status: 'waiting',
+    settings: {
+      maxPlayers: 10,
+      roundDuration: 60,
+      isPrivate: true,
+      language: 'es' as Language,
+    },
+  };
+
+  const roomDocRef = await addDoc(roomsCollection, newRoomData);
+
+  return {
+    id: roomDocRef.id,
+    hostId: newRoomData.hostId,
+    status: newRoomData.status,
+  };
+};
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
     const roomDocRef = doc(roomsCollection, roomId);
