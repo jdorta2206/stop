@@ -13,7 +13,10 @@ import {
     startAt,
     endAt,
     collectionGroup,
-    Timestamp
+    Timestamp,
+    addDoc,
+    updateDoc,
+    onSnapshot
 } from "firebase/firestore";
 
 export interface Friend {
@@ -21,6 +24,17 @@ export interface Friend {
     name: string;
     avatar?: string | null;
     addedAt: Timestamp;
+}
+
+export interface GameInvitation {
+  id: string;
+  fromUser: string;
+  fromUserId: string;
+  roomId: string;
+  message: string;
+  timestamp: Timestamp;
+  type: 'room_invite' | 'game_start' | 'game_finish' | 'chat_mention';
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
 }
 
 // Function to search for users by name
@@ -81,4 +95,40 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
         friends.push(doc.data() as Friend);
     });
     return friends;
+};
+
+export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
+    if (!recipientId) throw new Error("Recipient ID is required.");
+    
+    const notificationsRef = collection(db, `rankings/${recipientId}/notifications`);
+    
+    const newNotification = {
+        fromUserId: senderId,
+        fromUser: senderName,
+        roomId: roomId,
+        message: `¡${senderName} te ha desafiado a una partida de STOP!`,
+        timestamp: Timestamp.now(),
+        type: 'room_invite',
+        status: 'pending'
+    };
+    
+    await addDoc(notificationsRef, newNotification);
+};
+
+export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
+    const notificationsRef = collection(db, `rankings/${userId}/notifications`);
+    const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
+
+    return onSnapshot(q, (snapshot) => {
+        const notifications = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as GameInvitation));
+        callback(notifications);
+    });
+};
+
+export const updateNotificationStatus = async (userId: string, notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
+    const notificationDocRef = doc(db, `rankings/${userId}/notifications`, notificationId);
+    await updateDoc(notificationDocRef, { status });
 };

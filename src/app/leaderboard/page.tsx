@@ -16,7 +16,7 @@ import { GlobalLeaderboardCard } from '@/components/game/components/global-leade
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
 import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend, getFriends, type Friend } from '@/lib/friends-service';
+import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,8 +108,8 @@ export default function LeaderboardPage() {
       if(user) fetchData(user.uid);
   }
 
-  const handleChallenge = async (player: PlayerScore) => {
-    if (!user) {
+  const handleChallenge = async (playerToChallenge: PlayerScore) => {
+    if (!user || !user.displayName) {
       toast({ title: 'Error', description: "Debes iniciar sesión para desafiar a alguien.", variant: "destructive" });
       return;
     }
@@ -117,22 +117,28 @@ export default function LeaderboardPage() {
     try {
         const newRoom = await createRoom({
             creatorId: user.uid,
-            creatorName: user.displayName ?? 'Jugador',
-            creatorAvatar: user.photoURL ?? null
+            creatorName: user.displayName,
+            creatorAvatar: user.photoURL
         });
 
         if (!newRoom || !newRoom.id) {
             throw new Error("La función no devolvió un ID de sala.");
         }
 
+        // Send notification to the challenged player
+        await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
+
         toast({
-            title: '¡Sala de desafío creada!',
-            description: `Código: ${newRoom.id}. Compártelo con ${player.playerName}.`,
+            title: '¡Desafío enviado!',
+            description: `Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`,
         });
+
+        // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
+
     } catch (error) {
         toast({
-            title: "Error al crear la sala",
+            title: "Error al crear el desafío",
             description: (error as Error).message,
             variant: 'destructive',
         });

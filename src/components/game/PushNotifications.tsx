@@ -6,17 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface GameInvitation {
-  id: string;
-  fromUser: string;
-  fromUserId: string;
-  roomId: string;
-  message: string;
-  timestamp: Date;
-  type: 'room_invite' | 'game_start' | 'game_finish' | 'chat_mention';
-  status: 'pending' | 'accepted' | 'declined' | 'expired';
-}
+import { onNotificationsUpdate, updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
+import { useAuth } from '@/hooks/use-auth';
 
 interface PushNotificationsProps {
   userId: string;
@@ -35,71 +26,28 @@ export default function PushNotifications({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Check current notification permission
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
 
-    // Mock notifications for demo
-    const mockNotifications: GameInvitation[] = [
-      {
-        id: '1',
-        fromUser: 'Elena',
-        fromUserId: 'user1',
-        roomId: 'ROOM123',
-        message: '¡Te he invitado a una partida de STOP! ¿Te unes?',
-        timestamp: new Date(Date.now() - 300000),
-        type: 'room_invite',
-        status: 'pending'
-      },
-      {
-        id: '2',
-        fromUser: 'Carlos',
-        fromUserId: 'user2',
-        roomId: 'ROOM456',
-        message: '@' + username + ' ¿estás listo para la revancha?',
-        timestamp: new Date(Date.now() - 120000),
-        type: 'chat_mention',
-        status: 'pending'
-      },
-      {
-        id: '3',
-        fromUser: 'Sistema',
-        fromUserId: 'system',
-        roomId: 'ROOM789',
-        message: 'La partida en la sala LEYENDAS ha comenzado. ¡No te la pierdas!',
-        timestamp: new Date(Date.now() - 60000),
-        type: 'game_start',
-        status: 'pending'
-      }
-    ];
+    if (user) {
+      const unsubscribe = onNotificationsUpdate(user.uid, (newNotifications) => {
+        const oldNotifications = new Set(notifications.map(n => n.id));
+        const justReceived = newNotifications.find(n => !oldNotifications.has(n.id) && n.status === 'pending');
 
-    setNotifications(mockNotifications);
+        if (justReceived) {
+          showPushNotification(justReceived);
+          toast({ description: `Nueva invitación de ${justReceived.fromUser}` });
+        }
 
-    // Simulate receiving new notifications
-    const interval = setInterval(() => {
-      if (Math.random() > 0.8) {
-        const newNotification: GameInvitation = {
-          id: Date.now().toString(),
-          fromUser: `Jugador${Math.floor(Math.random() * 10)}`,
-          fromUserId: `user${Math.floor(Math.random() * 10)}`,
-          roomId: `ROOM${Math.floor(Math.random() * 1000)}`,
-          message: '¡Nueva invitación a jugar!',
-          timestamp: new Date(),
-          type: 'room_invite',
-          status: 'pending'
-        };
-
-        setNotifications(prev => [newNotification, ...prev]);
-        showPushNotification(newNotification);
-        toast({description: `Nueva invitación de ${newNotification.fromUser}`});
-      }
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [username]);
+        setNotifications(newNotifications);
+      });
+      return () => unsubscribe();
+    }
+  }, [user, notifications]);
 
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
@@ -133,35 +81,25 @@ export default function PushNotifications({
         notif.close();
       };
 
-      // Auto close after 10 seconds
       setTimeout(() => notif.close(), 10000);
     }
   };
 
-  const handleAcceptInvitation = (notificationId: string) => {
+  const handleAcceptInvitation = async (notificationId: string) => {
+    if (!user) return;
     const notification = notifications.find(n => n.id === notificationId);
     if (notification && notification.type === 'room_invite') {
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId 
-            ? { ...n, status: 'accepted' as const }
-            : n
-        )
-      );
+      await updateNotificationStatus(user.uid, notificationId, 'accepted');
       onJoinRoom(notification.roomId);
       toast({description: `Te uniste a la sala ${notification.roomId}`});
+      setShowNotifications(false);
     }
   };
 
-  const handleDeclineInvitation = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId 
-          ? { ...n, status: 'declined' as const }
-          : n
-      )
-    );
-    toast({description: 'Invitación rechazada'});
+  const handleDeclineInvitation = async (notificationId: string) => {
+     if (!user) return;
+     await updateNotificationStatus(user.uid, notificationId, 'declined');
+     toast({description: 'Invitación rechazada'});
   };
 
   const getNotificationIcon = (type: string) => {
@@ -194,9 +132,11 @@ export default function PushNotifications({
     }
   };
 
-  const formatTimestamp = (timestamp: Date) => {
+  const formatTimestamp = (timestamp: any) => {
+    if (!timestamp || typeof timestamp.toDate !== 'function') return '...';
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - timestamp.getTime()) / (1000 * 60));
+    const date = timestamp.toDate();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
     if (diffInMinutes < 1) return 'Ahora';
     if (diffInMinutes < 60) return `Hace ${diffInMinutes}m`;
@@ -269,7 +209,7 @@ export default function PushNotifications({
                   className={`transition-all ${
                     notification.status === 'pending' 
                       ? 'border-primary/30 bg-card' 
-                      : 'border-border/30 bg-card/50'
+                      : 'border-border/30 bg-card/50 opacity-60'
                   }`}
                 >
                   <CardContent className="p-3">

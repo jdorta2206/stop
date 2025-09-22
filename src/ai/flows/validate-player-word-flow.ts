@@ -53,13 +53,13 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
   // Diccionario de la IA (NORMALIZADO A MINÚSCULAS)
   const aiDictionary: Record<string, string[]> = {
-    nombre: ["ana", "andrés", "antonio", "beatriz", "benito", "bárbara", "carlos", "cecilia", "césar", "david", "dolores", "diana", "elena", "esteban", "eva", "fabián", "fatima", "fernando", "gabriel", "gloria", "gonzalo", "hugo", "helena", "héctor", "ignacio", "irene", "isabel", "javier", "jimena", "juan", "karla", "kevin", "karina", "kike", "luis", "laura", "lucía", "manuel", "maría", "marta", "natalia", "nicolás", "noelia", "nuria", "óscar", "olivia", "omar", "pablo", "paula", "pedro", "quintín", "juana", "roberto", "raquel", "rosa", "santiago", "sofía", "susana", "tomás", "teresa", "tatiana", "ursula", "unai", "valentina", "victor", "vanesa", "walter", "wendy", "wanda", "xavier", "ximena", "yolanda", "yasmin", "yago", "zoe", "zacarías"],
-    lugar: ["alemania", "argentina", "atenas", "brasil", "bogotá", "barcelona", "canadá", "china", "copenhague", "dinamarca", "dublín", "ecuador", "españa", "estocolmo", "francia", "finlandia", "florencia", "grecia", "guatemala", "ginebra", "holanda", "honduras", "helsinki", "italia", "irlanda", "islandia", "japón", "jamaica", "jerusalén", "kenia", "kuwait", "kiev", "libia", "lisboa", "londres", "méxico", "madrid", "moscú", "noruega", "nairobi", "nueva york", "oslo", "ottawa", "omán", "parís", "perú", "praga", "qatar", "quito", "rumanía", "roma", "rusia", "suecia", "suiza", "santiago", "tokio", "turquía", "toronto", "uruguay", "ucrania", "venecia", "vietnam", "varsovia", "washington", "wellington", "xalapa", "yemen", "zagreb", "zimbabue"],
-    animal: ["araña", "águila", "avispa", "búho", "ballena", "buitre", "caballo", "canguro", "cocodrilo", "delfín", "dromedario", "dragón de komodo", "elefante", "erizo", "escorpión", "foca", "flamenco", "gato", "gacela", "gorila", "halcón", "hiena", "hipopótamo", "iguana", "impala", "jaguar", "jabalí", "jirafa", "koala", "krill", "león", "loro", "lobo", "mapache", "mariposa", "medusa", "nutria", "ñu", "orangután", "oso", "orca", "perro", "pingüino", "pantera", "quetzal", "rana", "ratón", "rinoceronte", "serpiente", "sapo", "tiburón", "tigre", "tortuga", "topo", "urraca", "urogallo", "vaca", "vicuña", "vívora", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote"],
-    objeto: ["anillo", "aguja", "arco", "barco", "botella", "brújula", "cámara", "cuchillo", "copa", "dado", "destornillador", "diamante", "escalera", "escoba", "espejo", "flauta", "flecha", "foco", "guitarra", "gafas", "globo", "hacha", "hilo", "imán", "impresora", "jarrón", "jeringa", "juguete", "lámpara", "lápiz", "libro", "martillo", "mesa", "micrófono", "nube", "navaja", "ordenador", "olla", "paraguas", "pelota", "piano", "queso", "reloj", "regla", "rueda", "silla", "sofá", "sombrero", "teléfono", "tijeras", "tambor", "uniforme", "usb", "violín", "vela", "ventana", "xilófono", "yoyo", "zapato", "zapatilla"],
-    color: ["azul", "amarillo", "añil", "blanco", "beige", "burdeos", "cian", "carmesí", "castaño", "dorado", "esmeralda", "escarlata", "fucsia", "grana", "gris", "hueso", "índigo", "jade", "kaki", "lavanda", "lila", "marrón", "magenta", "marfil", "naranja", "negro", "ocre", "oro", "púrpura", "plata", "perla", "rojo", "rosa", "salmón", "turquesa", "terracota", "ultramar", "verde", "violeta", "vino", "wengue", "xantico", "zafiro"],
-    fruta: ["arándano", "albaricoque", "aceituna", "banana", "cereza", "ciruela", "dátil", "durazno", "fresa", "frambuesa", "granada", "higo", "kiwi", "limón", "lima", "mandarina", "manzana", "melón", "mora", "naranja", "nectarina", "níspero", "papaya", "pera", "piña", "plátano", "pomelo", "sandía", "tamarindo", "toronja", "uva"],
-    marca: ["adidas", "audi", "apple", "bic", "bosch", "casio", "chanel", "dior", "dell", "ebay", "elle", "fila", "ford", "gucci", "google", "hp", "honda", "ibm", "ikea", "intel", "jaguar", "jeep", "kodak", "kia", "lego", "levi's", "lg", "microsoft", "mercedes", "motorola", "nike", "nintendo", "nestlé", "omega", "oracle", "pepsi", "prada", "puma", "quick", "rolex", "ray-ban", "reebok", "samsung", "sony", "sega", "toyota", "tesla", "tissot", "uber", "umbro", "visa", "volkswagen", "versace", "walmart", "wikipedia", "xbox", "xiaomi", "yahoo", "youtube", "zara", "zoom"],
+    nombre: ["ana", "andrés", "antonio", "amanda", "alberto", "adriana", "beatriz", "benito", "bárbara", "bruno", "belén", "carlos", "cecilia", "césar", "clara", "cristina", "david", "dolores", "diana", "daniel", "diego", "elena", "esteban", "eva", "eduardo", "emma", "fabián", "fatima", "fernando", "felipe", "florencia", "gabriel", "gloria", "gonzalo", "graciela", "guillermo", "hugo", "helena", "héctor", "hilda", "horacio", "ignacio", "irene", "isabel", "iván", "inés", "javier", "jimena", "juan", "julia", "jorge", "karla", "kevin", "karina", "kike", "katia", "luis", "laura", "lucía", "leonardo", "leticia", "manuel", "maría", "marta", "miguel", "mónica", "natalia", "nicolás", "noelia", "nuria", "norma", "óscar", "olivia", "omar", "olga", "osvaldo", "pablo", "paula", "pedro", "patricia", "pilar", "quintín", "juana", "roberto", "raquel", "rosa", "ricardo", "rita", "santiago", "sofía", "susana", "sergio", "silvia", "tomás", "teresa", "tatiana", "teodoro", "trinidad", "ursula", "unai", "ulises", "valentina", "victor", "vanesa", "vicente", "verónica", "walter", "wendy", "wanda", "wilson", "wilfredo", "xavier", "ximena", "xenon", "yolanda", "yasmin", "yago", "yanina", "isidro", "zoe", "zacarías", "zulema", "zenón"],
+    lugar: ["alemania", "argentina", "atenas", "alicante", "albacete", "brasil", "bogotá", "barcelona", "bilbao", "berlín", "canadá", "china", "copenhague", "córdoba", "caracas", "dinamarca", "dublín", "dinant", "ecuador", "españa", "estocolmo", "edimburgo", "egipto", "francia", "finlandia", "florencia", "fiyi", "filipinas", "grecia", "guatemala", "ginebra", "granada", "guadalajara", "holanda", "honduras", "helsinki", "hungría", "hamburgo", "italia", "irlanda", "islandia", "indonesia", "india", "japón", "jamaica", "jerusalén", "jaén", "jordania", "kenia", "kuwait", "kiev", "kioto", "kazajistán", "libia", "lisboa", "londres", "lima", "luxemburgo", "méxico", "madrid", "moscú", "málaga", "marrakech", "noruega", "nairobi", "nueva york", "nicosia", "nepal", "oslo", "ottawa", "omán", "oporto", "oxford", "parís", "perú", "praga", "panamá", "palermo", "qatar", "quito", "quebec", "rumanía", "roma", "rusia", "rio de janeiro", "rotterdam", "suecia", "suiza", "santiago", "sevilla", "singapur", "tokio", "turquía", "toronto", "toledo", "tailandia", "uruguay", "ucrania", "utrecht", "venecia", "vietnam", "varsovia", "valencia", "viena", "washington", "wellington", "xalapa", "yemen", "yakarta", "zagreb", "zimbabue", "zaragoza", "zurich"],
+    animal: ["araña", "águila", "avispa", "avestruz", "alce", "búho", "ballena", "buitre", "bisonte", "burro", "caballo", "canguro", "cocodrilo", "cucaracha", "camello", "delfín", "dromedario", "dragón de komodo", "diablo de tasmania", "elefante", "erizo", "escorpión", "estrella de mar", "escarabajo", "foca", "flamenco", "faisán", "gato", "gacela", "gorila", "gusano", "gallina", "halcón", "hiena", "hipopótamo", "hormiga", "hurón", "iguana", "impala", "insecto palo", "jaguar", "jabalí", "jirafa", "jilguero", "koala", "krill", "kiwi", "león", "loro", "lobo", "libélula", "leopardo", "mapache", "mariposa", "medusa", "murciélago", "mantis", "nutria", "ñu", "ñandú", "orangután", "oso", "orca", "oveja", "ostra", "perro", "pingüino", "pantera", "pato", "perezoso", "quetzal", "quirquincho", "rana", "ratón", "rinoceronte", "reno", "ruiseñor", "serpiente", "sapo", "salamandra", "salmón", "saltamontes", "tiburón", "tigre", "tortuga", "topo", "tucán", "urraca", "urogallo", "vaca", "vicuña", "víbora", "vampiro", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote", "cebra", "ciervo"],
+    objeto: ["anillo", "aguja", "arco", "altavoz", "armario", "barco", "botella", "brújula", "bombilla", "bandeja", "cámara", "cuchillo", "copa", "cinturón", "cuadro", "dado", "destornillador", "diamante", "disco", "dron", "escalera", "escoba", "espejo", "estufa", "espada", "flauta", "flecha", "foco", "florero", "frasco", "guitarra", "gafas", "globo", "grapa", "guante", "hacha", "hilo", "horno", "herradura", "imán", "impresora", "imperdible", "jarrón", "jeringa", "juguete", "joya", "jabón", "lámpara", "lápiz", "libro", "lupa", "linterna", "martillo", "mesa", "micrófono", "moneda", "mochila", "nube", "navaja", "ordenador", "olla", "orinal", "paraguas", "pelota", "piano", "peine", "plato", "queso", "quemador", "reloj", "regla", "rueda", "radio", "rastrillo", "silla", "sofá", "sombrero", "sartén", "sello", "teléfono", "tijeras", "tambor", "taza", "taladro", "uniforme", "usb", "ukelele", "violín", "vela", "ventana", "vaso", "ventilador", "xilófono", "yoyo", "zapato", "zapatilla", "zanja"],
+    color: ["azul", "amarillo", "añil", "amatista", "ámbar", "blanco", "beige", "burdeos", "bronce", "cian", "carmesí", "castaño", "caoba", "crema", "dorado", "esmeralda", "escarlata", "fucsia", "grana", "gris", "grafito", "hueso", "índigo", "jade", "kaki", "lavanda", "lila", "marrón", "magenta", "marfil", "malva", "naranja", "negro", "nácar", "ocre", "oro", "púrpura", "plata", "perla", "pistacho", "rojo", "rosa", "salmón", "sepia", "turquesa", "terracota", "trigo", "ultramar", "verde", "violeta", "vino", "wengue", "xantico", "zafiro"],
+    fruta: ["arándano", "albaricoque", "aceituna", "ananá", "avellana", "banana", "cereza", "ciruela", "coco", "chirimoya", "dátil", "durazno", "damasco", "frambuesa", "fresa", "frutilla", "granada", "guayaba", "grosella", "higo", "higo chumbo", "kiwi", "kumquat", "kinoto", "limón", "lima", "lichi", "mandarina", "manzana", "melón", "mango", "maracuyá", "mora", "naranja", "nectarina", "níspero", "nuez", "papaya", "pera", "piña", "plátano", "pomelo", "paraguaya", "quinoto", "sandía", "tamarindo", "toronja", "tuna", "uva"],
+    marca: ["adidas", "audi", "apple", "amazon", "ariel", "bic", "bosch", "bayer", "barbie", "boeing", "casio", "chanel", "cocacola", "colgate", "canon", "dior", "dell", "disney", "danone", "durex", "ebay", "elle", "esso", "fila", "ford", "ferrari", "facebook", "fedex", "gucci", "google", "gillette", "general electric", "hp", "honda", "heineken", "hollywood", "ibm", "ikea", "intel", "instagram", "jaguar", "jeep", "john deere", "kodak", "kia", "kellogg's", "kfc", "lego", "levi's", "lg", "l'oréal", "lamborghini", "microsoft", "mercedes", "motorola", "mcdonald's", "marvel", "nike", "nintendo", "nestlé", "netflix", "nasa", "omega", "oracle", "oral-b", "pepsi", "prada", "puma", "porsche", "playstation", "quick", "rolex", "ray-ban", "reebok", "red bull", "samsung", "sony", "sega", "shell", "starbucks", "toyota", "tesla", "tissot", "tiktok", "twitter", "uber", "umbro", "unilever", "under armour", "visa", "volkswagen", "versace", "vodafone", "walmart", "wikipedia", "whatsapp", "xbox", "xiaomi", "xerox", "yahoo", "youtube", "yamaha", "zara", "zoom", "zalando"],
   };
 
   for (const playerResponse of input.playerResponses) {
@@ -68,16 +68,23 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     const playerWordLower = playerWord.toLowerCase().trim();
     const categoryDictionary = aiDictionary[categoryLower] || [];
     
+    // Lógica mejorada para la IA
     let aiWord = '';
     const possibleAiWords = categoryDictionary.filter(w => w.startsWith(letterLower));
-    if (Math.random() < 0.9 && possibleAiWords.length > 0) { 
+    
+    // La IA tiene un 85% de probabilidad de saber una palabra si hay alguna disponible.
+    if (Math.random() < 0.85 && possibleAiWords.length > 0) { 
         aiWord = possibleAiWords[Math.floor(Math.random() * possibleAiWords.length)];
     }
-    const aiWordLower = aiWord.toLowerCase();
+    const aiWordLower = aiWord.toLowerCase().trim();
     
-    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN (CORREGIDA Y DEFINITIVA) ***
+    // *** LÓGICA DE VALIDACIÓN Y PUNTUACIÓN (MÁS ESTRICTA) ***
 
     // 1. Validar palabra del jugador y de la IA
+    // Una palabra es válida si:
+    // - Tiene más de 1 caracter.
+    // - Empieza con la letra correcta.
+    // - Existe en nuestro diccionario.
     const isPlayerWordValid = 
         playerWordLower.length > 1 &&
         playerWordLower.startsWith(letterLower) &&
@@ -88,32 +95,30 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         aiWordLower.startsWith(letterLower) &&
         categoryDictionary.includes(aiWordLower);
 
-    // 2. Calcular puntuaciones (LÓGICA REESCRITA PARA CLARIDAD Y CORRECCIÓN)
+    // 2. Calcular puntuaciones
     let playerScore = 0;
     let aiScore = 0;
 
-    if (isPlayerWordValid) {
-        if (isAiWordValid) {
-            if (playerWordLower === aiWordLower) {
-                // Ambos aciertan con la misma palabra
-                playerScore = 5;
-                aiScore = 5;
-            } else {
-                // Ambos aciertan con palabras diferentes
-                playerScore = 10;
-                aiScore = 10;
-            }
+    if (isPlayerWordValid && isAiWordValid) {
+        if (playerWordLower === aiWordLower) {
+            // Ambos aciertan con la misma palabra
+            playerScore = 5;
+            aiScore = 5;
         } else {
-            // Solo el jugador acierta
+            // Ambos aciertan con palabras diferentes
             playerScore = 10;
-        }
-    } else {
-        // La palabra del jugador NO es válida, su puntuación es 0.
-        // Se calcula la puntuación de la IA de forma independiente.
-        if (isAiWordValid) {
             aiScore = 10;
         }
+    } else if (isPlayerWordValid) {
+        // Solo el jugador acierta
+        playerScore = 10;
+        aiScore = 0;
+    } else if (isAiWordValid) {
+        // Solo la IA acierta
+        playerScore = 0;
+        aiScore = 10;
     }
+    // Si ninguno acierta, ambos scores son 0.
     
     // 3. Guardar resultados para la categoría
     results[playerResponse.category] = {
@@ -122,7 +127,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
         isValid: isPlayerWordValid,
         score: playerScore,
       },
-ai: {
+      ai: {
         response: aiWord ? aiWord.charAt(0).toUpperCase() + aiWord.slice(1) : '',
         isValid: isAiWordValid,
         score: aiScore,
@@ -144,3 +149,5 @@ ai: {
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
   return await localEvaluateRound(input);
 }
+
+    
