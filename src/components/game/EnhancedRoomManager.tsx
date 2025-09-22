@@ -135,6 +135,9 @@ export default function EnhancedRoomManager({
     };
   }, [roomId, currentUser, toast, onLeaveRoom]);
   
+  const currentPlayer = players.find(p => p.id === currentUser.uid);
+  const isHost = room?.hostId === currentUser.uid;
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (room?.gameState === 'PLAYING' && timeLeft > 0) {
@@ -153,8 +156,6 @@ export default function EnhancedRoomManager({
     return () => clearInterval(timer);
   }, [room?.gameState, timeLeft, isHost, roomId]);
 
-  const currentPlayer = players.find(p => p.id === currentUser.uid);
-  const isHost = room?.hostId === currentUser.uid;
   const readyPlayersCount = players.filter(p => p.isReady).length;
   const canStartGame = isHost && players.length >= 1 && readyPlayersCount === players.length;
 
@@ -209,7 +210,7 @@ export default function EnhancedRoomManager({
     try {
       await removePlayerFromRoom(roomId, playerId);
       toast({ title: 'Éxito', description: 'Jugador expulsado de la sala' });
-    } catch (error) => {
+    } catch (error) {
       toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
     }
   };
@@ -453,3 +454,5 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
+
+    
