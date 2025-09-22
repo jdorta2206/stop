@@ -16,8 +16,6 @@ import {
     addDoc,
     Timestamp,
     writeBatch,
-    getDocsFromCache,
-    getDocsFromServer,
     where,
     documentId
 } from "firebase/firestore";
