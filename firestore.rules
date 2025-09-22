@@ -1,46 +1,45 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+    // Reglas para la colección 'users'
     match /users/{userId} {
-      // Un usuario puede leer y escribir su propio documento.
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // Cualquier usuario autenticado puede leer el perfil público de otro (necesario para buscar y mostrar amigos).
-      allow get: if request.auth != null;
-    }
-    
-    // Permitir la consulta en la colección de usuarios si se filtra por IDs (para cargar datos de amigos).
-    match /users/{document=**} {
-        allow list: if request.auth != null;
-    }
-    
-    match /users/{userId}/friends/{friendId} {
-      // Un usuario solo puede gestionar su propia lista de amigos.
-      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    match /users/{userId}/notifications/{notificationId} {
-        // Cualquiera puede crear una notificación para un usuario (enviar invitación).
+      // Cualquier usuario autenticado puede leer el perfil público de otro.
+      // Se permite la consulta 'list' solo si se filtra por IDs de documento,
+      // lo cual es necesario para obtener los datos de una lista de amigos.
+      allow read, list: if request.auth != null;
+      
+      // Un usuario solo puede escribir en su propio documento.
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Un usuario solo puede leer y escribir en su propia lista de amigos.
+      match /friends/{friendId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Un usuario puede crear notificaciones para otros (necesario para enviar invitaciones).
+      // Un usuario solo puede leer y actualizar sus propias notificaciones.
+      match /notifications/{notificationId} {
         allow create: if request.auth != null;
-        // Solo el usuario propietario puede leer o actualizar sus notificaciones.
-        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+        allow read, update: if request.auth != null && request.auth.uid == userId;
+      }
+      
+       // Un usuario solo puede leer su propio historial de partidas.
+      match /gameHistory/{gameId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
+    // Reglas para la colección 'rooms'
     match /rooms/{roomId} {
-      // Cualquiera puede leer una sala para ver quién está dentro.
-      allow read: if request.auth != null;
-      // Solo usuarios autenticados pueden crear salas.
-      allow create: if request.auth != null;
-      // La actualización de la sala se gestiona con lógica más granular en la app.
-      // Permitimos la actualización si el usuario está autenticado.
-      allow update: if request.auth != null;
-    }
-    
-    match /rooms/{roomId}/chat/{messageId} {
-        // Solo usuarios autenticados pueden leer o escribir en el chat de una sala.
-        allow read, write: if request.auth != null;
+      // Cualquier usuario autenticado puede leer o crear una sala.
+      allow read, create: if request.auth != null;
+      
+      // Solo se puede actualizar una sala si el usuario que lo solicita es parte de ella.
+      allow update: if request.auth != null && resource.data.players[request.auth.uid] != null;
+      
+      match /chat/{messageId} {
+        allow read, create: if request.auth != null && get(/databases/$(database)/documents/rooms/$(roomId)).data.players[request.auth.uid] != null;
+      }
     }
   }
 }
