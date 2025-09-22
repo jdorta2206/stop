@@ -92,7 +92,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomId = generateRoomId();
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
-  // Safely handle nullable user data
+  // Safely handle nullable user data to prevent Firestore errors
   const finalCreatorName = creatorName || 'Jugador Anónimo';
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalCreatorName)}`;
 
@@ -121,6 +121,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
       roundNumber: 0,
   };
 
+  // CRITICAL: Use await to ensure the document is created before returning
   await setDoc(newRoomDocRef, newRoomData);
 
   return {
