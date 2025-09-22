@@ -18,7 +18,7 @@ import {
     where,
     documentId
 } from "firebase/firestore";
-import type { GameResult } from '@/components/game/types';
+import type { GameResult, PlayerScore } from '@/components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
 
 const LEVELS = [
@@ -40,24 +40,6 @@ export const ACHIEVEMENTS: Record<string, { name: string; description: string; i
   'high_scorer': { name: 'Puntuación Alta', description: 'Obtén más de 50 puntos en una sola ronda', icon: '🚀' },
   'champion': { name: 'Campeón', description: 'Gana 10 juegos', icon: '👑' }
 };
-
-export interface PlayerScore {
-  id: string;
-  playerName: string;
-  photoURL?: string | null;
-  totalScore: number;
-  gamesPlayed: number;
-  gamesWon: number;
-  averageScore: number;
-  bestScore: number;
-  lastPlayed: any; // Can be Firestore Timestamp on server, string on client
-  level: string;
-  achievements: string[];
-  coins: number;
-  dailyMissions: MissionProgress[];
-  missionsLastReset: string; // YYYY-MM-DD
-}
-
 
 // Cantidad de monedas a otorgar
 const COINS_PER_GAME = 10;

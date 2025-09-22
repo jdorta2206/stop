@@ -67,6 +67,7 @@ export default function LeaderboardPage() {
         }
       }
     } catch (error) {
+      console.error("Error fetching leaderboard data:", error);
       toast.error("Error al cargar los datos", {
         description: (error as Error).message,
       });
