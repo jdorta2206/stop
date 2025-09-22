@@ -89,7 +89,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
       avatar: finalCreatorAvatar,
       isReady: false,
       status: 'online',
-      joinedAt: serverTimestamp(), // Use serverTimestamp for consistency
+      joinedAt: serverTimestamp(),
       isHost: true,
     };
 
@@ -141,13 +141,14 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
 
         const room = roomSnap.data() as Room;
         const playerPath = `players.${playerId}`;
+        const finalPlayerName = playerName || 'Jugador Anónimo';
+        const finalPlayerAvatar = playerAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalPlayerName}`;
 
-        // If player exists, just update their status. Otherwise, add them.
         if (room.players && room.players[playerId]) {
             transaction.update(roomDocRef, {
                 [`${playerPath}.status`]: 'online',
-                [`${playerPath}.name`]: playerName,
-                [`${playerPath}.avatar`]: playerAvatar,
+                [`${playerPath}.name`]: finalPlayerName,
+                [`${playerPath}.avatar`]: finalPlayerAvatar,
             });
         } else {
             if (Object.keys(room.players || {}).length >= room.settings.maxPlayers) {
@@ -155,12 +156,12 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
             }
             const newPlayer: Player = {
                 id: playerId,
-                name: playerName,
-                avatar: playerAvatar,
+                name: finalPlayerName,
+                avatar: finalPlayerAvatar,
                 isReady: false,
                 status: 'online',
                 joinedAt: serverTimestamp(),
-                isHost: false, // Only the creator is host initially
+                isHost: false,
             };
             transaction.update(roomDocRef, { [playerPath]: newPlayer });
         }
@@ -172,10 +173,8 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
     const room = await getRoom(roomId);
     if (!room) return;
 
-    // Check if the player to be removed is the host
     if (room.hostId === playerId) {
         const otherPlayers = Object.keys(room.players).filter(id => id !== playerId);
-        // If there are other players, assign the first one as the new host
         if (otherPlayers.length > 0) {
             const newHostId = otherPlayers[0];
             await updateDoc(roomDocRef, {
@@ -184,7 +183,6 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
                 [`players.${newHostId}.isHost`]: true
             });
         } else {
-            // If no other players, the room can be deleted, but for now just remove the player
             await updateDoc(roomDocRef, {
                 [`players.${playerId}`]: deleteField()
             });
@@ -204,7 +202,6 @@ export const updatePlayerInRoom = async (roomId: string, playerId: string, data:
         updateData[`players.${playerId}.${key}`] = data[key as keyof typeof data];
     }
     
-    // Ensure the document exists before trying to update it
     const docSnap = await getDoc(roomDocRef);
     if (docSnap.exists()) {
         await updateDoc(roomDocRef, updateData);
@@ -245,12 +242,10 @@ export const startGame = async (roomId: string) => {
 export const setLetterForRound = async (roomId: string, letter: string) => {
     const roomDocRef = doc(roomsCollection, roomId);
     
-    // Use a transaction to prevent multiple players setting the letter
     await runTransaction(db, async (transaction) => {
         const roomDoc = await transaction.get(roomDocRef);
         if (!roomDoc.exists()) throw "Document does not exist!";
         
-        // Only set letter if still in SPINNING state
         if (roomDoc.data().gameState === 'SPINNING') {
             transaction.update(roomDocRef, { 
                 currentLetter: letter,

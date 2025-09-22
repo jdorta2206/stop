@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, PartyPopper, Users } from 'lucide-react';
-import { createRoom } from '@/lib/room-service';
+import { createRoom, getRoom } from '@/lib/room-service';
 
 
 interface MultiplayerDialogProps {
@@ -48,7 +48,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         title: translate('rooms.create.title'),
         description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
       });
-      router.push(`/multiplayer?roomId=${newRoom.id}`);
+      router.push(`/multiplayer?roomId=${newRoom.id.toUpperCase()}`);
       onClose();
     } catch (error) {
       console.error("Error creating room:", error);
@@ -62,8 +62,9 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     }
   };
 
-  const handleJoinRoom = () => {
-    if (!joinRoomId.trim()) {
+  const handleJoinRoom = async () => {
+    const roomIdToJoin = joinRoomId.trim().toUpperCase();
+    if (!roomIdToJoin) {
       toast({
         title: "Código de Sala Vacío",
         description: "Por favor, introduce un código de sala para unirte.",
@@ -72,9 +73,27 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
       return;
     }
     setIsJoining(true);
-    router.push(`/multiplayer?roomId=${joinRoomId.trim().toUpperCase()}`);
-    onClose();
-    // No need to set isJoining to false, as the component will unmount on navigation
+    try {
+        const roomExists = await getRoom(roomIdToJoin);
+        if (roomExists) {
+            router.push(`/multiplayer?roomId=${roomIdToJoin}`);
+            onClose();
+        } else {
+            toast({
+                title: "Sala no encontrada",
+                description: "No se encontró ninguna sala con ese código. Verifica que sea correcto.",
+                variant: "destructive"
+            });
+        }
+    } catch (error) {
+         toast({
+            title: "Error al unirse a la sala",
+            description: (error as Error).message,
+            variant: "destructive"
+        });
+    } finally {
+        setIsJoining(false);
+    }
   };
 
   return (
@@ -115,10 +134,11 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
               <Input
                 placeholder="Introducir código de sala..."
                 value={joinRoomId}
-                onChange={(e) => setJoinRoomId(e.target.value)}
+                onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
+                className="uppercase"
               />
-              <Button type="button" onClick={handleJoinRoom} disabled={isJoining} variant="secondary">
+              <Button type="button" onClick={handleJoinRoom} disabled={isJoining || !joinRoomId.trim()} variant="secondary">
                 {isJoining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
               </Button>
             </div>

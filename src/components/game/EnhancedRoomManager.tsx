@@ -57,11 +57,9 @@ export default function EnhancedRoomManager({
     const joinAndListen = async () => {
       try {
         setIsLoading(true);
-        // La creación de la sala ya añade al host. Esta función ahora solo unirá
-        // a jugadores adicionales o actualizará su estado si ya están dentro.
+        
         await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL);
 
-        // Ahora que el jugador está en la sala, escucha las actualizaciones.
         unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
           if (updatedRoom) {
             setRoom(updatedRoom);
@@ -80,6 +78,8 @@ export default function EnhancedRoomManager({
         setError((err as Error).message);
         toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
         setIsLoading(false);
+        // If there's an error (like room not found), redirect
+        setTimeout(onLeaveRoom, 2000);
       }
     };
 
@@ -88,7 +88,7 @@ export default function EnhancedRoomManager({
     return () => {
       unsubscribe();
       if (roomId && currentUser?.uid) {
-        updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' });
+        updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' }).catch(e => console.error("Failed to update player status on leave:", e));
       }
     };
   }, [roomId, currentUser, toast, onLeaveRoom]);
@@ -158,13 +158,13 @@ export default function EnhancedRoomManager({
 
   if (error) {
     return (
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-destructive text-destructive-foreground">
             <CardHeader>
-                <CardTitle className="text-destructive">Error</CardTitle>
-                 <CardDescription>{error}</CardDescription>
+                <CardTitle>Error</CardTitle>
+                 <CardDescription className="text-destructive-foreground/90">{error}</CardDescription>
             </CardHeader>
             <CardContent>
-                <Button onClick={onLeaveRoom} className="w-full">Volver al inicio</Button>
+                <Button onClick={onLeaveRoom} variant="outline" className="w-full bg-white text-destructive hover:bg-white/90">Volver al inicio</Button>
             </CardContent>
         </Card>
     );

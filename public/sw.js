@@ -1,87 +1,100 @@
-// Nombre de la caché
-const CACHE_NAME = 'stop-game-cache-v1.6';
+// El nombre de la caché para nuestra aplicación
+const CACHE_NAME = 'stop-game-cache-v1.3';
 
-// Archivos para cachear (core de la app)
+// Los archivos y rutas que queremos cachear
 const urlsToCache = [
   '/',
   '/manifest.json',
   '/favicon.ico',
   '/android-chrome-192x192.png',
   '/android-chrome-512x512.png',
-  // Rutas principales de la PWA
+  // Rutas de la aplicación (añadir las más importantes)
   '/play-solo',
   '/leaderboard',
   '/categories',
-  // Es importante cachear los chunks de JS y CSS que Next.js genera.
-  // Estos nombres pueden cambiar en cada build, así que esta es una limitación
-  // de un sw.js estático. Una mejor solución usaría workbox-webpack-plugin.
+  // Recursos estáticos de Next.js (el nombre puede variar con cada build)
+  // El service worker los cacheará dinámicamente en el evento 'fetch'
 ];
 
-// Instalación del Service Worker
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Instalando...');
+// Evento 'install': se dispara cuando el service worker se instala
+self.addEventListener('install', event => {
+  console.log('Service Worker: Instalando...');
+  // Esperamos a que la promesa de 'waitUntil' se resuelva
   event.waitUntil(
+    // Abrimos la caché con el nombre definido
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Abriendo caché y añadiendo archivos core');
+      .then(cache => {
+        console.log('Service Worker: Cache abierta.');
+        // Añadimos todos los recursos definidos a la caché
         return cache.addAll(urlsToCache);
       })
-      .then(() => {
-        console.log('[Service Worker] Archivos core cacheados exitosamente');
-        return self.skipWaiting();
+      .catch(error => {
+        console.error('Service Worker: Falló el cacheo inicial', error);
       })
   );
 });
 
-// Activación del Service Worker y limpieza de cachés antiguas
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activando...');
+// Evento 'activate': se dispara cuando el service worker se activa
+self.addEventListener('activate', event => {
+  console.log('Service Worker: Activando...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    // Obtenemos todos los nombres de las cachés existentes
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        // Iteramos sobre los nombres de las cachés
+        cacheNames.map(cacheName => {
+          // Si una caché no es la actual, la eliminamos
           if (cacheName !== CACHE_NAME) {
-            console.log(`[Service Worker] Borrando caché antigua: ${cacheName}`);
+            console.log('Service Worker: Limpiando caché antigua', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      console.log('[Service Worker] Reclamando clientes...');
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim()) // Tomar control inmediato de las páginas
   );
 });
 
-// Interceptación de peticiones (Estrategia: Stale-While-Revalidate)
-self.addEventListener('fetch', (event) => {
-    // No interceptar peticiones a Firebase
-    if (event.request.url.includes('firestore.googleapis.com')) {
-        return;
-    }
-    
-    // Ignorar peticiones que no son GET
-    if (event.request.method !== 'GET') {
-        return;
-    }
 
-    event.respondWith(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.match(event.request).then((cachedResponse) => {
-                const fetchPromise = fetch(event.request).then((networkResponse) => {
-                    // Si la petición es exitosa, la guardamos en caché y la retornamos
-                    cache.put(event.request, networkResponse.clone());
-                    return networkResponse;
-                });
-
-                // Devolvemos la respuesta cacheada inmediatamente si existe,
-                // mientras la petición de red se ejecuta en segundo plano.
-                // Si no hay respuesta cacheada, esperamos a la respuesta de red.
-                return cachedResponse || fetchPromise;
-            }).catch(() => {
-                // Si todo falla (ni caché ni red), podemos devolver una página offline de fallback
-                // return caches.match('/offline.html');
-            })
-        })
-    );
+// Estrategia: Network Falling Back to Cache
+// Ideal para contenido que se actualiza frecuentemente (como rankings)
+// pero que debe estar disponible sin conexión.
+self.addEventListener('fetch', event => {
+  // Ignoramos las peticiones que no son GET
+  if (event.request.method !== 'GET') {
+    return;
+  }
+  
+  event.respondWith(
+    // 1. Intentamos obtener el recurso de la red
+    fetch(event.request)
+      .then(networkResponse => {
+        // Si la petición a la red fue exitosa
+        // Abrimos nuestra caché
+        return caches.open(CACHE_NAME).then(cache => {
+          // Guardamos una copia de la respuesta de red en la caché para futuras peticiones sin conexión
+          // Usamos .clone() porque la respuesta solo se puede consumir una vez
+          cache.put(event.request, networkResponse.clone());
+          // Devolvemos la respuesta de la red al navegador
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // 2. Si la petición de red falla (sin conexión), intentamos obtener el recurso de la caché
+        console.log('Service Worker: Fallo de red, buscando en caché para:', event.request.url);
+        return caches.match(event.request).then(cachedResponse => {
+            // Si encontramos una respuesta en caché, la devolvemos
+            if (cachedResponse) {
+              console.log('Service Worker: Sirviendo desde caché:', event.request.url);
+              return cachedResponse;
+            }
+            
+            // Si no se encuentra ni en red ni en caché, podríamos devolver una página offline por defecto
+            // Por ahora, simplemente dejamos que el error de red se propague
+            return new Response('Contenido no disponible sin conexión.', {
+              status: 404,
+              statusText: 'Offline'
+            });
+        });
+      })
+  );
 });
