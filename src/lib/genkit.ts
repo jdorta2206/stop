@@ -1,5 +1,5 @@
 
-import { genkit, configureGenkit } from 'genkit';
+import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 
 // Este archivo es un módulo de configuración.
