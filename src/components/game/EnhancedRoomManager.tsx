@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,8 @@ import {
     removePlayerFromRoom, 
     addPlayerToRoom, 
     startGame, 
+    submitPlayerAnswers,
+    triggerGlobalStop,
     type Player, 
     type Room 
 } from '@/lib/room-service';
@@ -36,6 +38,13 @@ import ContactsManager from './ContactsManager';
 import type { User } from 'firebase/auth';
 import { GameArea } from './components/game-area';
 import { useLanguage } from '@/contexts/language-context';
+
+const CATEGORIES_BY_LANG: Record<string, string[]> = {
+  es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
+  en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit", "Brand"],
+  fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit", "Marque"],
+  pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta", "Marca"],
+};
 
 interface EnhancedRoomManagerProps {
   roomId: string;
@@ -51,7 +60,7 @@ export default function EnhancedRoomManager({
   onStartGame: initialOnStartGame 
 }: EnhancedRoomManagerProps) {
   const { toast } = useToast();
-  const { translate } = useLanguage();
+  const { translate, language } = useLanguage();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -59,6 +68,10 @@ export default function EnhancedRoomManager({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  const roomSettings = useMemo(() => room?.settings || { roundDuration: 60, language: 'es' }, [room]);
+  const categories = useMemo(() => CATEGORIES_BY_LANG[roomSettings.language] || CATEGORIES_BY_LANG.es, [roomSettings.language]);
 
   useEffect(() => {
     if (!roomId || !currentUser) return;
@@ -75,7 +88,17 @@ export default function EnhancedRoomManager({
           if (updatedRoom) {
             setRoom(updatedRoom);
             setPlayers(Object.values(updatedRoom.players || {}));
-            setIsPlaying(updatedRoom.status === 'playing');
+            const gameIsPlaying = updatedRoom.status === 'playing' && updatedRoom.gameState === 'PLAYING';
+            setIsPlaying(gameIsPlaying);
+
+            if (gameIsPlaying && updatedRoom.roundStartedAt) {
+              const startTime = updatedRoom.roundStartedAt.toMillis();
+              const now = Date.now();
+              const elapsed = Math.floor((now - startTime) / 1000);
+              const remaining = Math.max(0, updatedRoom.settings.roundDuration - elapsed);
+              setTimeLeft(remaining);
+            }
+            
             setError(null);
           } else {
             setError("La sala ya no existe o no se pudo cargar.");
@@ -103,6 +126,16 @@ export default function EnhancedRoomManager({
       }
     };
   }, [roomId, currentUser, toast, onLeaveRoom]);
+  
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isPlaying && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isPlaying, timeLeft]);
 
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room?.hostId === currentUser.uid;
@@ -125,6 +158,22 @@ export default function EnhancedRoomManager({
     } catch (error) {
         toast({ title: 'Error', description: `No se pudo iniciar el juego: ${(error as Error).message}`, variant: 'destructive' });
     }
+  };
+
+  const handleStop = async () => {
+    try {
+      await triggerGlobalStop(roomId);
+    } catch (error) {
+       toast({ title: 'Error', description: `No se pudo detener la ronda: ${(error as Error).message}`, variant: 'destructive' });
+    }
+  };
+
+  const handleMultiplayerInputChange = async (category: string, value: string) => {
+     try {
+       await submitPlayerAnswers(roomId, currentUser.uid, { [category]: value });
+     } catch(error) {
+        toast({ title: 'Error', description: 'No se pudo guardar tu respuesta.', variant: 'destructive' });
+     }
   };
 
   const handleKickPlayer = async (playerId: string) => {
@@ -189,7 +238,6 @@ export default function EnhancedRoomManager({
     );
   }
 
-
   if (!room) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -199,15 +247,18 @@ export default function EnhancedRoomManager({
     );
   }
 
-  // Renderiza la interfaz de juego si el estado de la sala es 'playing'
   if (isPlaying) {
-      // Esta es una vista simplificada, necesitarás un componente de juego más complejo
       return (
-          <div>
-              <h2 className="text-2xl font-bold text-center">¡El juego ha comenzado!</h2>
-              <p className="text-center">Letra: {room.currentLetter}</p>
-              {/* Aquí iría el componente GameArea para el modo multijugador */}
-          </div>
+          <GameArea
+            currentLetter={room.currentLetter}
+            categories={categories}
+            playerResponses={room.playerResponses?.[currentUser.uid] || {}}
+            onInputChange={handleMultiplayerInputChange}
+            translateUi={translate}
+            onStop={handleStop}
+            timeLeft={timeLeft}
+            roundDuration={room.settings.roundDuration}
+          />
       );
   }
 

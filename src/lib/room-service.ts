@@ -251,21 +251,32 @@ export const startGame = async (roomId: string) => {
     const roomDocRef = doc(roomsCollection, roomId);
     const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
 
+    // Reset player responses and set game state to PLAYING
+    const room = await getRoom(roomId);
+    if (!room) return;
+    
+    const playerIds = Object.keys(room.players);
+    const initialResponses: PlayerResponses = {};
+    playerIds.forEach(id => {
+      initialResponses[id] = {};
+    });
+
     await updateDoc(roomDocRef, {
         status: 'playing',
         gameState: 'PLAYING',
         currentLetter: letter,
-        playerResponses: {},
+        playerResponses: initialResponses,
         roundResults: null,
         roundStartedAt: serverTimestamp(),
     });
 };
 
-export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: Record<string, string>) => {
+export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: PlayerResponseSet) => {
     const roomDocRef = doc(roomsCollection, roomId);
-    // Use dot notation for nested fields
+    // Use dot notation for nested fields for atomic updates
     const updatePayload: { [key: string]: any } = {};
     for (const category in answers) {
+        // This ensures we are setting a field within the player's response object
         updatePayload[`playerResponses.${playerId}.${category}`] = answers[category];
     }
     await updateDoc(roomDocRef, updatePayload);
