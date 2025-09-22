@@ -822,7 +822,7 @@ export const UI_TEXTS = {
       features: {
         multiplayer: {
           title: { es: "Multijugador", en: "Multiplayer", fr: "Multijoueur", pt: "Multijogador" },
-          description: { es: "Juega con hasta 8 amigos simultáneamente", en: "Play with up to 8 friends simultaneously", fr: "Jouez avec jusqu'à 8 amis simultanément", pt: "Jogue com até 8 amigos simultaneamente" }
+          description: { es: "Juega con hasta 10 amigos simultáneamente", en: "Play with up to 10 friends simultaneously", fr: "Jouez avec jusqu'à 10 amis simultanément", pt: "Jogue com até 10 amigos simultaneamente" }
         },
         multipleCategories: {
           title: { es: "Múltiples Categorías", en: "Multiple Categories", fr: "Catégories Multiples", pt: "Múltiplas Categorias" },
