@@ -250,7 +250,7 @@ export default function EnhancedRoomManager({
   if (isPlaying) {
       return (
           <GameArea
-            currentLetter={room.currentLetter}
+            currentLetter={room.currentLetter || null}
             categories={categories}
             playerResponses={room.playerResponses?.[currentUser.uid] || {}}
             onInputChange={handleMultiplayerInputChange}
