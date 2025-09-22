@@ -132,3 +132,4 @@ export const updateNotificationStatus = async (userId: string, notificationId: s
     const notificationDocRef = doc(db, `rankings/${userId}/notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };
+
