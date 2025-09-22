@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
             title: '¡Sala de desafío creada!',
             description: `Código: ${newRoom.id}. Compártelo con ${player.playerName}.`,
         });
-        router.push(`/multiplayer?roomId=${newRoom.id.toUpperCase()}`);
+        router.push(`/multiplayer?roomId=${newRoom.id}`);
     } catch (error) {
         toast({
             title: "Error al crear la sala",

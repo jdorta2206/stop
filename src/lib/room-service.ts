@@ -58,6 +58,15 @@ export interface Room {
 const roomsCollection = collection(db, 'rooms');
 const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
 
+function generateRoomId(length: number = 6): string {
+    const chars = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 
 export interface CreateRoomInput {
   creatorId: string;
@@ -78,7 +87,8 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
     throw new Error('User is not authenticated.');
   }
   
-  const newRoomDocRef = doc(collection(db, "rooms"));
+  const newRoomId = generateRoomId();
+  const newRoomDocRef = doc(db, "rooms", newRoomId);
 
   await runTransaction(db, async (transaction) => {
     const finalCreatorName = creatorName || 'Jugador Anónimo';
@@ -129,6 +139,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
 };
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
+    if (!roomId) return null;
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const docSnap = await getDoc(roomDocRef);
     return docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Room : null;
