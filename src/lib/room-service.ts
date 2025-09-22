@@ -82,7 +82,7 @@ export interface CreateRoomOutput {
   status: string;
 }
 
-export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutput> => {
+export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
   const { creatorId, creatorName, creatorAvatar } = input;
 
   if (!creatorId) {
@@ -127,7 +127,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
     hostId: creatorId,
     status: 'waiting',
   };
-};
+}
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
     if (!roomId) return null;
