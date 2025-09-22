@@ -28,11 +28,11 @@ import type { ChatMessage } from '@/components/chat/chat-message-item';
 export interface Player {
     id: string;
     name: string;
-    avatar?: string | null;
+    avatar: string; // Avatar is now always a string
     isReady: boolean;
     status: 'online' | 'away' | 'offline';
     joinedAt: any;
-    isHost?: boolean;
+    isHost: boolean;
 }
 
 export interface Room {
@@ -92,14 +92,15 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomId = generateRoomId();
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
+  // Safely handle nullable user data
   const finalCreatorName = creatorName || 'Jugador Anónimo';
-  const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
+  const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalCreatorName)}`;
 
   const hostPlayer: Player = {
     id: creatorId,
     name: finalCreatorName,
     avatar: finalCreatorAvatar,
-    isReady: true,
+    isReady: false,
     status: 'online',
     joinedAt: serverTimestamp(),
     isHost: true,
@@ -149,10 +150,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
         const playerPath = `players.${playerId}`;
         const finalPlayerName = playerName || 'Jugador Anónimo';
         
-        let finalPlayerAvatar = playerAvatar;
-        if (!finalPlayerAvatar) {
-            finalPlayerAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalPlayerName}`;
-        }
+        let finalPlayerAvatar = playerAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalPlayerName)}`;
 
 
         if (room.players && room.players[playerId]) {
@@ -194,25 +192,38 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
     const room = await getRoom(roomId);
     if (!room) return;
 
-    if (room.hostId === playerId) {
-        const otherPlayers = Object.keys(room.players).filter(id => id !== playerId);
-        if (otherPlayers.length > 0) {
-            const newHostId = otherPlayers[0];
-            await updateDoc(roomDocRef, {
-                [`players.${playerId}`]: deleteField(),
-                hostId: newHostId,
-                [`players.${newHostId}.isHost`]: true
-            });
-        } else {
-            await updateDoc(roomDocRef, {
-                [`players.${playerId}`]: deleteField()
-            });
+    await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomDocRef);
+        if (!roomSnap.exists()) {
+            return;
         }
-    } else {
-        await updateDoc(roomDocRef, {
-            [`players.${playerId}`]: deleteField()
-        });
-    }
+
+        const currentRoom = roomSnap.data() as Room;
+        const playerPath = `players.${playerId}`;
+        const gameScorePath = `gameScores.${playerId}`;
+        
+        // Prepare updates to remove player data
+        const updates: { [key: string]: any } = {
+            [playerPath]: deleteField(),
+            [gameScorePath]: deleteField(),
+        };
+
+        // If the player leaving is the host, assign a new host
+        if (currentRoom.hostId === playerId) {
+            const otherPlayers = Object.keys(currentRoom.players).filter(id => id !== playerId);
+            if (otherPlayers.length > 0) {
+                const newHostId = otherPlayers[0]; // Assign the first player in the list as the new host
+                updates['hostId'] = newHostId;
+                updates[`players.${newHostId}.isHost`] = true;
+            } else {
+                // If no players are left, maybe the room should be deleted or marked as inactive
+                // For now, just remove the host
+                updates['hostId'] = null; 
+            }
+        }
+
+        transaction.update(roomDocRef, updates);
+    });
 };
 
 
@@ -220,7 +231,14 @@ export const updatePlayerInRoom = async (roomId: string, playerId: string, data:
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
     for (const key in data) {
-        updateData[`players.${playerId}.${key}`] = data[key as keyof typeof data];
+        if(Object.prototype.hasOwnProperty.call(data, key)){
+            const typedKey = key as keyof Player;
+            // Ensure avatar is always a string
+            if(typedKey === 'avatar' && !data[typedKey]){
+                continue; // Do not update avatar to null or undefined
+            }
+            updateData[`players.${playerId}.${typedKey}`] = data[typedKey];
+        }
     }
     
     const docSnap = await getDoc(roomDocRef);
