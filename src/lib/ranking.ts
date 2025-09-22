@@ -215,6 +215,7 @@ class RankingManager {
     }
 
     for (const batch of batches) {
+      if (batch.length === 0) continue;
       const q = query(this.usersCollection, where(documentId(), "in", batch));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((doc) => {
