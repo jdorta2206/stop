@@ -1,17 +1,18 @@
 {
-  "name": "Stop - Juego de Palabras",
+  "name": "Stop - El Juego de Palabras",
   "short_name": "Stop",
   "description": "Un emocionante juego de palabras donde los jugadores deben escribir palabras que comiencen con una letra específica en diferentes categorías.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#ef4444",
+  "background_color": "#dc2626",
   "theme_color": "#ef4444",
   "orientation": "any",
   "id": "/",
   "scope": "/",
-  "lang": "es-ES",
   "dir": "auto",
-  "categories": ["games", "entertainment", "education"],
+  "lang": "es-ES",
+  "prefer_related_applications": false,
+  "iarc_rating_id": "e5c84f3c-54a8-4375-835d-25a835694297",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -24,27 +25,15 @@
       "type": "image/png"
     }
   ],
-  "screenshots": [
-    {
-      "src": "https://picsum.photos/seed/1/1080/1920",
-      "sizes": "1080x1920",
-      "type": "image/jpeg",
-      "form_factor": "narrow",
-      "label": "Pantalla de Inicio del Juego"
-    },
-    {
-      "src": "https://picsum.photos/seed/2/1920/1080",
-      "sizes": "1920x1080",
-      "type": "image/jpeg",
-      "form_factor": "wide",
-      "label": "Modo de Juego Principal"
-    }
+  "categories": [
+    "entertainment",
+    "games"
   ],
   "shortcuts": [
     {
       "name": "Jugar Solo",
       "short_name": "Jugar",
-      "description": "Iniciar una nueva partida contra la IA",
+      "description": "Iniciar una partida individual contra la IA",
       "url": "/play-solo",
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     },
@@ -56,7 +45,24 @@
       "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }]
     }
   ],
-  "share_target": {
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1080x1920.png?text=Bienvenido+a+Stop",
+      "type": "image/png",
+      "sizes": "1080x1920"
+    },
+    {
+      "src": "https://placehold.co/1080x1920.png?text=Juega+con+la+letra+P",
+      "type": "image/png",
+      "sizes": "1080x1920"
+    },
+    {
+      "src": "https://placehold.co/1080x1920.png?text=Resultados+de+la+Ronda",
+      "type": "image/png",
+      "sizes": "1080x1920"
+    }
+  ],
+   "share_target": {
     "action": "/share-target",
     "method": "GET",
     "params": {
