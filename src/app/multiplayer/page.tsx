@@ -46,7 +46,7 @@ function MultiplayerLobbyContent() {
                     } else {
                         setError("La sala ya no existe o no se pudo cargar.");
                         toast({ title: 'Error', description: 'La sala ya no existe.', variant: 'destructive'});
-                        onLeaveRoom();
+                        handleLeaveRoom();
                     }
                     setIsLoading(false);
                 });
