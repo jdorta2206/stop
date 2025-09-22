@@ -25,8 +25,16 @@ function MultiplayerLobbyContent() {
 
     const roomId = searchParams ? searchParams.get('roomId') : null;
 
+    const handleLeaveRoom = () => {
+        router.push('/');
+    };
+
     useEffect(() => {
-        if (authLoading || !roomId) return;
+        if (authLoading) return;
+        if (!roomId) {
+            handleLeaveRoom();
+            return;
+        }
 
         if (!user) {
             router.push('/');
@@ -66,17 +74,12 @@ function MultiplayerLobbyContent() {
         };
     }, [authLoading, user, router, roomId, toast]);
 
-
-    const handleLeaveRoom = () => {
-        router.push('/');
-    };
-
     const handleStartGame = () => {
         // This logic is now handled inside EnhancedRoomManager
         console.log(`Starting game in room ${roomId}`);
     };
 
-    if (isLoading || authLoading || !room) {
+    if (isLoading || authLoading) {
         return (
             <div className="flex h-screen items-center justify-center bg-background">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -85,7 +88,6 @@ function MultiplayerLobbyContent() {
         );
     }
     
-    // If we have a user, a room, and a roomId, show the manager
     if (user && room && roomId) {
         return (
             <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
@@ -104,12 +106,11 @@ function MultiplayerLobbyContent() {
         );
     }
 
-    // Fallback redirect
-    router.push('/');
+    // Fallback if room or user is missing after loading
     return (
         <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            <p className="ml-4 text-lg">Redirigiendo...</p>
+            <p className="ml-4 text-lg">{error || 'Redirigiendo...'}</p>
         </div>
     );
 }

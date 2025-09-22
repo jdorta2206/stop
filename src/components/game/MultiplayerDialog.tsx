@@ -36,8 +36,8 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     try {
       const newRoom = await createRoom({
         creatorId: user.uid,
-        creatorName: user.displayName ?? 'Jugador',
-        creatorAvatar: user.photoURL ?? null
+        creatorName: user.displayName,
+        creatorAvatar: user.photoURL
       });
 
       if (!newRoom || !newRoom.id) {
@@ -48,7 +48,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         title: translate('rooms.create.title'),
         description: `¡Sala creada con éxito! Código: ${newRoom.id}`,
       });
-      router.push(`/multiplayer?roomId=${newRoom.id.toUpperCase()}`);
+      router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
       console.error("Error creating room:", error);

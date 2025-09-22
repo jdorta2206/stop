@@ -242,36 +242,36 @@ export default function EnhancedRoomManager({
       }
   }
 
-  // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO) ---
+  // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
-    <div className="space-y-4 max-w-3xl mx-auto">
-      <Card className="overflow-hidden">
-        <CardHeader className="bg-card-foreground/5 p-4 border-b">
+    <div className="space-y-4 max-w-3xl mx-auto w-full">
+      <Card className="overflow-hidden shadow-2xl bg-card/70 backdrop-blur-md border-white/20">
+        <CardHeader className="bg-black/20 p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 {room.settings.isPrivate ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
                 Sala: {roomId}
               </CardTitle>
-              <CardDescription className="mt-1">
+              <CardDescription className="mt-1 text-white/70">
                 {players.length}/{room.settings.maxPlayers} jugadores • {readyPlayersCount} listos
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
                  <Dialog open={showContacts} onOpenChange={setShowContacts}>
                     <DialogTrigger asChild>
-                       <Button variant="outline">
+                       <Button variant="outline" className="bg-transparent hover:bg-white/10 border-white/30">
                         <Share2 className="h-4 w-4 mr-2" />
                         Invitar
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none">
+                    <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none p-0">
                         <ContactsManager language={room.settings.language} roomCode={roomId} onClose={() => setShowContacts(false)} />
                     </DialogContent>
                 </Dialog>
                 <Dialog open={showSettings} onOpenChange={setShowSettings}>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={!isHost}>
+                    <Button variant="ghost" size="icon" disabled={!isHost} className="hover:bg-white/10">
                       <Settings className="h-5 w-5" />
                     </Button>
                   </DialogTrigger>
@@ -309,13 +309,13 @@ export default function EnhancedRoomManager({
           </div>
         </CardHeader>
         
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <CardContent className="p-4 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
                 <h4 className="font-semibold mb-3 flex items-center gap-2"><Users className="h-5 w-5" />Jugadores</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                     {players.map((player) => (
-                    <div key={player.id} className="flex items-center justify-between p-3 bg-background/50 dark:bg-card/30 rounded-lg animate-fade-in">
+                    <div key={player.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg animate-fade-in">
                         <div className="flex items-center gap-3">
                             {getStatusIcon(player.status)}
                             <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
@@ -368,7 +368,7 @@ export default function EnhancedRoomManager({
                 <Button
                     onClick={onLeaveRoom}
                     variant="outline"
-                    className="w-full"
+                    className="w-full bg-transparent hover:bg-white/10 border-white/30"
                 >
                     <LogOut className="mr-2 h-4 w-4" />
                     Salir
@@ -380,5 +380,3 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
-
-    

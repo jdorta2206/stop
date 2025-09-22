@@ -94,7 +94,7 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
 
   const finalCreatorName = creatorName || 'Jugador Anónimo';
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
-  
+
   const hostPlayer: Player = {
     id: creatorId,
     name: finalCreatorName,
