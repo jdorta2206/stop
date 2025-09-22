@@ -10,7 +10,7 @@ import { AppFooter } from '@/components/layout/footer';
 import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
 import { useLanguage } from '@/contexts/language-context';
 import { onRoomUpdate, addPlayerToRoom, type Room } from '@/lib/room-service';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 function MultiplayerLobbyContent() {
     const router = useRouter();
@@ -60,7 +60,7 @@ function MultiplayerLobbyContent() {
             } catch (err) {
                 console.error("Error joining or listening to room:", err);
                 setError((err as Error).message);
-                toast.error((err as Error).message, { title: 'Error al unirse' });
+                toast.error((err as Error).message, { description: 'Error al unirse' });
                 setIsLoading(false);
                 setTimeout(() => router.push('/'), 3000);
             }

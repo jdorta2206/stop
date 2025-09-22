@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth'; 
 import { Loader2 } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 import type { User } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -39,9 +39,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   
   useEffect(() => {
     if (error) {
-       toast.error(error.message || "No se pudo completar el inicio de sesión.", {
-         title: "Error de inicio de sesión",
-       });
+       toast.error(error.message || "No se pudo completar el inicio de sesión.");
     }
   }, [error]);
 
@@ -49,11 +47,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
         const firebaseUser = await loginMethod();
         if (firebaseUser?.uid) {
-            toast.success("Has iniciado sesión correctamente.", { title: "¡Bienvenido!" });
+            toast.success("Has iniciado sesión correctamente.");
             onClose();
         }
     } catch (e: any) {
-        toast.error(`Error al iniciar sesión: ${e.message}`, { title: "Error" });
+        toast.error(`Error al iniciar sesión: ${e.message}`);
     }
   }
 

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '@/contexts/language-context';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { GameArea } from '@/components/game/components/game-area';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -122,17 +122,13 @@ export default function PlaySoloPage() {
           won: playerTotalScore > calculatedAiScore,
         }).catch(dbError => {
           console.error("Error saving game result:", dbError);
-          toast.error("No se pudo guardar tu puntuación, pero tus resultados están aquí.", {
-            title: "Error de Guardado"
-          });
+          toast.error("No se pudo guardar tu puntuación, pero tus resultados están aquí.");
         });
       }
 
     } catch (error) {
       console.error("Error en handleStop:", error);
-      toast.error(`Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`, {
-        title: translate('notifications.aiError.title'),
-      });
+      toast.error(`Error al procesar la ronda: ${(error as Error).message}. Por favor, intenta de nuevo.`);
       setGameState('PLAYING');
     } finally {
       isEvaluatingRef.current = false;

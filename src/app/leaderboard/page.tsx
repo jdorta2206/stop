@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { useAuth } from '@/hooks/use-auth';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
@@ -140,16 +140,14 @@ export default function LeaderboardPage() {
         // Send notification to the challenged player
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
 
-        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`, {
-            title: '¡Desafío enviado!',
-        });
+        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`);
 
         // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
         toast.error((error as Error).message, {
-          title: "Error al crear el desafío",
+          description: "Error al crear el desafío",
         });
     }
   };

@@ -10,7 +10,7 @@ import { AppFooter } from '@/components/layout/footer';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from 'lucide-react';
 import { rankingManager, type PlayerScore } from '@/lib/ranking';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export default function AdminPage() {
     const { language } = useLanguage();

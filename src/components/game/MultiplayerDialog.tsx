@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/language-context';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,16 +44,12 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
         throw new Error("La función `createRoom` no devolvió un ID de sala.");
       }
 
-      toast.success(`¡Sala creada con éxito! Código: ${newRoom.id}`, {
-        title: translate('rooms.create.title'),
-      });
+      toast.success(`¡Sala creada con éxito! Código: ${newRoom.id}`);
       router.push(`/multiplayer?roomId=${newRoom.id}`);
       onClose();
     } catch (error) {
       console.error("Error creating room:", error);
-      toast.error(`No se pudo crear la sala: ${(error as Error).message}`, {
-        title: translate('common.error'),
-      });
+      toast.error(`No se pudo crear la sala: ${(error as Error).message}`);
     } finally {
         setIsCreating(false);
     }
@@ -62,9 +58,7 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
   const handleJoinRoom = async () => {
     const roomIdToJoin = joinRoomId.trim().toUpperCase();
     if (!roomIdToJoin) {
-      toast.error("Por favor, introduce un código de sala para unirte.", {
-        title: "Código de Sala Vacío",
-      });
+      toast.error("Por favor, introduce un código de sala para unirte.");
       return;
     }
     setIsJoining(true);
@@ -74,13 +68,11 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
             router.push(`/multiplayer?roomId=${roomIdToJoin}`);
             onClose();
         } else {
-            toast.error("No se encontró ninguna sala con ese código. Verifica que sea correcto.", {
-                title: "Sala no encontrada",
-            });
+            toast.error("No se encontró ninguna sala con ese código. Verifica que sea correcto.");
         }
     } catch (error) {
          toast.error((error as Error).message, {
-            title: "Error al unirse a la sala",
+            description: "Error al unirse a la sala",
         });
     } finally {
         setIsJoining(false);

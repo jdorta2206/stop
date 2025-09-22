@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode, useCallback, useMemo } from 
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from 'sonner';
 
 // AppUser se usará en otras partes de la app, pero el hook solo expone FirebaseUser
 export interface AppUser extends FirebaseUser {
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const handleLogout = useCallback(async () => {
     await signOut();
-    toast.success("Has cerrado sesión correctamente.", { title: "Sesión cerrada" });
+    toast.success("Has cerrado sesión correctamente.");
   }, [signOut]);
   
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
