@@ -90,7 +90,7 @@ export default function EnhancedRoomManager({
         setError((err as Error).message);
         toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
         setIsLoading(false);
-        setTimeout(onLeaveRoom, 2000);
+        setTimeout(onLeaveRoom, 3000);
       }
     };
 
