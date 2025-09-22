@@ -37,10 +37,12 @@ export default function LeaderboardPage() {
   const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
+      // Fetch global leaderboard
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
       if (userId) {
+        // Fetch personal stats, game history, and friends list in parallel
         const [personalData, historyData, friendsList] = await Promise.all([
           rankingManager.getPlayerRanking(userId),
           rankingManager.getGameHistory(userId, 5),
@@ -52,8 +54,10 @@ export default function LeaderboardPage() {
         
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
+            // Fetch rankings for all friends
             const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
             
+            // Enrich friend rankings with names and avatars from the friends list
             const enrichedFriendRankings = friendRankings.map(ranking => {
                 const friendInfo = friendsList.find(f => f.id === ranking.id);
                 return {
@@ -70,7 +74,7 @@ export default function LeaderboardPage() {
       }
     } catch (error) {
       console.error("Error fetching leaderboard data:", error);
-      toast.error("Error al cargar los datos", {
+      toast.error("Error al cargar los datos del ranking.", {
         description: (error as Error).message,
       });
     } finally {

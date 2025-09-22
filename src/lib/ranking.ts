@@ -207,14 +207,14 @@ class RankingManager {
         return [];
     }
 
+    const players: PlayerScore[] = [];
+
     // Firestore 'in' query is limited to 30 elements. We need to batch.
     const batches: string[][] = [];
     for (let i = 0; i < playerIds.length; i += 30) {
         batches.push(playerIds.slice(i, i + 30));
     }
     
-    const players: PlayerScore[] = [];
-
     for (const batch of batches) {
         if (batch.length === 0) continue;
         const q = query(this.usersCollection, where(documentId(), 'in', batch));
@@ -224,8 +224,7 @@ class RankingManager {
         });
     }
 
-    // Sort by totalScore descending
-    return players.sort((a, b) => b.totalScore - a.totalScore);
+    return players;
   }
 }
 
