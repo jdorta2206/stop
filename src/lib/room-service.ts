@@ -15,7 +15,8 @@ import {
     query,
     orderBy,
     limit,
-    where
+    where,
+    Timestamp
 } from "firebase/firestore";
 import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '@/components/game/types/game-types';
 import type { EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
@@ -91,25 +92,20 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomId = generateRoomId();
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
-  await runTransaction(db, async (transaction) => {
-    const finalCreatorName = creatorName || 'Jugador Anónimo';
-    const finalCreatorAvatar =
-      creatorAvatar ||
-      `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
+  const finalCreatorName = creatorName || 'Jugador Anónimo';
+  const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalCreatorName}`;
 
-    const creatorPlayer: Player = {
-      id: creatorId,
-      name: finalCreatorName,
-      avatar: finalCreatorAvatar,
-      isReady: false,
-      status: 'online',
-      joinedAt: serverTimestamp(),
-      isHost: true,
-    };
-
-    const newRoomData: Omit<Room, 'id'> = {
+  await setDoc(newRoomDocRef, {
       players: {
-        [creatorId]: creatorPlayer,
+        [creatorId]: {
+          id: creatorId,
+          name: finalCreatorName,
+          avatar: finalCreatorAvatar,
+          isReady: false,
+          status: 'online',
+          joinedAt: serverTimestamp(),
+          isHost: true,
+        },
       },
       hostId: creatorId,
       createdAt: serverTimestamp(),
@@ -122,21 +118,12 @@ export const createRoom = async (input: CreateRoomInput): Promise<CreateRoomOutp
       },
       gameScores: { [creatorId]: 0 },
       roundNumber: 0,
-    };
-    
-    transaction.set(newRoomDocRef, newRoomData);
   });
-  
-  const roomSnap = await getDoc(newRoomDocRef);
-  if (!roomSnap.exists()) {
-      throw new Error("Failed to create and retrieve the new room.");
-  }
-  const roomData = roomSnap.data() as Room;
 
   return {
-    id: newRoomDocRef.id,
-    hostId: roomData.hostId,
-    status: roomData.status,
+    id: newRoomId,
+    hostId: creatorId,
+    status: 'waiting',
   };
 };
 
