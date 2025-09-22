@@ -22,11 +22,9 @@ import {
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { 
-    onRoomUpdate, 
     updatePlayerInRoom, 
     updateRoomSettings, 
     removePlayerFromRoom, 
-    addPlayerToRoom, 
     startGame, 
     submitPlayerAnswers,
     triggerGlobalStop,
@@ -59,6 +57,7 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 interface EnhancedRoomManagerProps {
   roomId: string;
   currentUser: User;
+  roomData: Room;
   onLeaveRoom: () => void;
   onStartGame: () => void;
 }
@@ -66,86 +65,41 @@ interface EnhancedRoomManagerProps {
 export default function EnhancedRoomManager({ 
   roomId, 
   currentUser, 
+  roomData: room,
   onLeaveRoom, 
   onStartGame: initialOnStartGame 
 }: EnhancedRoomManagerProps) {
   const { toast } = useToast();
   const { translate, language } = useLanguage();
-  const [room, setRoom] = useState<Room | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  const roomSettings = useMemo(() => room?.settings || { roundDuration: 60, language: 'es' }, [room]);
+  const players = useMemo(() => Object.values(room.players || {}), [room.players]);
+  const roomSettings = useMemo(() => room.settings, [room.settings]);
   const categories = useMemo(() => CATEGORIES_BY_LANG[roomSettings.language] || CATEGORIES_BY_LANG.es, [roomSettings.language]);
   const alphabet = useMemo(() => ALPHABET_BY_LANG[roomSettings.language] || ALPHABET_BY_LANG.es, [roomSettings.language]);
 
-  useEffect(() => {
-    if (!roomId || !currentUser) return;
-
-    let unsubscribe: () => void = () => {};
-
-    const joinAndListen = async () => {
-      try {
-        setIsLoading(true);
-        
-        await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador', currentUser.photoURL);
-
-        unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
-          if (updatedRoom) {
-            setRoom(updatedRoom);
-            setPlayers(Object.values(updatedRoom.players || {}));
-            
-            if (updatedRoom.gameState === 'PLAYING' && updatedRoom.roundStartedAt) {
-              const startTime = updatedRoom.roundStartedAt.toMillis();
-              const now = Date.now();
-              const elapsed = Math.floor((now - startTime) / 1000);
-              const remaining = Math.max(0, updatedRoom.settings.roundDuration - elapsed);
-              setTimeLeft(remaining);
-            }
-            
-            setError(null);
-          } else {
-            setError("La sala ya no existe o no se pudo cargar.");
-            toast({ title: 'Error', description: 'La sala ya no existe.', variant: 'destructive'});
-            onLeaveRoom();
-          }
-          setIsLoading(false);
-        });
-
-      } catch (err) {
-        console.error("Error joining or listening to room:", err);
-        setError((err as Error).message);
-        toast({ title: 'Error al unirse', description: (err as Error).message, variant: 'destructive' });
-        setIsLoading(false);
-        setTimeout(onLeaveRoom, 3000);
-      }
-    };
-
-    joinAndListen();
-
-    return () => {
-      unsubscribe();
-      if (roomId && currentUser?.uid) {
-        updatePlayerInRoom(roomId, currentUser.uid, { status: 'offline' }).catch(e => console.error("Failed to update player status on leave:", e));
-      }
-    };
-  }, [roomId, currentUser, toast, onLeaveRoom]);
-  
   const currentPlayer = players.find(p => p.id === currentUser.uid);
-  const isHost = room?.hostId === currentUser.uid;
+  const isHost = room.hostId === currentUser.uid;
 
+  useEffect(() => {
+    if (room.gameState === 'PLAYING' && room.roundStartedAt) {
+      const startTime = room.roundStartedAt.toMillis();
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const remaining = Math.max(0, room.settings.roundDuration - elapsed);
+      setTimeLeft(remaining);
+    }
+  }, [room.gameState, room.roundStartedAt, room.settings.roundDuration]);
+  
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (room?.gameState === 'PLAYING' && timeLeft > 0) {
+    if (room.gameState === 'PLAYING' && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft(prev => {
             const newTime = prev - 1;
             if (newTime <= 0) {
-                // Let only the host trigger the stop to avoid multiple triggers
                 if(isHost) triggerGlobalStop(roomId);
                 return 0;
             }
@@ -154,7 +108,7 @@ export default function EnhancedRoomManager({
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [room?.gameState, timeLeft, isHost, roomId]);
+  }, [room.gameState, timeLeft, isHost, roomId]);
 
   const readyPlayersCount = players.filter(p => p.isReady).length;
   const canStartGame = isHost && players.length >= 1 && readyPlayersCount === players.length;
@@ -241,38 +195,6 @@ export default function EnhancedRoomManager({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8 text-center">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          <p className="ml-4 text-lg">Entrando a la sala...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-        <Card className="w-full max-w-md bg-destructive text-destructive-foreground">
-            <CardHeader>
-                <CardTitle>Error</CardTitle>
-                 <CardDescription className="text-destructive-foreground/90">{error}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button onClick={onLeaveRoom} variant="outline" className="w-full bg-white text-destructive hover:bg-white/90">Volver al inicio</Button>
-            </CardContent>
-        </Card>
-    );
-  }
-
-  if (!room) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 text-center">
-          <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
-          <p className="text-lg">Cargando datos de la sala...</p>
-      </div>
-    );
-  }
-
   // --- RENDERIZADO CONDICIONAL POR ESTADO DE JUEGO ---
   
   if (room.status === 'playing') {
@@ -311,8 +233,12 @@ export default function EnhancedRoomManager({
                     />
                 );
           default:
-              // Fallback para estado de juego inesperado
-              return <p>Estado de juego desconocido...</p>
+              return (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+                    <p className="text-lg">Cargando estado del juego...</p>
+                </div>
+              );
       }
   }
 
