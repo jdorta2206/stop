@@ -45,7 +45,7 @@ export function FriendsLeaderboardCard({
       <CardContent>
         <LeaderboardTable 
           players={leaderboardData} 
-          currentUserId={currentUserId || ''}
+          currentUserId={currentUserId}
           onChallenge={onChallenge}
           isFriendsLeaderboard={true}
           language={language}
