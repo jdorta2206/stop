@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { 
     doc, 
@@ -43,11 +44,11 @@ export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
     
     // Search in the 'users' collection where profiles are more likely to be stored
     const usersRef = collection(db, 'users');
+    // Simplified query to avoid needing a composite index.
+    // This will search for exact matches of the displayName.
     const q = query(
       usersRef, 
-      orderBy('displayName'),
-      startAt(nameQuery.toLowerCase()),
-      endAt(nameQuery.toLowerCase() + '\uf8ff'),
+      where('displayName', '==', nameQuery),
       limit(10)
     );
 
