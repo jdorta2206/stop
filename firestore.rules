@@ -2,29 +2,37 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /rankings/{userId} {
-      allow read;
-      allow write: if request.auth != null && request.auth.uid == userId;
-
-      match /gameHistory/{gameId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      match /friends/{friendId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-
+    // Las salas son públicas para leer, pero solo los usuarios autenticados pueden crear o unirse (actualizar).
     match /rooms/{roomId} {
       allow read;
       allow create, update: if request.auth != null;
+
+      // El chat dentro de una sala solo es accesible para usuarios autenticados.
       match /chat/{messageId} {
         allow read, create: if request.auth != null;
       }
     }
+
+    // La información del ranking de un jugador solo puede ser modificada por ese mismo jugador.
+    // Cualquiera puede leer la información del ranking.
+    match /rankings/{userId} {
+      allow read;
+      allow write: if request.auth.uid == userId;
+
+      // El historial de partidas y la lista de amigos son privados para cada jugador.
+      match /gameHistory/{gameId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      match /friends/{friendId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
     
+    // Cualquier usuario autenticado puede crear una notificación.
+    // Las notificaciones solo las puede leer el destinatario.
     match /notifications/{notificationId} {
-      allow read, update: if request.auth != null && request.auth.uid == resource.data.recipientId;
-      allow create: if request.auth != null;
+        allow create: if request.auth != null;
+        allow read, update: if request.auth.uid == resource.data.recipientId;
     }
   }
 }
