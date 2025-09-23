@@ -9,9 +9,9 @@ import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
-import { rankingManager } from '@/lib/ranking';
-import type { PlayerScore, GameResult } from '@/components/game/types';
+import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
+import { rankingManager, type PlayerScore } from '@/lib/ranking';
+import type { GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
@@ -20,7 +20,8 @@ import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { createRoom } from '@/lib/room-service';
+import { createRoom, addPlayerToRoom } from '@/lib/room-service';
+import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -52,16 +53,17 @@ export default function LeaderboardPage() {
 
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
-            // Fetch rankings for all friends
-            const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
-            const friendRankings = await Promise.all(friendRankingsPromises);
-
+            // Fetch rankings for all friends, but don't fail if one is missing
+            const friendRankingsPromises = friendIds.map(id => 
+                rankingManager.getPlayerRanking(id).catch(() => null)
+            );
+            const friendRankings = (await Promise.all(friendRankingsPromises)).filter(p => p !== null) as PlayerScore[];
+            
             // Combine friend data with their ranking data
             const enrichedFriendRankings = friendsList.map(friend => {
                 const rankingData = friendRankings.find(r => r.id === friend.id);
                 return {
-                    ...rankingData, // this will be undefined if no ranking found, but that's ok
-                    id: friend.id, // Make sure friend ID is always correct
+                    id: friend.id,
                     playerName: friend.name,
                     photoURL: friend.avatar,
                     totalScore: rankingData?.totalScore ?? 0,
@@ -76,7 +78,7 @@ export default function LeaderboardPage() {
                     dailyMissions: rankingData?.dailyMissions ?? [],
                     missionsLastReset: rankingData?.missionsLastReset ?? '',
                 };
-            }).filter(p => p !== null) as PlayerScore[];
+            }).sort((a,b) => b.totalScore - a.totalScore); // Sort by score
             
             setFriendsLeaderboard(enrichedFriendRankings);
         } else {
@@ -84,8 +86,8 @@ export default function LeaderboardPage() {
         }
       }
     } catch (error) {
-      toast.error((error as Error).message, {
-        description: translate('common.error'),
+      toast.error("No se pudieron cargar los datos del ranking.", {
+        description: (error as Error).message,
       });
     } finally {
       setIsLoading(false);
@@ -95,15 +97,15 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (user) {
       fetchData(user.uid);
-    } else {
+    } else if (!isAuthLoading) {
       fetchData(); // Fetch global data even if not logged in
     }
-  }, [user]);
+  }, [user, isAuthLoading]);
 
   const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
       toast.warning(translate('leaderboards.loginRequired'), {
-        description: translate('actionRequired'),
+        description: "actionRequired",
       });
       return;
     }
@@ -130,24 +132,25 @@ export default function LeaderboardPage() {
         const newRoom = await createRoom({
             creatorId: user.uid,
             creatorName: user.displayName,
-            creatorAvatar: user.photoURL
+            creatorAvatar: user.photoURL,
+            invitedPlayer: {
+              id: playerToChallenge.id,
+              name: playerToChallenge.playerName,
+              avatar: playerToChallenge.photoURL
+            }
         });
 
         if (!newRoom || !newRoom.id) {
             throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
-
-        // Send notification to the challenged player
+        
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
-
-        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}. Serás redirigido a la sala.`);
-
-        // Redirect current user to the room
+        toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}.`);
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
-        toast.error((error as Error).message, {
-          description: "Error al crear el desafío",
+        toast.error("No se pudo crear el desafío.", {
+          description: (error as Error).message,
         });
     }
   };
@@ -161,14 +164,14 @@ export default function LeaderboardPage() {
   }
   
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AppHeader />
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-bold text-primary">{translate('leaderboards.title')}</h1>
+          <h1 className="text-4xl font-bold text-white">Ranking & Amigos</h1>
           <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? translate('loading') : translate('refresh')}
+            {isLoading ? translate('common.loading') : translate('refresh')}
           </Button>
         </div>
         
@@ -186,6 +189,7 @@ export default function LeaderboardPage() {
             {user && (
               <FriendsLeaderboardCard 
                 leaderboardData={friendsLeaderboard}
+                friendsList={friends}
                 currentUserId={user?.uid}
                 onChallenge={handleChallenge}
                 language={language}
@@ -200,6 +204,7 @@ export default function LeaderboardPage() {
               <>
                 <PersonalHighScoreCard highScore={personalStats.bestScore} translateUi={translate} />
                 <GameHistoryCard gameHistory={gameHistory} translateUi={translate} />
+                <DailyMissionsCard />
                 <AchievementsCard achievements={personalStats.achievements || []} translateUi={translate} />
                  <Card>
                   <CardHeader>
@@ -213,7 +218,7 @@ export default function LeaderboardPage() {
                   </CardContent>
                 </Card>
               </>
-            ) : !user && !isLoading && (
+            ) : !user && !isAuthLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
                 <Button onClick={() => router.push('/')}>
@@ -228,3 +233,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    

@@ -8,12 +8,6 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   return (
     <AuthProvider>
       <ThemeProvider
@@ -24,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <LanguageProvider>
           <TooltipProvider>
-            {isMounted ? children : null}
+            {children}
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>

@@ -74,6 +74,11 @@ export interface CreateRoomInput {
   creatorId: string;
   creatorName: string | null;
   creatorAvatar: string | null;
+  invitedPlayer?: {
+      id: string;
+      name: string;
+      avatar: string | null;
+  }
 }
 
 export interface CreateRoomOutput {
@@ -81,7 +86,7 @@ export interface CreateRoomOutput {
 }
 
 export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
-  const { creatorId, creatorName, creatorAvatar } = input;
+  const { creatorId, creatorName, creatorAvatar, invitedPlayer } = input;
 
   if (!creatorId) {
     throw new Error('User is not authenticated.');
@@ -91,7 +96,6 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
   const newRoomDocRef = doc(db, "rooms", newRoomId);
 
   const finalCreatorName = creatorName || 'Jugador Anónimo';
-  // Ensure avatar is never null or undefined
   const finalCreatorAvatar = creatorAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalCreatorName)}`;
 
   const hostPlayer: Player = {
@@ -104,8 +108,25 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
     isHost: true,
   };
 
+  const players: Record<string, Player> = { [creatorId]: hostPlayer };
+  const gameScores: Record<string, number> = { [creatorId]: 0 };
+
+  if (invitedPlayer) {
+      const finalInvitedName = invitedPlayer.name || 'Invitado';
+      players[invitedPlayer.id] = {
+          id: invitedPlayer.id,
+          name: finalInvitedName,
+          avatar: invitedPlayer.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalInvitedName)}`,
+          isReady: false,
+          status: 'offline', // Invited player is initially offline
+          joinedAt: serverTimestamp(),
+          isHost: false,
+      };
+      gameScores[invitedPlayer.id] = 0;
+  }
+
   const newRoomData: Omit<Room, 'id'> = {
-      players: { [creatorId]: hostPlayer },
+      players,
       hostId: creatorId,
       createdAt: serverTimestamp(),
       status: 'waiting',
@@ -115,7 +136,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
         isPrivate: true,
         language: 'es',
       },
-      gameScores: { [creatorId]: 0 },
+      gameScores,
       roundNumber: 0,
   };
 
@@ -450,6 +471,3 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
 };
 
     
-
-    
-

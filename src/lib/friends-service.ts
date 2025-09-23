@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { 
     doc, 
@@ -12,7 +13,6 @@ import {
     orderBy,
     startAt,
     endAt,
-    collectionGroup,
     Timestamp,
     addDoc,
     updateDoc,
@@ -30,6 +30,7 @@ export interface GameInvitation {
   id: string;
   fromUser: string;
   fromUserId: string;
+  recipientId: string;
   roomId: string;
   message: string;
   timestamp: Timestamp;
@@ -58,7 +59,7 @@ export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
             id: doc.id,
             name: data.playerName,
             avatar: data.photoURL,
-            addedAt: Timestamp.now() // This is just for the type, not stored here
+            addedAt: Timestamp.now()
         });
     });
     return users;
@@ -98,26 +99,41 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 };
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
-    if (!recipientId) throw new Error("Recipient ID is required.");
-    
-    const notificationsRef = collection(db, `rankings/${recipientId}/notifications`);
+    if (!recipientId) {
+        throw new Error("El ID del destinatario es requerido.");
+    }
+
+    const recipientDocRef = doc(db, 'rankings', recipientId);
+    const recipientDoc = await getDoc(recipientDocRef);
+    if (!recipientDoc.exists()) {
+        throw new Error(`El jugador al que intentas invitar no existe.`);
+    }
+
+    const notificationsRef = collection(db, "notifications");
     
     const newNotification = {
         fromUserId: senderId,
         fromUser: senderName,
+        recipientId: recipientId,
         roomId: roomId,
         message: `¡${senderName} te ha desafiado a una partida de STOP!`,
         timestamp: Timestamp.now(),
         type: 'room_invite',
         status: 'pending'
     };
-    
+
     await addDoc(notificationsRef, newNotification);
 };
 
+
 export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
-    const notificationsRef = collection(db, `rankings/${userId}/notifications`);
-    const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
+    const notificationsRef = collection(db, `notifications`);
+    const q = query(
+        notificationsRef, 
+        where('recipientId', '==', userId), 
+        orderBy('timestamp', 'desc'), 
+        limit(20)
+    );
 
     return onSnapshot(q, (snapshot) => {
         const notifications = snapshot.docs.map(doc => ({
@@ -125,11 +141,12 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
             ...doc.data()
         } as GameInvitation));
         callback(notifications);
+    }, (error) => {
+        console.error("Error listening to notifications:", error);
     });
 };
 
-export const updateNotificationStatus = async (userId: string, notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
-    const notificationDocRef = doc(db, `rankings/${userId}/notifications`, notificationId);
+export const updateNotificationStatus = async (notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
+    const notificationDocRef = doc(db, `notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };
-

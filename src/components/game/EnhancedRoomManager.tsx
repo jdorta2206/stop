@@ -187,8 +187,8 @@ export default function EnhancedRoomManager({
   
   const handleInviteFriend = async (friendId: string) => {
     if (!currentUser.displayName) {
-        toast.error("Tu nombre no está disponible. Por favor, vuelve a iniciar sesión.", {
-            description: "No se puede enviar una invitación sin un nombre de remitente.",
+        toast.error("Tu nombre de usuario no está disponible.", {
+            description: "No puedes enviar una invitación sin un nombre de remitente.",
         });
         return;
     }
@@ -198,7 +198,9 @@ export default function EnhancedRoomManager({
       setInvitedFriends(prev => new Set(prev).add(friendId));
     } catch (error) {
       console.error("Error sending invitation:", error);
-      toast.error(`No se pudo enviar la invitación.`);
+      toast.error("No se pudo enviar la invitación.", {
+          description: (error as Error).message
+      });
     }
   };
 

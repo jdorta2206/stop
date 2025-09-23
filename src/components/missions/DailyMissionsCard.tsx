@@ -26,7 +26,11 @@ export function DailyMissionsCard() {
     };
 
     useEffect(() => {
-        fetchMissions();
+        if(user) {
+            fetchMissions();
+        } else {
+            setIsLoading(false);
+        }
     }, [user]);
 
     const handleClaim = async (missionId: string) => {
@@ -58,12 +62,16 @@ export function DailyMissionsCard() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {missions.map(mission => (
+                        {missions.length > 0 ? missions.map(mission => (
                             <MissionItem key={mission.id} mission={mission} onClaim={handleClaim} />
-                        ))}
+                        )) : (
+                            <p className="text-center text-muted-foreground">No hay misiones diarias disponibles.</p>
+                        )}
                     </div>
                 )}
             </CardContent>
         </Card>
     );
 }
+
+    

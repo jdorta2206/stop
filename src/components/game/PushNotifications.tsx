@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { onNotificationsUpdate, updateNotificationStatus, type GameInvitation } from '@/lib/friends-service';
+import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '@/lib/friends-service';
 import { useAuth } from '@/hooks/use-auth';
 
 interface PushNotificationsProps {
@@ -33,20 +33,23 @@ export default function PushNotifications({
     }
 
     if (user) {
+      // The onNotificationsUpdate function now correctly queries the root 'notifications' collection.
       const unsubscribe = onNotificationsUpdate(user.uid, (newNotifications) => {
-        const oldNotifications = new Set(notifications.map(n => n.id));
-        const justReceived = newNotifications.find(n => !oldNotifications.has(n.id) && n.status === 'pending');
+        const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
+        const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));
 
-        if (justReceived) {
-          showPushNotification(justReceived);
-          toast.info(`Nueva invitación de ${justReceived.fromUser}`);
+        if (newPendingNotification) {
+            showPushNotification(newPendingNotification);
+            toast.info(`Nueva invitación de ${newPendingNotification.fromUser}`);
         }
 
         setNotifications(newNotifications);
       });
+
       return () => unsubscribe();
     }
-  }, [user, notifications]);
+  }, [user]);
+
 
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
@@ -73,7 +76,7 @@ export default function PushNotifications({
       notif.onclick = () => {
         window.focus();
         if (notification.type === 'room_invite') {
-          handleAcceptInvitation(notification.id);
+          handleAcceptInvitation(notification);
         } else if (notification.type === 'chat_mention') {
           onOpenChat();
         }
@@ -84,11 +87,10 @@ export default function PushNotifications({
     }
   };
 
-  const handleAcceptInvitation = async (notificationId: string) => {
+  const handleAcceptInvitation = async (notification: GameInvitation) => {
     if (!user) return;
-    const notification = notifications.find(n => n.id === notificationId);
-    if (notification && notification.type === 'room_invite') {
-      await updateNotificationStatus(user.uid, notificationId, 'accepted');
+    if (notification.type === 'room_invite') {
+      await updateNotificationStatus(notification.id, 'accepted');
       onJoinRoom(notification.roomId);
       toast.success(`Te uniste a la sala ${notification.roomId}`);
       setShowNotifications(false);
@@ -97,7 +99,7 @@ export default function PushNotifications({
 
   const handleDeclineInvitation = async (notificationId: string) => {
      if (!user) return;
-     await updateNotificationStatus(user.uid, notificationId, 'declined');
+     await updateNotificationStatus(notificationId, 'declined');
      toast.info('Invitación rechazada');
   };
 
@@ -244,7 +246,7 @@ export default function PushNotifications({
                             <>
                               <Button
                                 size="sm"
-                                onClick={() => handleAcceptInvitation(notification.id)}
+                                onClick={() => handleAcceptInvitation(notification)}
                                 className="h-7 px-2"
                               >
                                 <Check className="h-3 w-3 mr-1" />
