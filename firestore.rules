@@ -1,8 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Reglas para las Salas de Juego
+    match /rooms/{roomId} {
+      // Cualquiera puede leer los datos de una sala para poder unirse y ver jugadores.
+      allow read: if true;
+
+      // Solo usuarios autenticados pueden crear, actualizar o borrar salas.
+      // La lógica específica (ej. solo el host puede cambiar el estado) se maneja en el backend/reglas más detalladas.
+      allow write: if request.auth != null;
+
+      // Reglas para el chat dentro de una sala
+      match /chat/{messageId} {
+        // Solo usuarios autenticados pueden leer y escribir en el chat de una sala.
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // Reglas para los Perfiles y Rankings de Jugadores
+    match /rankings/{userId} {
+      // Cualquiera puede leer los perfiles de los jugadores (necesario para los rankings).
+      allow read: if true;
+
+      // Un usuario solo puede actualizar su propio perfil.
+      allow update, write: if request.auth != null && request.auth.uid == userId;
+
+      // El historial de partidas y la lista de amigos son privados.
+      match /gameHistory/{gameId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /friends/{friendId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Reglas para Notificaciones y Desafíos
+    match /notifications/{notificationId} {
+        // Cualquiera usuario autenticado puede crear una notificación (enviar una invitación).
+        allow create: if request.auth != null;
+        
+        // Un usuario solo puede leer, actualizar o borrar las notificaciones que le pertenecen.
+        allow read, update, delete: if request.auth != null && resource.data.recipientId == request.auth.uid;
     }
   }
 }
