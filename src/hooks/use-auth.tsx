@@ -1,7 +1,7 @@
 
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
+import { createContext, useContext, type ReactNode, useCallback, useMemo, useState } from "react";
 import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
 import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
 import { signInWithPopup, type User as FirebaseUser } from "firebase/auth";
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const [user, authLoading, authError] = useAuthState(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
-  const [isProcessingLogin, setIsProcessingLogin] = React.useState(false);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   
   const handleLogin = async (provider: typeof googleProvider | typeof facebookProvider, providerName: string): Promise<FirebaseUser | undefined> => {
     setIsProcessingLogin(true);
