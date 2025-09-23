@@ -37,6 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const checkUser = async () => {
+      // Pequeña espera para asegurar que el SDK de Firebase se inicialice
       await new Promise(resolve => setTimeout(resolve, 50));
       try {
         const result = await getRedirectResult(auth);
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkUser();
   }, []);
 
+  // Efecto para asegurar que el perfil del jugador exista o se cree en la base de datos
   useEffect(() => {
     if (user?.uid) {
       rankingManager.getPlayerRanking(
