@@ -1,15 +1,14 @@
 
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
-import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
+import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
-import type { User as FirebaseUser } from "firebase/auth";
+import { signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { toast } from 'sonner';
+import { rankingManager } from "@/lib/ranking";
 
-// AppUser se usará en otras partes de la app, pero el hook solo expone FirebaseUser
 export interface AppUser extends FirebaseUser {
-  // Campos del perfil de la base de datos que se pueden añadir
   totalScore?: number;
   level?: string;
 }
@@ -21,6 +20,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<FirebaseUser | undefined>;
   loginWithFacebook: () => Promise<FirebaseUser | undefined>;
   logout: () => Promise<void>;
+  isProcessingLogin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,58 +31,78 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   
-  const [firebaseUser, authLoading, authError] = useAuthState(auth);
+  const [user, authLoading, authError] = useAuthState(auth);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+
+  // This effect runs when the user state changes (e.g., after login).
+  // It ensures the player's profile exists in the database.
+  useEffect(() => {
+    if (user?.uid) {
+      rankingManager.getPlayerRanking(
+        user.uid,
+        user.displayName,
+        user.photoURL
+      ).catch(error => {
+        console.error("Error ensuring player profile exists:", error);
+        toast.error("Hubo un problema al cargar tu perfil de jugador.");
+      });
+    }
+  }, [user]);
   
-  const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
-  const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
-  const [signOut, signOutLoading, signOutError] = useSignOut(auth);
-  
-  const handleLogin = async (loginFunction: () => Promise<any>, providerName: string): Promise<FirebaseUser | undefined> => {
+  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider, providerName: string): Promise<FirebaseUser | undefined> => {
+    setIsProcessingLogin(true);
     try {
-        const userCredential = await loginFunction();
+        const userCredential = await signInWithPopup(auth, provider);
         if (userCredential?.user) {
+           // The useEffect above will handle the database profile creation.
            return userCredential.user;
         }
-        // Si no hay userCredential, puede que el usuario haya cerrado la ventana emergente
         return undefined;
     } catch (e: any) {
        toast.error(`Error al iniciar sesión con ${providerName}`, {
          description: e.message || "Por favor, inténtalo de nuevo."
        });
        console.error(`Login failed with ${providerName}:`, e);
+    } finally {
+      setIsProcessingLogin(false);
     }
     return undefined;
   };
 
   const loginWithGoogle = useCallback(async () => {
-    return await handleLogin(signInWithGoogle, "Google");
-  }, [signInWithGoogle]);
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
+    return await handleLogin(googleProvider, 'Google');
+  }, []);
   
   const loginWithFacebook = useCallback(async () => {
-     return await handleLogin(signInWithFacebook, "Facebook");
-  }, [signInWithFacebook]);
+     const facebookProvider = new FacebookAuthProvider();
+     facebookProvider.addScope('email');
+     facebookProvider.setCustomParameters({ 'display': 'popup' });
+     return await handleLogin(facebookProvider, 'Facebook');
+  }, []);
   
   const handleLogout = useCallback(async () => {
     try {
-        await signOut();
+        await signOut(auth);
         toast.success("Has cerrado sesión correctamente.");
     } catch (e: any) {
         toast.error("Error al cerrar sesión", { description: e.message });
     }
-  }, [signOut]);
+  }, []);
   
-  // Simplificamos el estado de carga y error. Solo nos importa el estado general
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
-  const error = authError || signOutError; // Los errores de login se manejan con toasts
+  const isLoading = authLoading || isProcessingLogin;
+  const error = authError;
 
   const value = useMemo(() => ({
-    user: firebaseUser,
+    user: user,
     isLoading,
     error: error || null,
     loginWithGoogle,
     loginWithFacebook,
     logout: handleLogout,
-  }), [firebaseUser, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout]);
+    isProcessingLogin,
+  }), [user, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -29,7 +29,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { user, loginWithGoogle, loginWithFacebook, isLoading, error } = useAuth();
+  const { user, loginWithGoogle, loginWithFacebook, isProcessingLogin, error } = useAuth();
   
   useEffect(() => {
     if (user && isOpen) {
@@ -39,19 +39,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   
   useEffect(() => {
     if (error) {
-       toast.error(error.message || "No se pudo completar el inicio de sesión.");
+       toast.error(error.message || "Ha ocurrido un error de autenticación.");
     }
   }, [error]);
 
   const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
-    try {
-        const firebaseUser = await loginMethod();
-        if (firebaseUser?.uid) {
-            toast.success("Has iniciado sesión correctamente.");
-            onClose();
-        }
-    } catch (e: any) {
-        toast.error(`Error al iniciar sesión: ${e.message}`);
+    const firebaseUser = await loginMethod();
+    if (firebaseUser?.uid) {
+        toast.success("Has iniciado sesión correctamente.");
+        onClose();
     }
   }
 
@@ -68,7 +64,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {isLoading ? (
+          {isProcessingLogin ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="text-muted-foreground text-sm">Iniciando sesión...</p>
@@ -79,7 +75,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => handleLogin(loginWithGoogle)}
-                    disabled={isLoading}
+                    disabled={isProcessingLogin}
                 >
                     <GoogleIcon />
                     <span className="text-sm">Continuar con Google</span>
@@ -88,7 +84,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => handleLogin(loginWithFacebook)}
-                    disabled={isLoading}
+                    disabled={isProcessingLogin}
                 >
                     <FacebookIcon />
                     <span className="text-sm">Continuar con Facebook</span>

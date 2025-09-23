@@ -6,6 +6,8 @@ import { LanguageProvider } from '@/contexts/language-context';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/hooks/use-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegistrar } from '@/components/pwa/ServiceWorkerRegistrar';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +21,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <LanguageProvider>
           <TooltipProvider>
             {children}
+            <Toaster />
+            <ServiceWorkerRegistrar />
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>
