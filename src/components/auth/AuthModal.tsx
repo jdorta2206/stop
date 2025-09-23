@@ -43,12 +43,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   }, [error]);
 
-  const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
-    const firebaseUser = await loginMethod();
-    if (firebaseUser?.uid) {
-        toast.success("Has iniciado sesión correctamente.");
-        onClose();
-    }
+  const handleLogin = async (loginMethod: () => Promise<void>) => {
+    await loginMethod();
+    // No cerramos el modal aquí, la redirección se encargará
   }
 
   return (
@@ -67,7 +64,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           {isProcessingLogin ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-muted-foreground text-sm">Iniciando sesión...</p>
+                <p className="text-muted-foreground text-sm">Redirigiendo a la página de inicio de sesión...</p>
              </div>
           ) : (
             <div className="grid grid-cols-1 gap-2">
