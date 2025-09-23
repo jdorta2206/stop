@@ -1,44 +1,28 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Reglas para los perfiles y datos de jugadores
     match /rankings/{userId} {
-      // Permite a cualquier usuario autenticado leer perfiles de ranking individuales (get)
-      // y listar la colección completa para el ranking global (list).
       allow get: if request.auth != null;
       allow list: if request.auth != null;
-      
-      // Solo el propio usuario puede crear o actualizar su perfil de ranking.
-      allow create, update: if request.auth.uid == userId;
+      allow create, update, delete: if request.auth.uid == userId;
 
-      // Un usuario solo puede leer y escribir en su propia lista de amigos.
       match /friends/{friendId} {
-        allow read, write: if request.auth.uid == userId;
-      }
-      
-      // Un usuario solo puede gestionar sus propias notificaciones.
-      match /notifications/{notificationId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write, delete: if request.auth.uid == userId;
       }
 
-      // Un usuario solo puede añadir a su historial de partidas y leerlo.
+      match /notifications/{notificationId} {
+        allow read, write, create, delete: if request.auth.uid == userId;
+      }
+
+      // Esta es la regla que faltaba
       match /gameHistory/{gameId} {
-        allow create, read: if request.auth.uid == userId;
+      	allow read, write, create, delete: if request.auth.uid == userId;
       }
     }
-    
-    // Reglas para las salas de juego
+
     match /rooms/{roomId} {
-      // Cualquier usuario autenticado puede leer, crear y actualizar salas.
-      allow read, create, update: if request.auth != null;
-    
-      // Cualquier usuario autenticado puede leer y enviar mensajes en el chat de una sala.
-      match /chat/{messageId} {
-        allow read, create: if request.auth != null;
-      }
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null && (request.auth.uid == resource.data.hostId || request.auth.uid in resource.data.players);
     }
   }
 }
