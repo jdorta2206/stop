@@ -298,7 +298,7 @@ export default function EnhancedRoomManager({
 
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
-    <div className="w-full max-w-2xl mx-auto bg-black/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20">
+    <div className="w-full max-w-2xl mx-auto bg-card/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-red-400/30">
       {/* Header */}
       <div className="text-center mb-6 pb-4 border-b border-white/20">
           <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
