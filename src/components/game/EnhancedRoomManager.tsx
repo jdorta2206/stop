@@ -19,7 +19,9 @@ import {
   Gamepad2,
   ClipboardCopy,
   UserPlus,
-  Loader2
+  Loader2,
+  AlertTriangle,
+  Lightbulb
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -88,6 +90,7 @@ export default function EnhancedRoomManager({
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
+  const [errorFriends, setErrorFriends] = useState<Set<string>>(new Set());
   const [loadingFriends, setLoadingFriends] = useState(true);
 
   useEffect(() => {
@@ -206,8 +209,11 @@ export default function EnhancedRoomManager({
       await sendChallengeNotification(currentUser.uid, currentUser.displayName || 'un amigo', friend.id, roomId);
       toast.success(`Invitación enviada a ${friend.name}`);
       setInvitedFriends(prev => new Set(prev).add(friend.id));
-    } catch(error) {
-      toast.error(`No se pudo invitar a ${friend.name}: ${(error as Error).message}`);
+    } catch(error: any) {
+      toast.error(`No se pudo invitar a ${friend.name}`, {
+          description: error.message
+      });
+      setErrorFriends(prev => new Set(prev).add(friend.id));
     }
   };
 
@@ -298,7 +304,7 @@ export default function EnhancedRoomManager({
                 <span>{readyPlayersCount} listos</span>
             </div>
         </div>
-
+        
         {/* Players Section */}
         <div className="mb-6">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
@@ -329,12 +335,22 @@ export default function EnhancedRoomManager({
                 ))}
             </div>
         </div>
-        
+
         {/* Friends Invite Section */}
         <div className="bg-white/5 rounded-lg p-5 mb-6">
-             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
                 <UserPlus size={20}/> Invitar Amigos del Juego
             </h2>
+
+            <div className="bg-red-500/20 border-l-4 border-red-500 p-3 rounded-r-lg mb-4 text-sm text-red-200">
+                <strong className="font-bold flex items-center gap-2"><AlertTriangle size={16}/> Problema detectado:</strong>
+                <p className="mt-1">Algunos amigos no pueden ser invitados directamente debido a permisos de la base de datos.</p>
+            </div>
+             <div className="bg-yellow-500/20 border-l-4 border-yellow-500 p-3 rounded-r-lg mb-4 text-sm text-yellow-200">
+                <strong className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Solución:</strong>
+                <p className="mt-1">Usa la sección "Compartir Enlace" de abajo. ¡Funciona para todos!</p>
+            </div>
+
             <Input 
                 placeholder="Buscar amigos..."
                 value={searchQuery}
@@ -345,7 +361,7 @@ export default function EnhancedRoomManager({
                 {loadingFriends ? <Loader2 className="mx-auto my-4 h-6 w-6 animate-spin"/> : (
                     filteredFriends.length > 0 ? filteredFriends.map(friend => (
                         <div key={friend.id} className="flex items-center justify-between p-2 rounded hover:bg-white/10">
-                             <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
                                     <AvatarImage src={friend.avatar || undefined} alt={friend.name} />
                                     <AvatarFallback>{friend.name?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -354,12 +370,12 @@ export default function EnhancedRoomManager({
                             </div>
                             <Button 
                                 size="sm"
-                                variant={invitedFriends.has(friend.id) ? "secondary" : "default"}
+                                variant={invitedFriends.has(friend.id) ? "secondary" : (errorFriends.has(friend.id) ? "destructive" : "default")}
                                 onClick={() => handleInviteFriend(friend)}
-                                disabled={invitedFriends.has(friend.id)}
-                                className={invitedFriends.has(friend.id) ? "bg-yellow-500 text-black" : "bg-green-600"}
+                                disabled={invitedFriends.has(friend.id) || errorFriends.has(friend.id)}
+                                className={`w-28 ${invitedFriends.has(friend.id) ? "bg-yellow-500 text-black" : errorFriends.has(friend.id) ? "" : "bg-green-600"}`}
                             >
-                                {invitedFriends.has(friend.id) ? 'Invitado' : 'Invitar'}
+                                {invitedFriends.has(friend.id) ? 'Invitado' : errorFriends.has(friend.id) ? 'Error' : 'Invitar'}
                             </Button>
                         </div>
                     )) : <p className="text-center text-sm text-white/60 py-4">No se encontraron amigos.</p>
@@ -367,7 +383,7 @@ export default function EnhancedRoomManager({
             </div>
         </div>
 
-        {/* Invite Link Section */}
+        {/* Share Link Section */}
         <div className="bg-white/5 rounded-lg p-5 mb-6">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
                 <Send size={20}/> Compartir Enlace de Invitación
@@ -424,3 +440,5 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
+
+    
