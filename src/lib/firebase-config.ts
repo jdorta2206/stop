@@ -11,5 +11,6 @@ export const firebaseConfig = {
   "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
   "authDomain": "global-stop.firebaseapp.com",
   "measurementId": "G-P41T2BEMKZ",
-  "messagingSenderId": "902072408470"
+  "messagingSenderId": "902072408470",
+  "storageBucket": "global-stop.appspot.com"
 };
