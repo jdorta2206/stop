@@ -86,7 +86,7 @@ export interface CreateRoomOutput {
 }
 
 export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
-  const { creatorId, creatorName, creatorAvatar, invitedPlayer } = input;
+  const { creatorId, creatorName, creatorAvatar } = input;
 
   if (!creatorId) {
     throw new Error('User is not authenticated.');
@@ -108,25 +108,8 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
     isHost: true,
   };
 
-  const players: Record<string, Player> = { [creatorId]: hostPlayer };
-  const gameScores: Record<string, number> = { [creatorId]: 0 };
-
-  if (invitedPlayer) {
-      const finalInvitedName = invitedPlayer.name || 'Invitado';
-      players[invitedPlayer.id] = {
-          id: invitedPlayer.id,
-          name: finalInvitedName,
-          avatar: invitedPlayer.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalInvitedName)}`,
-          isReady: false,
-          status: 'offline', // Invited player is initially offline
-          joinedAt: serverTimestamp(),
-          isHost: false,
-      };
-      gameScores[invitedPlayer.id] = 0;
-  }
-
   const newRoomData: Omit<Room, 'id'> = {
-      players,
+      players: { [creatorId]: hostPlayer },
       hostId: creatorId,
       createdAt: serverTimestamp(),
       status: 'waiting',
@@ -136,7 +119,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
         isPrivate: true,
         language: 'es',
       },
-      gameScores,
+      gameScores: { [creatorId]: 0 },
       roundNumber: 0,
   };
 
