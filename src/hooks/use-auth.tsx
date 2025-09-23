@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState } from "react";
 import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
 import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
-import { signInWithPopup, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { signInWithPopup, type User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -35,18 +35,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   
-  const handleLogin = async (providerType: 'google' | 'facebook'): Promise<FirebaseUser | undefined> => {
+  const handleLogin = async (provider: typeof googleProvider | typeof facebookProvider, providerName: string): Promise<FirebaseUser | undefined> => {
     setIsProcessingLogin(true);
-    let provider;
-    if (providerType === 'google') {
-      provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-    } else {
-      provider = new FacebookAuthProvider();
-      provider.addScope('email');
-      provider.setCustomParameters({ 'display': 'popup' });
-    }
-
     try {
         const userCredential = await signInWithPopup(auth, provider);
         if (userCredential?.user) {
@@ -59,10 +49,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         return undefined;
     } catch (e: any) {
-       toast.error(`Error al iniciar sesión con ${providerType}`, {
+       toast.error(`Error al iniciar sesión con ${providerName}`, {
          description: e.message || "Por favor, inténtalo de nuevo."
        });
-       console.error(`Login failed with ${providerType}:`, e);
+       console.error(`Login failed with ${providerName}:`, e);
     } finally {
       setIsProcessingLogin(false);
     }
@@ -70,11 +60,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const loginWithGoogle = useCallback(async () => {
-    return await handleLogin('google');
+    return await handleLogin(googleProvider, 'Google');
   }, []);
   
   const loginWithFacebook = useCallback(async () => {
-     return await handleLogin('facebook');
+     return await handleLogin(facebookProvider, 'Facebook');
   }, []);
   
   const handleLogout = useCallback(async () => {
