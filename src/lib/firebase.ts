@@ -1,4 +1,3 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
@@ -15,7 +14,7 @@ const db = getFirestore(app);
 // Initialize App Check
 if (typeof window !== 'undefined') {
   try {
-    const appCheck = initializeAppCheck(app, {
+    initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider('6LdOutlrAAAAAHyftbN3PIP8s72soDyqcUsCehiQ'), 
       isTokenAutoRefreshEnabled: true
     });
@@ -25,18 +24,15 @@ if (typeof window !== 'undefined') {
   }
 }
 
-
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 const facebookProvider = new FacebookAuthProvider();
-// Solución: Añadir scopes y parámetros personalizados para robustecer la petición de OAuth.
 facebookProvider.addScope('email');
 facebookProvider.setCustomParameters({
   'display': 'popup'
 });
 
-
-// Export the initialized services
+// Export the initialized services and providers
 export { app, auth, db, googleProvider, facebookProvider };
