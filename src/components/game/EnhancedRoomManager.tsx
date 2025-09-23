@@ -21,7 +21,8 @@ import {
   UserPlus,
   Loader2,
   AlertTriangle,
-  Lightbulb
+  Lightbulb,
+  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -205,6 +206,12 @@ export default function EnhancedRoomManager({
   };
   
   const handleInviteFriend = async (friend: Friend) => {
+    setErrorFriends(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(friend.id);
+      return newSet;
+    });
+    
     try {
       await sendChallengeNotification(currentUser.uid, currentUser.displayName || 'un amigo', friend.id, roomId);
       toast.success(`Invitación enviada a ${friend.name}`);
@@ -292,153 +299,145 @@ export default function EnhancedRoomManager({
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
     <div className="w-full max-w-2xl mx-auto bg-black/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20">
-        {/* Header */}
-        <div className="text-center mb-6 pb-4 border-b border-white/20">
-            <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
-            <div className="text-3xl font-bold tracking-widest bg-white/10 px-4 py-2 rounded-lg inline-block font-mono text-green-400">
-                {roomId}
-            </div>
-            <div className="flex justify-center gap-4 mt-3 text-sm opacity-80">
-                <span>{players.length}/{room.settings.maxPlayers} jugadores</span>
-                <span>•</span>
-                <span>{readyPlayersCount} listos</span>
-            </div>
-        </div>
-        
-        {/* Players Section */}
-        <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
-                <Users size={20} /> Jugadores en la Sala
-            </h2>
-            <div className="bg-white/5 rounded-lg p-2 space-y-2">
-                {players.map(player => (
-                    <div key={player.id} className="flex justify-between items-center p-2 rounded-md">
-                         <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                                <AvatarImage src={player.avatar} alt={player.name} />
-                                <AvatarFallback>{player.name?.charAt(0).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <span className={`font-medium ${player.id === currentUser.uid ? 'text-yellow-400' : ''}`}>
-                                    {player.name} {player.id === currentUser.uid && '(Tú)'}
-                                    {player.isHost && <Crown className="inline h-4 w-4 ml-1 text-yellow-500"/>}
-                                </span>
-                                <p className="text-xs text-white/60">Nivel 15</p>
-                            </div>
-                        </div>
-                        {player.isReady ? (
-                            <div className="text-green-400 text-xs font-bold bg-green-500/20 px-2 py-1 rounded-full">LISTO</div>
-                        ) : (
-                            <div className="text-white/60 text-xs">Esperando...</div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </div>
+      {/* Header */}
+      <div className="text-center mb-6 pb-4 border-b border-white/20">
+          <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
+          <h2 className="text-4xl font-bold tracking-widest bg-white/10 px-4 py-2 rounded-lg inline-block font-mono text-green-400">
+              {roomId}
+          </h2>
+          <div className="flex justify-center gap-4 mt-3 text-sm opacity-80">
+              <span>{players.length}/{room.settings.maxPlayers} jugadores</span>
+              <span>•</span>
+              <span>{readyPlayersCount} listos</span>
+          </div>
+      </div>
+      
+      {/* Players Section */}
+      <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+              <Users size={20} /> Jugadores en la Sala
+          </h3>
+          <div className="bg-white/5 rounded-lg p-2 space-y-2">
+              {players.map(player => (
+                  <div key={player.id} className="flex justify-between items-center p-2 rounded-md">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                              <AvatarImage src={player.avatar} alt={player.name} />
+                              <AvatarFallback>{player.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                              <span className={`font-medium ${player.id === currentUser.uid ? 'text-yellow-400' : ''}`}>
+                                  {player.name} {player.id === currentUser.uid && '(Tú)'}
+                                  {player.isHost && <Crown className="inline h-4 w-4 ml-1 text-yellow-500"/>}
+                              </span>
+                              <p className="text-xs text-white/60">Nivel 15</p>
+                          </div>
+                      </div>
+                      {player.isReady ? (
+                          <div className="text-green-400 text-xs font-bold bg-green-500/20 px-2 py-1 rounded-full">LISTO</div>
+                      ) : (
+                          <div className="text-white/60 text-xs">Esperando...</div>
+                      )}
+                  </div>
+              ))}
+          </div>
+      </div>
 
-        {/* Friends Invite Section */}
-        <div className="bg-white/5 rounded-lg p-5 mb-6">
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
-                <UserPlus size={20}/> Invitar Amigos del Juego
-            </h2>
+      {/* Friends Invite Section */}
+      <div className="bg-white/5 rounded-lg p-5 mb-6">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+              <UserPlus size={20}/> Invitar Amigos del Juego
+          </h3>
 
-            <div className="bg-red-500/20 border-l-4 border-red-500 p-3 rounded-r-lg mb-4 text-sm text-red-200">
-                <strong className="font-bold flex items-center gap-2"><AlertTriangle size={16}/> Problema detectado:</strong>
-                <p className="mt-1">Algunos amigos no pueden ser invitados directamente debido a permisos de la base de datos.</p>
-            </div>
-             <div className="bg-yellow-500/20 border-l-4 border-yellow-500 p-3 rounded-r-lg mb-4 text-sm text-yellow-200">
-                <strong className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Solución:</strong>
-                <p className="mt-1">Usa la sección "Compartir Enlace" de abajo. ¡Funciona para todos!</p>
-            </div>
+          <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input 
+                  placeholder="Buscar amigos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-white/10 border-white/20 pl-10"
+              />
+          </div>
+          <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+              {loadingFriends ? <Loader2 className="mx-auto my-4 h-6 w-6 animate-spin"/> : (
+                  filteredFriends.length > 0 ? filteredFriends.map(friend => (
+                      <div key={friend.id} className="flex items-center justify-between p-2 rounded hover:bg-white/10">
+                          <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                  <AvatarImage src={friend.avatar || undefined} alt={friend.name} />
+                                  <AvatarFallback>{friend.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <p className="font-medium text-sm">{friend.name}</p>
+                          </div>
+                          <Button 
+                              size="sm"
+                              variant={invitedFriends.has(friend.id) ? "secondary" : (errorFriends.has(friend.id) ? "destructive" : "default")}
+                              onClick={() => handleInviteFriend(friend)}
+                              disabled={invitedFriends.has(friend.id) || errorFriends.has(friend.id)}
+                              className={`w-28 transition-colors duration-300 ${invitedFriends.has(friend.id) ? "bg-yellow-500 text-black hover:bg-yellow-600" : errorFriends.has(friend.id) ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
+                          >
+                              {invitedFriends.has(friend.id) ? 'Invitado' : errorFriends.has(friend.id) ? 'Error' : 'Invitar'}
+                          </Button>
+                      </div>
+                  )) : <p className="text-center text-sm text-white/60 py-4">No se encontraron amigos.</p>
+              )}
+          </div>
+      </div>
 
-            <Input 
-                placeholder="Buscar amigos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white/10 border-white/20 mb-3"
-            />
-            <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
-                {loadingFriends ? <Loader2 className="mx-auto my-4 h-6 w-6 animate-spin"/> : (
-                    filteredFriends.length > 0 ? filteredFriends.map(friend => (
-                        <div key={friend.id} className="flex items-center justify-between p-2 rounded hover:bg-white/10">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={friend.avatar || undefined} alt={friend.name} />
-                                    <AvatarFallback>{friend.name?.charAt(0).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <p className="font-medium text-sm">{friend.name}</p>
-                            </div>
-                            <Button 
-                                size="sm"
-                                variant={invitedFriends.has(friend.id) ? "secondary" : (errorFriends.has(friend.id) ? "destructive" : "default")}
-                                onClick={() => handleInviteFriend(friend)}
-                                disabled={invitedFriends.has(friend.id) || errorFriends.has(friend.id)}
-                                className={`w-28 ${invitedFriends.has(friend.id) ? "bg-yellow-500 text-black" : errorFriends.has(friend.id) ? "" : "bg-green-600"}`}
-                            >
-                                {invitedFriends.has(friend.id) ? 'Invitado' : errorFriends.has(friend.id) ? 'Error' : 'Invitar'}
-                            </Button>
-                        </div>
-                    )) : <p className="text-center text-sm text-white/60 py-4">No se encontraron amigos.</p>
-                )}
-            </div>
-        </div>
+      {/* Share Link Section */}
+      <div className="bg-white/5 rounded-lg p-5 mb-6">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+              <Send size={20}/> Compartir Enlace de Invitación
+          </h3>
+          <p className="text-sm opacity-90 mb-4">
+              Usa este enlace para invitar a amigos que no estén en tu lista.
+          </p>
+          <div className="flex mb-4 bg-white/10 rounded-lg overflow-hidden border border-white/20">
+              <input readOnly value={inviteUrl} className="flex-grow p-3 text-sm bg-transparent outline-none truncate"/>
+              <button onClick={handleCopyLink} className="bg-green-600 hover:bg-green-700 text-white px-4 flex items-center gap-2 transition-colors">
+                  <ClipboardCopy size={16}/> Copiar
+              </button>
+          </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <button onClick={() => handleShare('whatsapp')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                  <WhatsappIcon /> WhatsApp
+              </button>
+                <button onClick={() => handleShare('telegram')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                  <TelegramIcon /> Telegram
+              </button>
+                <button onClick={handleCopyLink} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                  <Share2 /> Copiar Enlace
+              </button>
+          </div>
+      </div>
 
-        {/* Share Link Section */}
-        <div className="bg-white/5 rounded-lg p-5 mb-6">
-            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
-                <Send size={20}/> Compartir Enlace de Invitación
-            </h2>
-            <p className="text-sm opacity-90 mb-4">
-                Usa este enlace para invitar a amigos que no estén en tu lista.
-            </p>
-            <div className="flex mb-4 bg-white/10 rounded-lg overflow-hidden border border-white/20">
-                <input readOnly value={inviteUrl} className="flex-grow p-3 text-sm bg-transparent outline-none truncate"/>
-                <button onClick={handleCopyLink} className="bg-green-600 hover:bg-green-700 text-white px-4 flex items-center gap-2 transition-colors">
-                    <ClipboardCopy size={16}/> Copiar
-                </button>
-            </div>
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <button onClick={() => handleShare('whatsapp')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                    <WhatsappIcon /> WhatsApp
-                </button>
-                 <button onClick={() => handleShare('telegram')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                    <TelegramIcon /> Telegram
-                </button>
-                 <button onClick={handleCopyLink} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                    <Share2 /> Copiar Enlace
-                </button>
-            </div>
-        </div>
+      {/* Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Button
+              onClick={handleToggleReady}
+              variant={currentPlayer?.isReady ? "destructive" : "default"}
+              className={`w-full py-6 text-base font-bold transition-colors ${!currentPlayer?.isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+          >
+              {currentPlayer?.isReady ? <><X className="mr-2"/> No Estoy Listo</> : <><Check className="mr-2"/> Estoy Listo</>}
+          </Button>
+          
+          <Button
+              onClick={handleStartGame}
+              disabled={!canStartGame}
+              className="w-full py-6 text-base font-bold text-black bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-600 disabled:text-white/70 disabled:cursor-not-allowed md:col-span-1"
+          >
+              <Gamepad2 className="mr-2"/> Iniciar ({readyPlayersCount}/{players.length})
+          </Button>
 
-        {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Button
-                onClick={handleToggleReady}
-                variant={currentPlayer?.isReady ? "destructive" : "default"}
-                className={`w-full py-6 text-base font-bold ${!currentPlayer?.isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
-            >
-                {currentPlayer?.isReady ? <><X className="mr-2"/> No Estoy Listo</> : <><Check className="mr-2"/> Estoy Listo</>}
-            </Button>
-            
-            <Button
-                onClick={handleStartGame}
-                disabled={!canStartGame}
-                className="w-full py-6 text-base font-bold text-black bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-600 disabled:text-white/70 disabled:cursor-not-allowed md:col-span-1"
-            >
-                <Gamepad2 className="mr-2"/> Iniciar ({readyPlayersCount}/{players.length})
-            </Button>
-
-            <Button
-                onClick={onLeaveRoom}
-                variant="outline"
-                className="w-full py-6 text-base bg-white/10 border-white/30 hover:bg-white/20 md:col-span-1"
-            >
-                <DoorOpen className="mr-2 h-5 w-5" />
-                Salir
-            </Button>
-        </div>
+          <Button
+              onClick={onLeaveRoom}
+              variant="outline"
+              className="w-full py-6 text-base bg-white/10 border-white/30 hover:bg-white/20 md:col-span-1"
+          >
+              <DoorOpen className="mr-2 h-5 w-5" />
+              Salir
+          </Button>
+      </div>
     </div>
   );
 }
-
-    
