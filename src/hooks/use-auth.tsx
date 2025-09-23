@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
-import { signInWithRedirect, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -17,8 +17,8 @@ interface AuthContextType {
   user: FirebaseUser | null | undefined;
   isLoading: boolean;
   error?: Error | null;
-  loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
+  loginWithGoogle: () => Promise<FirebaseUser | undefined>;
+  loginWithFacebook: () => Promise<FirebaseUser | undefined>;
   logout: () => Promise<void>;
   isProcessingLogin: boolean;
 }
@@ -32,10 +32,8 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   
   const [user, authLoading, authError] = useAuthState(auth);
-  const [isProcessingLogin, setIsProcessingLogin] = useState(true); // Start as true
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
-  // This effect runs when the user state changes (e.g., after login).
-  // It ensures the player's profile exists in the database.
   useEffect(() => {
     if (user?.uid) {
       rankingManager.getPlayerRanking(
@@ -49,41 +47,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  // This effect handles the result of the redirect.
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          toast.success("Has iniciado sesión correctamente.");
-        }
-      })
-      .catch((error) => {
-        toast.error(`Error al iniciar sesión`, {
-          description: error.message || "Por favor, inténtalo de nuevo."
-        });
-        console.error("Login redirect failed:", error);
-      })
-      .finally(() => {
-        setIsProcessingLogin(false);
-      });
-  }, []);
-  
-  const handleLoginWithRedirect = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
+  const handleLoginWithPopup = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<FirebaseUser | undefined> => {
     setIsProcessingLogin(true);
-    await signInWithRedirect(auth, provider);
+    try {
+        const result = await signInWithPopup(auth, provider);
+        return result.user;
+    } catch (error: any) {
+        // Handle specific auth errors if needed, otherwise rethrow
+        console.error("Login popup failed:", error);
+        toast.error(`Error al iniciar sesión`, {
+          description: error.code === 'auth/popup-closed-by-user' 
+              ? 'La ventana de inicio de sesión fue cerrada.' 
+              : error.message || "Por favor, inténtalo de nuevo."
+        });
+        return undefined;
+    } finally {
+        setIsProcessingLogin(false);
+    }
   };
-
+  
   const loginWithGoogle = useCallback(async () => {
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
-    await handleLoginWithRedirect(googleProvider);
+    return await handleLoginWithPopup(googleProvider);
   }, []);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
      facebookProvider.setCustomParameters({ 'display': 'popup' });
-     await handleLoginWithRedirect(facebookProvider);
+     return await handleLoginWithPopup(facebookProvider);
   }, []);
   
   const handleLogout = useCallback(async () => {
