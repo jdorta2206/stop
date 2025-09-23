@@ -2,9 +2,9 @@
 "use client";
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState } from "react";
-import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
-import { signInWithPopup, type User as FirebaseUser } from "firebase/auth";
+import { signInWithPopup, signOut, type User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -32,7 +32,6 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   
   const [user, authLoading, authError] = useAuthState(auth);
-  const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   
   const handleLogin = async (provider: typeof googleProvider | typeof facebookProvider, providerName: string): Promise<FirebaseUser | undefined> => {
@@ -45,6 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                userCredential.user.displayName,
                userCredential.user.photoURL
             );
+           toast.success("Has iniciado sesión correctamente.");
            return userCredential.user;
         }
         return undefined;
@@ -69,15 +69,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const handleLogout = useCallback(async () => {
     try {
-        await signOut();
+        await signOut(auth);
         toast.success("Has cerrado sesión correctamente.");
     } catch (e: any) {
         toast.error("Error al cerrar sesión", { description: e.message });
     }
-  }, [signOut]);
+  }, []);
   
-  const isLoading = authLoading || signOutLoading;
-  const error = authError || signOutError;
+  const isLoading = authLoading;
+  const error = authError;
 
   const value = useMemo(() => ({
     user: user,
