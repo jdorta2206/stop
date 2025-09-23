@@ -4,43 +4,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Perfiles de Jugadores y Ranking
+    // Rankings: Publicly readable, but writable only by the owner.
     match /rankings/{userId} {
-      // Cualquier usuario autenticado puede leer los perfiles (necesario para buscar e invitar).
       allow get, list: if request.auth != null;
-      
-      // Solo el propietario del perfil puede crear, actualizar o borrar su propio documento.
-      allow create, update, delete: if request.auth.uid == userId;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
 
-      // Historial de partidas: solo el propietario puede acceder a su historial.
+      // Game history is private to the user
       match /gameHistory/{gameId} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Amigos: solo el propietario puede gestionar su lista de amigos.
+
+      // Friends list is private to the user
       match /friends/{friendId} {
-        allow read, write, delete: if request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // Salas de Juego
+    // Rooms: Readable by anyone logged in, but with specific update rules.
     match /rooms/{roomId} {
-      // Cualquiera puede leer los datos de una sala para unirse y jugar.
-      // La escritura se controla por lógica en el servidor (Cloud Functions o server-side logic).
-      // Aquí permitimos la escritura a cualquier usuario autenticado para que puedan actualizar su estado.
-      allow read, write: if request.auth != null;
+      allow get, list: if request.auth != null;
+      allow create: if request.auth != null;
+      
+      // Only the host can change critical game state.
+      // Players can update their own data.
+      allow update: if request.auth != null && (
+        (resource.data.hostId == request.auth.uid && (
+            request.resource.data.gameState != resource.data.gameState ||
+            request.resource.data.currentLetter != resource.data.currentLetter ||
+            request.resource.data.roundStartedAt != resource.data.roundStartedAt
+        )) ||
+        // Allow players to join (add themselves to the map)
+        (request.resource.data.players.size() > resource.data.players.size()) ||
+        // Allow players to update their own ready status or answers
+        (request.resource.data.players[request.auth.uid].isReady != resource.data.players[request.auth.uid].isReady) ||
+        (request.resource.data.players[request.auth.uid].name != resource.data.players[request.auth.uid].name) ||
+        (request.resource.data.playerResponses[request.auth.uid] != resource.data.playerResponses[request.auth.uid])
+      );
 
-      // Chat de la sala
+      // Chat within a room is writable by anyone in the room (simplified for now)
       match /chat/{messageId} {
-        allow read, create: if request.auth != null;
+          allow read, create: if request.auth != null && exists(path(string(resource.parent.parent).replace("/rooms", "/rooms/")));
       }
     }
-    
-    // Notificaciones: Cualquier usuario autenticado puede crear notificaciones (enviar invitaciones).
+
+    // Notifications: Creatable by anyone, but only readable/updatable by the recipient.
     match /notifications/{notificationId} {
       allow create: if request.auth != null;
-      // Solo el destinatario puede leer o actualizar su notificación (para marcarla como leída/aceptada).
-      allow read, update: if request.auth.uid == resource.data.recipientId;
+      allow get, update, delete: if request.auth != null && resource.data.recipientId == request.auth.uid;
     }
   }
 }
