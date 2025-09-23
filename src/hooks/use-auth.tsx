@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
   
-  const isLoading = authLoading;
+  const isLoading = authLoading || isProcessingLogin;
   const error = authError;
 
   const value = useMemo(() => ({

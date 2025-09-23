@@ -1,6 +1,6 @@
 
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth'; 
@@ -38,7 +38,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [user, isOpen, onClose]);
   
   useEffect(() => {
-    // This effect can show errors from the useAuthState hook, e.g., if the user session becomes invalid.
     if (error) {
        toast.error(error.message || "Ha ocurrido un error de autenticación.");
     }
