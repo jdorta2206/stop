@@ -136,7 +136,7 @@ export default function LeaderboardPage() {
             invitedPlayer: {
               id: playerToChallenge.id,
               name: playerToChallenge.playerName,
-              avatar: playerToChallenge.photoURL
+              avatar: playerToChallenge.photoURL || null
             }
         });
 
