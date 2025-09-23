@@ -1,6 +1,7 @@
+
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo, useState } from "react";
+import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
 import { signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
@@ -32,17 +33,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const [user, authLoading, authError] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+
+  // This effect runs when the user state changes (e.g., after login).
+  // It ensures the player's profile exists in the database.
+  useEffect(() => {
+    if (user?.uid) {
+      rankingManager.getPlayerRanking(
+        user.uid,
+        user.displayName,
+        user.photoURL
+      ).catch(error => {
+        console.error("Error ensuring player profile exists:", error);
+        toast.error("Hubo un problema al cargar tu perfil de jugador.");
+      });
+    }
+  }, [user]);
   
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider, providerName: string): Promise<FirebaseUser | undefined> => {
     setIsProcessingLogin(true);
     try {
         const userCredential = await signInWithPopup(auth, provider);
+        // DO NOT perform database operations here. Let the useEffect handle it.
         if (userCredential?.user) {
-           await rankingManager.getPlayerRanking(
-               userCredential.user.uid,
-               userCredential.user.displayName,
-               userCredential.user.photoURL
-            );
            toast.success("Has iniciado sesión correctamente.");
            return userCredential.user;
         }
