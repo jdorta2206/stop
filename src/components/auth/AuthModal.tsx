@@ -30,7 +30,6 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { user, loginWithGoogle, loginWithFacebook, isProcessingLogin, error } = useAuth();
-  const [isHandlingLogin, setIsHandlingLogin] = useState(false);
   
   useEffect(() => {
     if (user && isOpen) {
@@ -46,16 +45,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [error]);
 
   const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
-    setIsHandlingLogin(true);
     const firebaseUser = await loginMethod();
-    setIsHandlingLogin(false);
     if (firebaseUser?.uid) {
         toast.success("Has iniciado sesión correctamente.");
         onClose();
     }
   }
-
-  const combinedIsLoading = isProcessingLogin || isHandlingLogin;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -70,7 +65,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {combinedIsLoading ? (
+          {isProcessingLogin ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="text-muted-foreground text-sm">Iniciando sesión...</p>
@@ -81,7 +76,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => handleLogin(loginWithGoogle)}
-                    disabled={combinedIsLoading}
+                    disabled={isProcessingLogin}
                 >
                     <GoogleIcon />
                     <span className="text-sm">Continuar con Google</span>
@@ -90,7 +85,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
                     onClick={() => handleLogin(loginWithFacebook)}
-                    disabled={combinedIsLoading}
+                    disabled={isProcessingLogin}
                 >
                     <FacebookIcon />
                     <span className="text-sm">Continuar con Facebook</span>

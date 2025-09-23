@@ -53,9 +53,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsProcessingLogin(true);
     try {
         const userCredential = await signInWithPopup(auth, provider);
-        // DO NOT perform database operations here. Let the useEffect handle it.
         if (userCredential?.user) {
-           toast.success("Has iniciado sesión correctamente.");
+           // The useEffect above will handle the database profile creation.
            return userCredential.user;
         }
         return undefined;
