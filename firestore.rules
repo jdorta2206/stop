@@ -1,56 +1,8 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Rankings: Publicly readable, but writable only by the owner.
-    match /rankings/{userId} {
-      allow get, list: if request.auth != null;
-      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
-
-      // Game history is private to the user
-      match /gameHistory/{gameId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Friends list is private to the user
-      match /friends/{friendId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-
-    // Rooms: Readable by anyone logged in, but with specific update rules.
-    match /rooms/{roomId} {
-      allow get, list: if request.auth != null;
-      allow create: if request.auth != null;
-      
-      // Only the host can change critical game state.
-      // Players can update their own data.
-      allow update: if request.auth != null && (
-        (resource.data.hostId == request.auth.uid && (
-            request.resource.data.gameState != resource.data.gameState ||
-            request.resource.data.currentLetter != resource.data.currentLetter ||
-            request.resource.data.roundStartedAt != resource.data.roundStartedAt
-        )) ||
-        // Allow players to join (add themselves to the map)
-        (request.resource.data.players.size() > resource.data.players.size()) ||
-        // Allow players to update their own ready status or answers
-        (request.resource.data.players[request.auth.uid].isReady != resource.data.players[request.auth.uid].isReady) ||
-        (request.resource.data.players[request.auth.uid].name != resource.data.players[request.auth.uid].name) ||
-        (request.resource.data.playerResponses[request.auth.uid] != resource.data.playerResponses[request.auth.uid])
-      );
-
-      // Chat within a room is writable by anyone in the room (simplified for now)
-      match /chat/{messageId} {
-          allow read, create: if request.auth != null && exists(path(string(resource.parent.parent).replace("/rooms", "/rooms/")));
-      }
-    }
-
-    // Notifications: Creatable by anyone, but only readable/updatable by the recipient.
-    match /notifications/{notificationId} {
-      allow create: if request.auth != null;
-      allow get, update, delete: if request.auth != null && resource.data.recipientId == request.auth.uid;
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
