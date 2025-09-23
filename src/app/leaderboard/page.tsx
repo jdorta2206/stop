@@ -133,11 +133,6 @@ export default function LeaderboardPage() {
             creatorId: user.uid,
             creatorName: user.displayName,
             creatorAvatar: user.photoURL,
-            invitedPlayer: {
-              id: playerToChallenge.id,
-              name: playerToChallenge.playerName,
-              avatar: playerToChallenge.photoURL || null
-            }
         });
 
         if (!newRoom || !newRoom.id) {
