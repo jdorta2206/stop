@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,9 +8,9 @@ import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
-import { rankingManager, type PlayerScore } from '@/lib/ranking';
-import type { GameResult } from '@/components/game/types';
+import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
+import { rankingManager } from '@/lib/ranking';
+import type { PlayerScore, GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
@@ -55,7 +54,7 @@ export default function LeaderboardPage() {
             const friendIds = friendsList.map(f => f.id);
             // Fetch rankings for all friends
             const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
-            const friendRankings = await Promise.all(friendRankingsPromises);
+            const friendRankings = (await Promise.all(friendRankingsPromises)).filter(p => p !== null);
 
             // Combine friend data with their ranking data
             const enrichedFriendRankings = friendsList.map(friend => {

@@ -1,68 +1,53 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Reglas para la colección 'users'
-    match /users/{userId} {
-      // Cualquier usuario autenticado puede leer el perfil de otro usuario.
-      // Esto es necesario para mostrar nombres y avatares en rankings y listas de amigos.
+
+    // La colección 'rankings' almacena los perfiles públicos y puntuaciones.
+    match /rankings/{userId} {
+      // CUALQUIERA puede leer el ranking global (lecturas de lista).
+      allow list; 
+      
+      // Un usuario autenticado PUEDE LEER el perfil de otro si conoce su ID.
+      // Esto es clave para cargar los datos de los amigos en el ranking.
       allow get: if request.auth != null;
 
-      // Un usuario solo puede leer (listar) su propio perfil, no el de otros.
-      allow list: if request.auth != null && request.auth.uid == userId;
+      // Un usuario SOLO PUEDE ESCRIBIR en su propio documento de ranking.
+      allow write: if request.auth != null && request.auth.uid == userId;
 
-      // Un usuario solo puede crear su propio perfil.
-      allow create: if request.auth != null && request.auth.uid == userId;
-
-      // Un usuario solo puede actualizar su propio perfil.
-      allow update: if request.auth != null && request.auth.uid == userId;
-
-      // Un usuario no puede borrar su perfil (generalmente se gestiona desde el backend).
-      allow delete: if false;
-
-      // Subcolección de amigos: solo el propietario del perfil puede gestionar su lista de amigos.
+      // Subcolección de amigos de un jugador.
       match /friends/{friendId} {
-        allow read, list, create, update, delete: if request.auth != null && request.auth.uid == userId;
-      }
-
-      // Subcolección de historial de juegos: solo el propietario puede leer su historial.
-      match /gameHistory/{gameId} {
-        allow read, list: if request.auth != null && request.auth.uid == userId;
-        // La creación se hace desde el servidor (funciones) al finalizar una partida.
-        allow create: if request.auth != null && request.auth.uid == userId; 
-        allow update, delete: if false; // No se permite modificar ni borrar el historial.
+        // Un usuario SOLO PUEDE LEER Y ESCRIBIR su propia lista de amigos.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
-      // Subcolección de notificaciones
+      // Subcolección del historial de partidas de un jugador.
+      match /gameHistory/{gameId} {
+        // Un usuario SOLO PUEDE LEER Y ESCRIBIR su propio historial.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Subcolección de notificaciones de un jugador.
       match /notifications/{notificationId} {
-        allow read, list, update: if request.auth != null && request.auth.uid == userId;
-        // La creación se hace a través de funciones del servidor, no directamente por el cliente.
-        allow create: if request.auth != null; // Cualquiera autenticado puede enviar una notificación a otro.
-        allow delete: if request.auth != null && request.auth.uid == userId;
+        // Un usuario SOLO PUEDE LEER Y ESCRIBIR sus propias notificaciones.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
-    // Reglas para la colección 'rooms'
+    // La colección 'rooms' gestiona las salas de juego multijugador.
     match /rooms/{roomId} {
-      // Cualquiera autenticado puede leer una sala (para unirse o ver el estado).
-      allow read: if request.auth != null;
+      // CUALQUIER usuario autenticado puede leer, crear y actualizar una sala.
+      // Esto permite unirse, ver jugadores, y actualizar estado (listo, etc.).
+      allow read, create, update: if request.auth != null;
       
-      // Solo un usuario autenticado puede crear una sala.
-      allow create: if request.auth != null;
-      
-      // Solo un usuario autenticado puede actualizar una sala (ej: unirse, cambiar estado).
-      // Se podrían añadir reglas más granulares (ej: solo el host puede cambiar settings).
-      allow update: if request.auth != null;
-      
-      // Nadie puede borrar una sala directamente (se podría gestionar con funciones de limpieza).
+      // SOLO se puede borrar una sala si la petición viene del servidor (lógica futura).
       allow delete: if false;
 
-      // Subcolección de chat en una sala
+      // Subcolección de chat de una sala.
       match /chat/{messageId} {
-        // Cualquiera autenticado puede leer y escribir mensajes en una sala.
-        allow read, create: if request.auth != null;
-        allow update, delete: if false; // No se permite editar/borrar mensajes.
+        // CUALQUIER usuario autenticado puede leer y escribir en el chat de una sala.
+        allow read, write: if request.auth != null;
       }
     }
   }
