@@ -54,13 +54,12 @@ export default function LeaderboardPage() {
             const friendIds = friendsList.map(f => f.id);
             // Fetch rankings for all friends
             const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
-            const friendRankings = (await Promise.all(friendRankingsPromises)).filter(p => p !== null);
+            const friendRankings = (await Promise.all(friendRankingsPromises)).filter(p => p !== null) as PlayerScore[];
 
             // Combine friend data with their ranking data
             const enrichedFriendRankings = friendsList.map(friend => {
                 const rankingData = friendRankings.find(r => r.id === friend.id);
                 return {
-                    ...rankingData, // this will be undefined if no ranking found, but that's ok
                     id: friend.id, // Make sure friend ID is always correct
                     playerName: friend.name,
                     photoURL: friend.avatar,
@@ -76,7 +75,7 @@ export default function LeaderboardPage() {
                     dailyMissions: rankingData?.dailyMissions ?? [],
                     missionsLastReset: rankingData?.missionsLastReset ?? '',
                 };
-            }).filter(p => p !== null) as PlayerScore[];
+            });
             
             setFriendsLeaderboard(enrichedFriendRankings);
         } else {
@@ -229,5 +228,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    
