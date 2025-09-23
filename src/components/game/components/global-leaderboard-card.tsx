@@ -15,14 +15,14 @@ export function GlobalLeaderboardCard({
 }: GlobalLeaderboardCardProps) {
   return (
     <Card className={`shadow-lg rounded-xl overflow-hidden ${className}`}>
-      <CardHeader className="bg-blue-600 text-white p-4">
+      <CardHeader className="bg-card text-white p-4">
         <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg font-bold">
                 <Trophy className="h-5 w-5" />
                 {translateUi('leaderboards.global.title')}
             </CardTitle>
         </div>
-        <CardDescription className="text-blue-100 text-sm">
+        <CardDescription className="text-muted-foreground text-sm">
             {translateUi('leaderboards.global.description')}
         </CardDescription>
       </CardHeader>
@@ -40,3 +40,5 @@ export function GlobalLeaderboardCard({
     </Card>
   );
 }
+
+    
