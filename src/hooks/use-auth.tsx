@@ -1,10 +1,9 @@
-
 "use client";
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
-import { signInWithPopup, signOut, type User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/lib/firebase"; 
+import { signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -34,7 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, authLoading, authError] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   
-  const handleLogin = async (provider: typeof googleProvider | typeof facebookProvider, providerName: string): Promise<FirebaseUser | undefined> => {
+  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider, providerName: string): Promise<FirebaseUser | undefined> => {
     setIsProcessingLogin(true);
     try {
         const userCredential = await signInWithPopup(auth, provider);
@@ -60,10 +59,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const loginWithGoogle = useCallback(async () => {
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: 'select_account' });
     return await handleLogin(googleProvider, 'Google');
   }, []);
   
   const loginWithFacebook = useCallback(async () => {
+     const facebookProvider = new FacebookAuthProvider();
+     facebookProvider.addScope('email');
+     facebookProvider.setCustomParameters({ 'display': 'popup' });
      return await handleLogin(facebookProvider, 'Facebook');
   }, []);
   

@@ -10,15 +10,5 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- Providers ---
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-const facebookProvider = new FacebookAuthProvider();
-facebookProvider.addScope('email');
-facebookProvider.setCustomParameters({
-  'display': 'popup'
-});
-
-// Export the initialized services and providers
-export { app, auth, db, googleProvider, facebookProvider };
+// We export the providers directly now, not instances.
+export { app, auth, db, GoogleAuthProvider, FacebookAuthProvider };
