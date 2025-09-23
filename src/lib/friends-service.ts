@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { 
     doc, 
@@ -12,7 +13,6 @@ import {
     orderBy,
     startAt,
     endAt,
-    collectionGroup,
     Timestamp,
     addDoc,
     updateDoc,
@@ -30,6 +30,7 @@ export interface GameInvitation {
   id: string;
   fromUser: string;
   fromUserId: string;
+  recipientId: string; // Added to know who the notification is for
   roomId: string;
   message: string;
   timestamp: Timestamp;
@@ -100,11 +101,13 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
     if (!recipientId) throw new Error("Recipient ID is required.");
     
-    const notificationsRef = collection(db, `rankings/${recipientId}/notifications`);
+    // Notifications are now stored in a root collection
+    const notificationsRef = collection(db, `notifications`);
     
     const newNotification = {
         fromUserId: senderId,
         fromUser: senderName,
+        recipientId: recipientId, // Set the recipient
         roomId: roomId,
         message: `¡${senderName} te ha desafiado a una partida de STOP!`,
         timestamp: Timestamp.now(),
@@ -116,8 +119,14 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
 };
 
 export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
-    const notificationsRef = collection(db, `rankings/${userId}/notifications`);
-    const q = query(notificationsRef, orderBy('timestamp', 'desc'), limit(20));
+    // Query the root 'notifications' collection for documents where the user is the recipient
+    const notificationsRef = collection(db, `notifications`);
+    const q = query(
+        notificationsRef, 
+        where('recipientId', '==', userId), 
+        orderBy('timestamp', 'desc'), 
+        limit(20)
+    );
 
     return onSnapshot(q, (snapshot) => {
         const notifications = snapshot.docs.map(doc => ({
@@ -128,7 +137,8 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
     });
 };
 
-export const updateNotificationStatus = async (userId: string, notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
-    const notificationDocRef = doc(db, `rankings/${userId}/notifications`, notificationId);
+export const updateNotificationStatus = async (notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
+    // Notifications are in the root collection
+    const notificationDocRef = doc(db, `notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };
