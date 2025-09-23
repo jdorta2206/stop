@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
@@ -36,34 +37,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  const handleLogin = async (loginFunction: () => Promise<any>): Promise<FirebaseUser | undefined> => {
+  const handleLogin = async (loginFunction: () => Promise<any>, providerName: string): Promise<FirebaseUser | undefined> => {
     try {
         const userCredential = await loginFunction();
         if (userCredential?.user) {
            return userCredential.user;
         }
+        // Si no hay userCredential, puede que el usuario haya cerrado la ventana emergente
+        return undefined;
     } catch (e: any) {
-       // El error ya se muestra en el modal, no es necesario un toast aquí.
-       console.error("Login failed:", e);
+       toast.error(`Error al iniciar sesión con ${providerName}`, {
+         description: e.message || "Por favor, inténtalo de nuevo."
+       });
+       console.error(`Login failed with ${providerName}:`, e);
     }
     return undefined;
   };
 
   const loginWithGoogle = useCallback(async () => {
-    return await handleLogin(signInWithGoogle);
+    return await handleLogin(signInWithGoogle, "Google");
   }, [signInWithGoogle]);
   
   const loginWithFacebook = useCallback(async () => {
-     return await handleLogin(signInWithFacebook);
+     return await handleLogin(signInWithFacebook, "Facebook");
   }, [signInWithFacebook]);
   
   const handleLogout = useCallback(async () => {
-    await signOut();
-    toast.success("Has cerrado sesión correctamente.");
+    try {
+        await signOut();
+        toast.success("Has cerrado sesión correctamente.");
+    } catch (e: any) {
+        toast.error("Error al cerrar sesión", { description: e.message });
+    }
   }, [signOut]);
   
+  // Simplificamos el estado de carga y error. Solo nos importa el estado general
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
-  const error = authError || googleError || facebookError || signOutError;
+  const error = authError || signOutError; // Los errores de login se manejan con toasts
 
   const value = useMemo(() => ({
     user: firebaseUser,
