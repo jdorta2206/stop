@@ -3,8 +3,8 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase"; 
-import { signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, signInWithRedirect } from "firebase/auth";
+import { app } from "@/lib/firebase"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -24,6 +24,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const auth = getAuth(app);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -39,7 +40,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const checkUser = async () => {
       // Give time for useAuthState to initialize
       await new Promise(resolve => setTimeout(resolve, 50));
-      setIsProcessingLogin(false);
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+           toast.success("Has iniciado sesión correctamente.");
+        }
+      } catch (error: any) {
+        console.error("Redirect login failed:", error);
+         toast.error(`Error al iniciar sesión`, {
+            description: error.code === 'auth/popup-closed-by-user' 
+                ? 'La ventana de inicio de sesión fue cerrada.' 
+                : error.message || "Por favor, inténtalo de nuevo."
+        });
+      } finally {
+        setIsProcessingLogin(false);
+      }
     };
     checkUser();
   }, []);
@@ -57,36 +72,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  const handleLoginWithPopup = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
+  const handleLoginWithRedirect = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    try {
-        const result = await signInWithPopup(auth, provider);
-        if (result) {
-            toast.success("Has iniciado sesión correctamente.");
-        }
-    } catch (error: any) {
-        console.error("Popup login failed:", error);
-        toast.error(`Error al iniciar sesión`, {
-            description: error.code === 'auth/popup-closed-by-user' 
-                ? 'La ventana de inicio de sesión fue cerrada.' 
-                : error.message || "Por favor, inténtalo de nuevo."
-        });
-    } finally {
-        setIsProcessingLogin(false);
-    }
+    await signInWithRedirect(auth, provider);
   };
   
   const loginWithGoogle = useCallback(async () => {
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
-    await handleLoginWithPopup(googleProvider);
+    await handleLoginWithRedirect(googleProvider);
   }, []);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
      facebookProvider.setCustomParameters({ 'display': 'popup' });
-     await handleLoginWithPopup(facebookProvider);
+     await handleLoginWithRedirect(facebookProvider);
   }, []);
   
   const handleLogout = useCallback(async () => {
