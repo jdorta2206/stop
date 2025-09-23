@@ -13,9 +13,6 @@ const db = getFirestore(app);
 
 // Initialize App Check
 if (typeof window !== 'undefined') {
-  // Pass your reCAPTCHA v3 site key (public) to the provider.
-  // Make sure to add this to your environment variables.
-  // IMPORTANT: This key is public and safe to expose.
   try {
     const appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider('6LdOutlrAAAAAHyftbN3PIP8s72soDyqcUsCehiQ'), 
@@ -33,6 +30,12 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 const facebookProvider = new FacebookAuthProvider();
+// Solución: Añadir scopes y parámetros personalizados para robustecer la petición de OAuth.
+facebookProvider.addScope('email');
+facebookProvider.setCustomParameters({
+  'display': 'popup'
+});
+
 
 // Export the initialized services
 export { app, auth, db, googleProvider, facebookProvider };
