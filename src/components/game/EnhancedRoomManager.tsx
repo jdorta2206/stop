@@ -3,11 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { 
   Users, 
   Settings,
@@ -17,10 +12,14 @@ import {
   UserX,
   LogOut,
   Play,
-  Loader2,
+  Copy,
   Crown,
-  UserPlus,
-  Send
+  Check,
+  X,
+  DoorOpen,
+  Send,
+  Gamepad2,
+  ClipboardCopy
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -34,16 +33,12 @@ import {
     type Player, 
     type Room 
 } from '@/lib/room-service';
-import { getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
-import type { Language } from '@/contexts/language-context';
-import ContactsManager from './ContactsManager';
 import type { User } from 'firebase/auth';
 import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
 import { RouletteWheel } from './components/roulette-wheel';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
@@ -67,19 +62,29 @@ interface EnhancedRoomManagerProps {
   onStartGame: () => void;
 }
 
+const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path d="M22.25 12.01C22.25 17.65 17.65 22.25 12.01 22.25C10.03 22.25 8.16998 21.68 6.56998 20.68L2.75 21.75L3.85 18.01C2.8 16.34 2.25 14.28 2.25 12.01C2.25 6.37 6.85 1.77 12.49 1.77C15.11 1.77 17.51 2.78 19.31 4.57C21.11 6.37 22.25 8.78 22.25 12.01Z" fill="#25D366" />
+        <path d="M17.08 13.8C17.01 13.68 16.88 13.62 16.63 13.5C16.38 13.38 15.17 12.79 14.95 12.7C14.73 12.61 14.56 12.66 14.41 12.91C14.27 13.16 13.78 13.71 13.65 13.88C13.53 14.03 13.4 14.05 13.13 13.93C12.86 13.81 11.76 13.43 10.63 12.41C9.74001 11.61 9.12 10.74 8.99 10.48C8.86 10.23 8.98 10.11 9.09 10.01C9.19 9.91001 9.33 9.73001 9.46 9.59001C9.59 9.45001 9.64 9.33001 9.71 9.17001C9.78 9.01001 9.73 8.86001 9.68 8.74001C9.63 8.62001 9.03 7.31001 8.83 6.87001C8.63 6.43001 8.43 6.49001 8.31 6.49001L7.82 6.50001C7.67 6.50001 7.43 6.57001 7.24 6.78001C7.05 6.99001 6.43 7.56001 6.43 8.76001C6.43 9.96001 7.29 11.09 7.41 11.25C7.54 11.4 9.17 13.87 11.58 14.87C13.99 15.87 13.99 15.35 14.42 15.3C14.85 15.25 15.96 14.67 16.18 14.07C16.4 13.47 16.4 12.97 16.33 12.85C16.26 12.73 16.13 12.67 15.88 12.55" fill="white"/>
+    </svg>
+);
+
+const TelegramIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+       <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="#0088CC"/>
+       <path d="M9.41211 15.424L16.2841 8.55198C16.6341 8.20198 16.1551 8.01698 15.7161 8.19698L6.28711 12.215C5.74811 12.433 5.75311 12.771 6.33611 12.955L8.51311 13.593L13.8181 10.355C14.1831 10.117 14.5421 10.258 14.2671 10.493L10.3441 14.072L10.2071 16.591C10.5051 16.591 10.6691 16.427 10.8651 16.233L12.4431 14.68L14.7791 16.353C15.2811 16.657 15.6881 16.505 15.8231 15.918L17.4431 9.25598C17.6531 8.44198 17.0711 8.06198 16.4861 8.28798" fill="white"/>
+    </svg>
+);
+
+
 export default function EnhancedRoomManager({ 
   roomId, 
   currentUser, 
   roomData: room,
   onLeaveRoom, 
-  onStartGame: initialOnStartGame 
 }: EnhancedRoomManagerProps) {
   const { translate, language } = useLanguage();
-  const [showSettings, setShowSettings] = useState(false);
-  const [showContacts, setShowContacts] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
 
   const players = useMemo(() => Object.values(room.players || {}), [room.players]);
   const roomSettings = useMemo(() => room.settings, [room.settings]);
@@ -89,15 +94,15 @@ export default function EnhancedRoomManager({
   const currentPlayer = players.find(p => p.id === currentUser.uid);
   const isHost = room.hostId === currentUser.uid;
 
-  useEffect(() => {
-    async function fetchFriends() {
-        if(currentUser) {
-            const userFriends = await getFriends(currentUser.uid);
-            setFriends(userFriends);
-        }
+  const inviteUrl = useMemo(() => {
+    if (typeof window !== 'undefined') {
+        // Asegura que el código se ejecute solo en el cliente
+        const origin = window.location.origin;
+        return `${origin}/multiplayer?roomId=${roomId}`;
     }
-    fetchFriends();
-  }, [currentUser]);
+    return `https://juego-stop.netlify.app/multiplayer?roomId=${roomId}`;
+  }, [roomId]);
+
 
   useEffect(() => {
     if (room.gameState === 'PLAYING' && room.roundStartedAt) {
@@ -127,7 +132,7 @@ export default function EnhancedRoomManager({
   }, [room.gameState, timeLeft, isHost, roomId]);
 
   const readyPlayersCount = players.filter(p => p.isReady).length;
-  const canStartGame = isHost && players.length >= 1 && readyPlayersCount === players.length;
+  const canStartGame = isHost && players.length > 0 && readyPlayersCount === players.length;
 
   const handleToggleReady = async () => {
     if (!currentPlayer) return;
@@ -139,7 +144,10 @@ export default function EnhancedRoomManager({
   };
 
   const handleStartGame = async () => {
-    if (!canStartGame) return;
+    if (!canStartGame) {
+        toast.warning("Todos los jugadores deben estar listos para empezar.");
+        return;
+    };
     try {
         await startGame(roomId);
     } catch (error) {
@@ -172,63 +180,30 @@ export default function EnhancedRoomManager({
      }
   };
 
-  const handleKickPlayer = async (playerId: string) => {
-    if (!isHost) {
-      toast.error('Solo el anfitrión puede expulsar jugadores.');
-      return;
-    }
-    try {
-      await removePlayerFromRoom(roomId, playerId);
-      toast.success('Jugador expulsado de la sala');
-    } catch (error) {
-      toast.error((error as Error).message);
-    }
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      toast.success("Enlace copiado al portapapeles");
+    }).catch(err => {
+      console.error('Error al copiar enlace: ', err);
+      toast.error("No se pudo copiar el enlace.");
+    });
   };
-  
-  const handleInviteFriend = async (friendId: string) => {
-    if (!currentUser.displayName) {
-        toast.error("Tu nombre de usuario no está disponible.", {
-            description: "No puedes enviar una invitación sin un nombre de remitente.",
-        });
-        return;
+
+  const handleShare = (platform: 'whatsapp' | 'telegram') => {
+    const message = `¡Únete a mi sala en el juego Stop! Código: ${roomId}\n${inviteUrl}`;
+    let url = '';
+
+    if (platform === 'whatsapp') {
+      url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    } else if (platform === 'telegram') {
+      url = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(`¡Únete a mi sala en el juego Stop! Código: ${roomId}`)}`;
     }
-    try {
-      await sendChallengeNotification(currentUser.uid, currentUser.displayName, friendId, roomId);
-      toast.success(`Invitación enviada.`);
-      setInvitedFriends(prev => new Set(prev).add(friendId));
-    } catch (error) {
-      console.error("Error sending invitation:", error);
-      toast.error("No se pudo enviar la invitación.", {
-          description: (error as Error).message
-      });
+    
+    if (url) {
+        window.open(url, '_blank');
     }
   };
 
-  const handleUpdateSettings = async (newSettings: Partial<Room['settings']>) => {
-    if (!isHost) {
-      toast.error('Solo el anfitrión puede cambiar la configuración.');
-      return;
-    }
-    try {
-        await updateRoomSettings(roomId, newSettings);
-        toast.success('Configuración de sala actualizada');
-    } catch (error) {
-        toast.error((error as Error).message);
-    }
-  };
-
-  const getStatusIcon = (status: 'online' | 'away' | 'offline') => {
-    switch (status) {
-      case 'online':
-        return <div className="w-2.5 h-2.5 bg-green-500 rounded-full" title="En línea" />;
-      case 'away':
-        return <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full" title="Ausente"/>;
-      case 'offline':
-        return <div className="w-2.5 h-2.5 bg-gray-400 rounded-full" title="Desconectado" />;
-      default:
-        return null;
-    }
-  };
 
   // --- RENDERIZADO CONDICIONAL POR ESTADO DE JUEGO ---
   
@@ -279,172 +254,95 @@ export default function EnhancedRoomManager({
 
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
-    <div className="space-y-4 max-w-4xl mx-auto w-full">
-      <Card className="overflow-hidden shadow-2xl bg-card/70 backdrop-blur-md border-white/20">
-        <CardHeader className="bg-black/20 p-4 border-b border-white/10">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                {room.settings.isPrivate ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
-                Sala: {roomId}
-              </CardTitle>
-              <CardDescription className="mt-1 text-white/70">
-                {players.length}/{room.settings.maxPlayers} jugadores • {readyPlayersCount} listos
-              </CardDescription>
+    <div className="w-full max-w-lg mx-auto bg-black/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20">
+        {/* Header */}
+        <div className="text-center mb-6 pb-4 border-b border-white/20">
+            <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
+            <div className="text-3xl font-bold tracking-widest bg-white/10 px-4 py-2 rounded-lg inline-block font-mono text-green-400">
+                {roomId}
             </div>
-            <div className="flex items-center gap-2">
-                 <Dialog open={showContacts} onOpenChange={setShowContacts}>
-                    <DialogTrigger asChild>
-                       <Button variant="outline" className="bg-transparent hover:bg-white/10 border-white/30">
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Invitar por Contacto
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none p-0">
-                        <ContactsManager language={room.settings.language} roomCode={roomId} onClose={() => setShowContacts(false)} />
-                    </DialogContent>
-                </Dialog>
-                <Dialog open={showSettings} onOpenChange={setShowSettings}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={!isHost} className="hover:bg-white/10">
-                      <Settings className="h-5 w-5" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Configuración de Sala</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                      <div>
-                        <Label htmlFor="max-players">Máximo de jugadores</Label>
-                        <Select 
-                          value={room.settings.maxPlayers.toString()} 
-                          onValueChange={(value) => handleUpdateSettings({ maxPlayers: parseInt(value) })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[2, 4, 6, 8, 10].map(num => <SelectItem key={num} value={num.toString()}>{num} jugadores</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="private-room">Sala privada</Label>
-                        <Switch
-                          id="private-room"
-                          checked={room.settings.isPrivate}
-                          onCheckedChange={(checked) => handleUpdateSettings({ isPrivate: checked })}
-                        />
-                      </div>
-                    </div>
-                  </DialogContent>
-              </Dialog>
+            <div className="flex justify-center gap-4 mt-3 text-sm opacity-80">
+                <span>{players.length}/{room.settings.maxPlayers} jugadores</span>
+                <span>•</span>
+                <span>{readyPlayersCount} listos</span>
             </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="p-4 md:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-6">
-                <div>
-                    <h4 className="font-semibold mb-3 flex items-center gap-2"><Users className="h-5 w-5" />Jugadores en la Sala</h4>
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                        {players.map((player) => (
-                        <div key={player.id} className="flex items-center justify-between p-3 bg-black/20 rounded-lg animate-fade-in">
-                            <div className="flex items-center gap-3">
-                                {getStatusIcon(player.status)}
-                                <img src={player.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${player.name}`} alt={player.name} className="h-8 w-8 rounded-full" data-ai-hint="avatar person" />
-                                <span className="font-medium flex items-center gap-2">
-                                    {player.name} {player.id === currentUser.uid && "(Tú)"}
-                                    {player.isHost && <Crown className="h-4 w-4 text-yellow-500"/>}
-                                </span>
-                            </div>
-                            <div className='flex items-center gap-2'>
-                            <Badge variant={player.isReady ? "default" : "secondary"} className="text-xs w-20 justify-center">
-                                {player.isReady ? "Listo" : "Esperando"}
-                            </Badge>
-                            {isHost && player.id !== currentUser.uid && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleKickPlayer(player.id)}
-                                    title="Expulsar jugador"
-                                    className="text-muted-foreground hover:text-destructive h-7 w-7"
-                                >
-                                    <UserX className="h-4 w-4" />
-                                </Button>
-                            )}
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-                </div>
+        </div>
 
-                <div>
-                    <h4 className="font-semibold mb-3 flex items-center gap-2"><UserPlus className="h-5 w-5" />Invitar Amigos</h4>
-                    <ScrollArea className="h-40">
-                      <div className="space-y-2 pr-4">
-                        {friends.length > 0 ? friends.map(friend => (
-                          <div key={friend.id} className="flex items-center justify-between p-2 bg-black/10 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={friend.avatar || undefined} />
-                                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm font-medium">{friend.name}</span>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="bg-transparent"
-                              onClick={() => handleInviteFriend(friend.id)}
-                              disabled={invitedFriends.has(friend.id)}
-                            >
-                              <Send className="h-3 w-3 mr-2"/>
-                              {invitedFriends.has(friend.id) ? 'Invitado' : 'Invitar'}
-                            </Button>
-                          </div>
-                        )) : (
-                          <p className="text-sm text-center text-white/60 p-4">No tienes amigos añadidos. Ve al ranking para añadir amigos.</p>
+        {/* Players Section */}
+        <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+                <Users size={20} /> Jugadores en la Sala
+            </h2>
+            <div className="bg-white/5 rounded-lg p-4 space-y-3">
+                {players.map(player => (
+                    <div key={player.id} className="flex justify-between items-center pb-2 border-b border-white/10 last:border-b-0">
+                        <span className={`font-medium ${player.id === currentUser.uid ? 'text-yellow-400' : ''}`}>
+                            {player.name} {player.id === currentUser.uid && '(Tú)'}
+                            {player.isHost && <Crown className="inline h-4 w-4 ml-1 text-yellow-500"/>}
+                        </span>
+                        {player.isReady ? (
+                            <div className="text-green-400 text-xs font-bold bg-green-500/20 px-2 py-1 rounded-full">LISTO</div>
+                        ) : (
+                            <div className="text-white/60 text-xs">Esperando...</div>
                         )}
-                      </div>
-                    </ScrollArea>
-                </div>
+                    </div>
+                ))}
             </div>
+        </div>
+
+        {/* Invite Section */}
+        <div className="bg-white/5 rounded-lg p-5 mb-6">
+            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+                <Send size={20}/> Invitar Amigos
+            </h2>
+            <p className="text-sm opacity-90 mb-4">
+                Comparte este enlace con tus amigos para que se unan a la sala:
+            </p>
+            <div className="flex mb-4 bg-white/10 rounded-lg overflow-hidden border border-white/20">
+                <input readOnly value={inviteUrl} className="flex-grow p-3 text-sm bg-transparent outline-none truncate"/>
+                <button onClick={handleCopyLink} className="bg-green-600 hover:bg-green-700 text-white px-4 flex items-center gap-2 transition-colors">
+                    <ClipboardCopy size={16}/> Copiar
+                </button>
+            </div>
+             <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => handleShare('whatsapp')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                    <WhatsappIcon /> WhatsApp
+                </button>
+                 <button onClick={() => handleShare('telegram')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                    <TelegramIcon /> Telegram
+                </button>
+            </div>
+        </div>
+
+        {/* Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Button
+                onClick={handleToggleReady}
+                variant={currentPlayer?.isReady ? "destructive" : "default"}
+                className={`w-full py-6 text-base font-bold ${!currentPlayer?.isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+            >
+                {currentPlayer?.isReady ? <><X className="mr-2"/> No Estoy Listo</> : <><Check className="mr-2"/> Estoy Listo</>}
+            </Button>
             
-            <div className="flex flex-col justify-between space-y-3">
-                 <h4 className="font-semibold mb-3 flex items-center gap-2"><Play className="h-5 w-5" />Acciones</h4>
-                 <Button
-                    onClick={handleToggleReady}
-                    variant={currentPlayer?.isReady ? "secondary" : "default"}
-                    className="w-full text-lg py-6"
-                    size="lg"
-                >
-                    {currentPlayer?.isReady ? "Cancelar" : "¡Estoy listo!"}
-                </Button>
-                
-                <Button
-                    onClick={handleStartGame}
-                    disabled={!canStartGame}
-                    className="w-full text-lg py-6"
-                    size="lg"
-                >
-                    Iniciar ({readyPlayersCount}/{players.length})
-                </Button>
-                
-                <Button
-                    onClick={onLeaveRoom}
-                    variant="outline"
-                    className="w-full bg-transparent hover:bg-white/10 border-white/30"
-                >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Salir
-                </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Button
+                onClick={handleStartGame}
+                disabled={!canStartGame}
+                className="w-full py-6 text-base font-bold text-black bg-yellow-400 hover:bg-yellow-500 disabled:bg-gray-600 disabled:text-white/70 disabled:cursor-not-allowed md:col-span-1"
+            >
+                <Gamepad2 className="mr-2"/> Iniciar ({readyPlayersCount}/{players.length})
+            </Button>
+
+            <Button
+                onClick={onLeaveRoom}
+                variant="outline"
+                className="w-full py-6 text-base bg-white/10 border-white/30 hover:bg-white/20 md:col-span-1"
+            >
+                <DoorOpen className="mr-2 h-5 w-5" />
+                Salir
+            </Button>
+        </div>
     </div>
   );
 }
+
+    
