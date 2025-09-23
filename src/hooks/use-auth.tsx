@@ -1,10 +1,10 @@
 
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect } from "react";
-import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from "@/lib/firebase"; 
-import type { User as FirebaseUser } from "firebase/auth";
+import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
+import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
+import { auth, googleProvider, facebookProvider } from "@/lib/firebase"; 
+import { signInWithPopup, type User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
 
@@ -20,6 +20,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<FirebaseUser | undefined>;
   loginWithFacebook: () => Promise<FirebaseUser | undefined>;
   logout: () => Promise<void>;
+  isProcessingLogin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,17 +31,15 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   
-  const [firebaseUser, authLoading, authError] = useAuthState(auth);
-  
-  const [signInWithGoogle, , googleLoading, googleError] = useSignInWithGoogle(auth);
-  const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
+  const [user, authLoading, authError] = useAuthState(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
+  const [isProcessingLogin, setIsProcessingLogin] = React.useState(false);
   
-  const handleLogin = async (loginFunction: () => Promise<any>, providerName: string): Promise<FirebaseUser | undefined> => {
+  const handleLogin = async (provider: typeof googleProvider | typeof facebookProvider, providerName: string): Promise<FirebaseUser | undefined> => {
+    setIsProcessingLogin(true);
     try {
-        const userCredential = await loginFunction();
+        const userCredential = await signInWithPopup(auth, provider);
         if (userCredential?.user) {
-           // Ensure user profile exists in Firestore after login
            await rankingManager.getPlayerRanking(
                userCredential.user.uid,
                userCredential.user.displayName,
@@ -54,17 +53,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
          description: e.message || "Por favor, inténtalo de nuevo."
        });
        console.error(`Login failed with ${providerName}:`, e);
+    } finally {
+      setIsProcessingLogin(false);
     }
     return undefined;
   };
 
   const loginWithGoogle = useCallback(async () => {
-    return await handleLogin(signInWithGoogle, "Google");
-  }, [signInWithGoogle]);
+    return await handleLogin(googleProvider, "Google");
+  }, []);
   
   const loginWithFacebook = useCallback(async () => {
-     return await handleLogin(signInWithFacebook, "Facebook");
-  }, [signInWithFacebook]);
+     return await handleLogin(facebookProvider, "Facebook");
+  }, []);
   
   const handleLogout = useCallback(async () => {
     try {
@@ -75,17 +76,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [signOut]);
   
-  const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
-  const error = authError || googleError || facebookError || signOutError;
+  const isLoading = authLoading || signOutLoading;
+  const error = authError || signOutError;
 
   const value = useMemo(() => ({
-    user: firebaseUser,
+    user: user,
     isLoading,
     error: error || null,
     loginWithGoogle,
     loginWithFacebook,
     logout: handleLogout,
-  }), [firebaseUser, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout]);
+    isProcessingLogin,
+  }), [user, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
 
   return (
     <AuthContext.Provider value={value}>
