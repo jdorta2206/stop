@@ -20,7 +20,7 @@ import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@
 import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
 import FriendsInvite from '@/components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { createRoom } from '@/lib/room-service';
+import { createRoom, addPlayerToRoom } from '@/lib/room-service';
 import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
 
 export default function LeaderboardPage() {
@@ -132,19 +132,20 @@ export default function LeaderboardPage() {
         const newRoom = await createRoom({
             creatorId: user.uid,
             creatorName: user.displayName,
-            creatorAvatar: user.photoURL
+            creatorAvatar: user.photoURL,
+            invitedPlayer: {
+              id: playerToChallenge.id,
+              name: playerToChallenge.playerName,
+              avatar: playerToChallenge.photoURL
+            }
         });
 
         if (!newRoom || !newRoom.id) {
             throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
-
-        // Send notification to the challenged player
+        
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
-
         toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}.`);
-
-        // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
@@ -232,3 +233,5 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+
+    
