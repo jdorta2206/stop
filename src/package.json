@@ -1,8 +1,0 @@
-
-{
-  "name": "stop-game-functions",
-  "type": "module",
-  "dependencies": {
-    "firebase": "^10.12.3"
-  }
-}

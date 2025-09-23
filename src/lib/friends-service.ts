@@ -99,7 +99,17 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 };
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
-    if (!recipientId) throw new Error("Recipient ID is required.");
+    if (!recipientId) {
+      throw new Error("El ID del destinatario es requerido.");
+    }
+
+    // Check if the recipient user exists in the 'rankings' collection
+    const recipientDocRef = doc(db, 'rankings', recipientId);
+    const recipientDoc = await getDoc(recipientDocRef);
+
+    if (!recipientDoc.exists()) {
+        throw new Error(`El jugador con ID ${recipientId} no existe o no ha jugado nunca.`);
+    }
     
     // Notifications are now stored in a root collection
     const notificationsRef = collection(db, `notifications`);
