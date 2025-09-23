@@ -30,7 +30,7 @@ export interface GameInvitation {
   id: string;
   fromUser: string;
   fromUserId: string;
-  recipientId: string; // Added to know who the notification is for
+  recipientId: string;
   roomId: string;
   message: string;
   timestamp: Timestamp;
@@ -59,7 +59,7 @@ export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
             id: doc.id,
             name: data.playerName,
             avatar: data.photoURL,
-            addedAt: Timestamp.now() // This is just for the type, not stored here
+            addedAt: Timestamp.now()
         });
     });
     return users;
@@ -100,36 +100,35 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
     if (!recipientId) {
-      throw new Error("El ID del destinatario es requerido.");
+        throw new Error("El ID del destinatario es requerido.");
     }
 
-    // Check if the recipient user exists in the 'rankings' collection
+    // Comprobamos si el destinatario existe para dar un error más claro.
     const recipientDocRef = doc(db, 'rankings', recipientId);
     const recipientDoc = await getDoc(recipientDocRef);
-
     if (!recipientDoc.exists()) {
-        throw new Error(`El jugador con ID ${recipientId} no existe o no ha jugado nunca.`);
+        throw new Error(`El jugador al que intentas invitar no existe.`);
     }
-    
-    // Notifications are now stored in a root collection
-    const notificationsRef = collection(db, `notifications`);
+
+    const notificationsRef = collection(db, "notifications");
     
     const newNotification = {
         fromUserId: senderId,
         fromUser: senderName,
-        recipientId: recipientId, // Set the recipient
+        recipientId: recipientId,
         roomId: roomId,
         message: `¡${senderName} te ha desafiado a una partida de STOP!`,
         timestamp: Timestamp.now(),
         type: 'room_invite',
         status: 'pending'
     };
-    
+
+    // El error de permisos, si ocurre, se propagará y será manejado por el componente que llama.
     await addDoc(notificationsRef, newNotification);
 };
 
+
 export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
-    // Query the root 'notifications' collection for documents where the user is the recipient
     const notificationsRef = collection(db, `notifications`);
     const q = query(
         notificationsRef, 
@@ -144,11 +143,13 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
             ...doc.data()
         } as GameInvitation));
         callback(notifications);
+    }, (error) => {
+        console.error("Error listening to notifications:", error);
+        // Aquí puedes notificar al usuario que hay un problema con las actualizaciones en tiempo real.
     });
 };
 
 export const updateNotificationStatus = async (notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
-    // Notifications are in the root collection
     const notificationDocRef = doc(db, `notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };
