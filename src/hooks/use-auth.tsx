@@ -24,23 +24,21 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const auth = getAuth(app);
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  
+  const auth = getAuth(app);
   const [user, authLoading, authError] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
-      // Pequeña espera para asegurar que el SDK de Firebase se inicialice
       await new Promise(resolve => setTimeout(resolve, 50));
       try {
-        const result = await getRedirectResult(auth);
+        const result = await getRedirectResult(getAuth(app));
         if (result) {
            toast.success("Has iniciado sesión correctamente.");
         }
@@ -58,7 +56,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkUser();
   }, []);
 
-  // Efecto para asegurar que el perfil del jugador exista o se cree en la base de datos
   useEffect(() => {
     if (user?.uid) {
       rankingManager.getPlayerRanking(
@@ -75,7 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(getAuth(app), provider);
       toast.success("Has iniciado sesión correctamente.");
     } catch (error: any) {
       console.error("Popup login failed:", error);
@@ -104,7 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const handleLogout = useCallback(async () => {
     try {
-        await signOut(auth);
+        await signOut(getAuth(app));
         toast.success("Has cerrado sesión correctamente.");
     } catch (e: any) {
         toast.error("Error al cerrar sesión", { description: e.message });
