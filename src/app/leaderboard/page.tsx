@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -10,8 +9,8 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
-import { rankingManager } from '@/lib/ranking';
-import type { PlayerScore, GameResult } from '@/components/game/types';
+import { rankingManager, type PlayerScore } from '@/lib/ranking';
+import type { GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
@@ -29,6 +28,7 @@ export default function LeaderboardPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [friendsLeaderboard, setFriendsLeaderboard] = useState<PlayerScore[]>([]);
   const [personalStats, setPersonalStats] = useState<PlayerScore | null>(null);
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
@@ -37,45 +37,55 @@ export default function LeaderboardPage() {
   const fetchData = async (userId?: string) => {
     setIsLoading(true);
     try {
-      // Fetch global leaderboard
       const globalData = await rankingManager.getTopRankings(10);
       setGlobalLeaderboard(globalData);
 
       if (userId) {
-        // Fetch personal stats, game history, and friends list in parallel
-        const [personalData, historyData, friendsList] = await Promise.all([
-          rankingManager.getPlayerRanking(userId),
-          rankingManager.getGameHistory(userId, 5),
-          getFriends(userId)
-        ]);
-
+        const personalData = await rankingManager.getPlayerRanking(userId);
         setPersonalStats(personalData);
+        
+        const historyData = await rankingManager.getGameHistory(userId, 5);
         setGameHistory(historyData);
         
+        const friendsList = await getFriends(userId);
+        setFriends(friendsList);
+
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
             // Fetch rankings for all friends
-            const friendRankings = await rankingManager.getMultiplePlayerRankings(friendIds);
-            
-            // Enrich friend rankings with names and avatars from the friends list
-            const enrichedFriendRankings = friendRankings.map(ranking => {
-                const friendInfo = friendsList.find(f => f.id === ranking.id);
+            const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
+            const friendRankings = await Promise.all(friendRankingsPromises);
+
+            // Combine friend data with their ranking data
+            const enrichedFriendRankings = friendsList.map(friend => {
+                const rankingData = friendRankings.find(r => r.id === friend.id);
                 return {
-                    ...ranking,
-                    playerName: friendInfo?.name || ranking.playerName,
-                    photoURL: friendInfo?.avatar || ranking.photoURL,
+                    ...rankingData, // this will be undefined if no ranking found, but that's ok
+                    id: friend.id, // Make sure friend ID is always correct
+                    playerName: friend.name,
+                    photoURL: friend.avatar,
+                    totalScore: rankingData?.totalScore ?? 0,
+                    level: rankingData?.level ?? 'Principiante',
+                    bestScore: rankingData?.bestScore ?? 0,
+                    gamesPlayed: rankingData?.gamesPlayed ?? 0,
+                    gamesWon: rankingData?.gamesWon ?? 0,
+                    averageScore: rankingData?.averageScore ?? 0,
+                    lastPlayed: rankingData?.lastPlayed ?? 'Nunca',
+                    achievements: rankingData?.achievements ?? [],
+                    coins: rankingData?.coins ?? 0,
+                    dailyMissions: rankingData?.dailyMissions ?? [],
+                    missionsLastReset: rankingData?.missionsLastReset ?? '',
                 };
-            }).sort((a, b) => b.totalScore - a.totalScore);
+            }).filter(p => p !== null) as PlayerScore[];
             
-             setFriendsLeaderboard(enrichedFriendRankings);
+            setFriendsLeaderboard(enrichedFriendRankings);
         } else {
             setFriendsLeaderboard([]);
         }
       }
     } catch (error) {
-      console.error("Error fetching leaderboard data:", error);
-      toast.error("Error al cargar los datos del ranking.", {
-        description: (error as Error).message,
+      toast.error((error as Error).message, {
+        description: translate('common.error'),
       });
     } finally {
       setIsLoading(false);
@@ -83,21 +93,23 @@ export default function LeaderboardPage() {
   };
 
   useEffect(() => {
-    if (!isAuthLoading) {
-        fetchData(user?.uid);
+    if (user) {
+      fetchData(user.uid);
+    } else if (!isAuthLoading) {
+      fetchData(); // Fetch global data even if not logged in
     }
   }, [user, isAuthLoading]);
 
-    const handleAddFriend = async (friendId: string, friendName: string, friendAvatar: string | null) => {
+  const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
       toast.warning(translate('leaderboards.loginRequired'), {
-        description: translate('actionRequired'),
+        description: "actionRequired",
       });
       return;
     }
     try {
-      await addFriend(user.uid, friendId, friendName, friendAvatar);
-      toast.success(translate('leaderboards.friendAdded', { name: friendName }));
+      await addFriend(user.uid, player.id, player.playerName, player.photoURL);
+      toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
       fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast.error((error as Error).message);
@@ -125,10 +137,12 @@ export default function LeaderboardPage() {
             throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
 
+        // Send notification to the challenged player
         await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
 
         toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}.`);
 
+        // Redirect current user to the room
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
     } catch (error) {
@@ -154,7 +168,7 @@ export default function LeaderboardPage() {
           <h1 className="text-4xl font-bold text-white">Ranking & Amigos</h1>
           <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? translate('loading') : translate('refresh')}
+            {isLoading ? translate('common.loading') : translate('refresh')}
           </Button>
         </div>
         
@@ -163,7 +177,7 @@ export default function LeaderboardPage() {
             <GlobalLeaderboardCard 
               leaderboardData={globalLeaderboard}
               currentUserId={user?.uid}
-              onAddFriend={(player) => handleAddFriend(player.id, player.playerName, player.photoURL || null)}
+              onAddFriend={handleAddFriend}
               onChallenge={handleChallenge}
               language={language}
               translateUi={translate}
@@ -215,3 +229,4 @@ export default function LeaderboardPage() {
     </div>
   );
 }
+    
