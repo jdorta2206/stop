@@ -1,15 +1,14 @@
-
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect } from "react";
+import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from "@/lib/firebase"; 
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
-import { rankingManager } from "@/lib/ranking";
 
+// AppUser se usará en otras partes de la app, pero el hook solo expone FirebaseUser
 export interface AppUser extends FirebaseUser {
+  // Campos del perfil de la base de datos que se pueden añadir
   totalScore?: number;
   level?: string;
 }
@@ -37,28 +36,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [signInWithFacebook, , facebookLoading, facebookError] = useSignInWithFacebook(auth);
   const [signOut, signOutLoading, signOutError] = useSignOut(auth);
   
-  const updateUserProfile = async (user: FirebaseUser) => {
-    if (!user) return;
-    // Instead of directly writing, we use the rankingManager to ensure consistency
-    // This will create the player profile if it doesn't exist.
-    await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-  };
-
-  useEffect(() => {
-    if (firebaseUser) {
-      updateUserProfile(firebaseUser);
-    }
-  }, [firebaseUser]);
-
-
   const handleLogin = async (loginFunction: () => Promise<any>): Promise<FirebaseUser | undefined> => {
     try {
         const userCredential = await loginFunction();
         if (userCredential?.user) {
-           await updateUserProfile(userCredential.user);
            return userCredential.user;
         }
     } catch (e: any) {
+       // El error ya se muestra en el modal, no es necesario un toast aquí.
        console.error("Login failed:", e);
     }
     return undefined;

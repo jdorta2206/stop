@@ -64,6 +64,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: hsl(var(--background));
+    background-image: linear-gradient(to right top, hsl(var(--background)), hsl(var(--card)));
   }
 }
