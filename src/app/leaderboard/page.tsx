@@ -8,9 +8,9 @@ import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, UserPlus, Users } from 'lucide-react';
-import { rankingManager } from '@/lib/ranking';
-import type { PlayerScore, GameResult } from '@/components/game/types';
+import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
+import { rankingManager, type PlayerScore } from '@/lib/ranking';
+import type { GameResult } from '@/components/game/types';
 import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
 import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
 import { GameHistoryCard } from '@/components/game/components/game-history-card';
@@ -84,8 +84,8 @@ export default function LeaderboardPage() {
         }
       }
     } catch (error) {
-      toast.error((error as Error).message, {
-        description: translate('common.error'),
+      toast.error("No se pudieron cargar los datos del ranking.", {
+        description: (error as Error).message,
       });
     } finally {
       setIsLoading(false);
@@ -229,6 +229,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-    
-
-    
