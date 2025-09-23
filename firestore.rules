@@ -1,40 +1,28 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Reglas para la colección 'rankings'
-    match /rankings/{userId} {
-      // Cualquiera puede leer datos de perfiles para los rankings.
-      allow read: if request.auth != null;
-
-      // Un usuario solo puede escribir en su propio perfil.
-      allow write: if request.auth.uid == userId;
-
-      // Reglas para subcolecciones de un usuario
-      match /friends/{friendId} {
-        allow read, write: if request.auth.uid == userId;
-      }
-
-      match /notifications/{notificationId} {
-        allow read, write: if request.auth.uid == userId;
-      }
-
-      match /gameHistory/{gameId} {
-        allow read, write: if request.auth.uid == userId;
+    match /rooms/{roomId} {
+      allow read, create, update: if request.auth != null;
+      match /chat/{messageId} {
+        allow read, write: if request.auth != null;
       }
     }
-
-    // Reglas para la colección 'rooms'
-    match /rooms/{roomId} {
-      // Cualquiera autenticado puede leer, crear y actualizar salas.
-      allow read, create, update: if request.auth != null;
-
-      // El borrado puede ser más restrictivo si es necesario, por ahora solo el host.
-      allow delete: if request.auth != null && resource.data.hostId == request.auth.uid;
-      
-      match /chat/{messageId} {
-        allow read, create: if request.auth != null;
+    match /rankings/{userId} {
+      allow get, list: if true;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
+      match /friends/{friendId} {
+        allow read, write, delete: if request.auth.uid == userId;
+      }
+      match /notifications/{notificationId} {
+        // Allow any logged-in user to CREATE a notification (send an invite)
+        allow create: if request.auth != null;
+        // Only allow the user to read, update, or delete their OWN notifications
+        allow read, update, delete: if request.auth.uid == userId;
+      }
+      match /gameHistory/{gameId} {
+        allow read, write: if request.auth.uid == userId;
       }
     }
   }
