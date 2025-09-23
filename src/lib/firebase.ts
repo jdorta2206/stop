@@ -17,8 +17,9 @@ if (typeof window !== 'undefined') {
   // Make sure to add this to your environment variables.
   // IMPORTANT: This key is public and safe to expose.
   try {
+    // TODO: Replace with your actual public reCAPTCHA site key from the Google Cloud console.
     const appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider('6Ld-pB8pAAAAAAn_2ENuYTub2z392E5K7lq3yJ9B'), // Replace with your actual public reCAPTCHA site key
+      provider: new ReCaptchaV3Provider('6Ld-pB8pAAAAAAn_2ENuYTub2z392E5K7lq3yJ9B'), 
       isTokenAutoRefreshEnabled: true
     });
     console.log("Firebase App Check initialized successfully.");
