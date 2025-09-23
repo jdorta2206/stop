@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, signInWithRedirect } from "firebase/auth";
 import { app } from "@/lib/firebase"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
