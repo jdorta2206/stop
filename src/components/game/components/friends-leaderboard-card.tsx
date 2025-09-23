@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,9 +7,11 @@ import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PlayerScore } from '../types';
 import type { Language } from '@/contexts/language-context';
+import type { Friend } from '@/lib/friends-service';
 
 interface FriendsLeaderboardCardProps {
   leaderboardData: PlayerScore[];
+  friendsList: Friend[];
   className?: string;
   language: Language;
   currentUserId?: string;
@@ -19,7 +22,8 @@ interface FriendsLeaderboardCardProps {
 
 
 export function FriendsLeaderboardCard({ 
-  leaderboardData, 
+  leaderboardData,
+  friendsList,
   className, 
   language,
   currentUserId,
@@ -28,6 +32,9 @@ export function FriendsLeaderboardCard({
   isLoading,
 }: FriendsLeaderboardCardProps) {
   
+  const hasFriends = friendsList.length > 0;
+  const hasScores = leaderboardData.length > 0;
+
   return (
     <Card className={cn("shadow-lg rounded-xl", className)}>
       <CardHeader>
@@ -50,9 +57,14 @@ export function FriendsLeaderboardCard({
           language={language}
           isLoading={isLoading}
         />
-        {!isLoading && leaderboardData.length === 0 && (
+        {!isLoading && !hasFriends && (
           <div className="text-center text-muted-foreground p-4">
-            Aún no tienes amigos en tu lista. ¡Añade algunos para competir!
+            Aún no tienes amigos en tu lista. ¡Añade algunos desde el ranking global para competir!
+          </div>
+        )}
+        {!isLoading && hasFriends && !hasScores && (
+           <div className="text-center text-muted-foreground p-4">
+            Tus amigos aún no han jugado. ¡Anímales a unirse a una partida!
           </div>
         )}
       </CardContent>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -52,15 +53,17 @@ export default function LeaderboardPage() {
 
         if (friendsList.length > 0) {
             const friendIds = friendsList.map(f => f.id);
-            // Fetch rankings for all friends
-            const friendRankingsPromises = friendIds.map(id => rankingManager.getPlayerRanking(id));
+            // Fetch rankings for all friends, but don't fail if one is missing
+            const friendRankingsPromises = friendIds.map(id => 
+                rankingManager.getPlayerRanking(id).catch(() => null)
+            );
             const friendRankings = (await Promise.all(friendRankingsPromises)).filter(p => p !== null) as PlayerScore[];
-
+            
             // Combine friend data with their ranking data
             const enrichedFriendRankings = friendsList.map(friend => {
                 const rankingData = friendRankings.find(r => r.id === friend.id);
                 return {
-                    id: friend.id, // Make sure friend ID is always correct
+                    id: friend.id,
                     playerName: friend.name,
                     photoURL: friend.avatar,
                     totalScore: rankingData?.totalScore ?? 0,
@@ -75,7 +78,7 @@ export default function LeaderboardPage() {
                     dailyMissions: rankingData?.dailyMissions ?? [],
                     missionsLastReset: rankingData?.missionsLastReset ?? '',
                 };
-            });
+            }).sort((a,b) => b.totalScore - a.totalScore); // Sort by score
             
             setFriendsLeaderboard(enrichedFriendRankings);
         } else {
@@ -185,6 +188,7 @@ export default function LeaderboardPage() {
             {user && (
               <FriendsLeaderboardCard 
                 leaderboardData={friendsLeaderboard}
+                friendsList={friends}
                 currentUserId={user?.uid}
                 onChallenge={handleChallenge}
                 language={language}
