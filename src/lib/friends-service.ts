@@ -103,7 +103,6 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
         throw new Error("El ID del destinatario es requerido.");
     }
 
-    // Comprobamos si el destinatario existe para dar un error más claro.
     const recipientDocRef = doc(db, 'rankings', recipientId);
     const recipientDoc = await getDoc(recipientDocRef);
     if (!recipientDoc.exists()) {
@@ -123,7 +122,6 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
         status: 'pending'
     };
 
-    // El error de permisos, si ocurre, se propagará y será manejado por el componente que llama.
     await addDoc(notificationsRef, newNotification);
 };
 
@@ -145,7 +143,6 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
         callback(notifications);
     }, (error) => {
         console.error("Error listening to notifications:", error);
-        // Aquí puedes notificar al usuario que hay un problema con las actualizaciones en tiempo real.
     });
 };
 
