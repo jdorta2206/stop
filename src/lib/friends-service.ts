@@ -80,7 +80,7 @@ export const addFriend = async (currentUserId: string, friendId: string, friendN
     await setDoc(friendDocRef, {
         id: friendId,
         name: friendName,
-        avatar: friendAvatar,
+        avatar: friendAvatar || null,
         addedAt: Timestamp.now()
     });
 };
