@@ -140,8 +140,6 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
             ...doc.data()
         } as GameInvitation));
         callback(notifications);
-    }, (error) => {
-        // Do not log error here, as it can be noisy if rules are being adjusted.
     });
 };
 

@@ -74,11 +74,6 @@ export interface CreateRoomInput {
   creatorId: string;
   creatorName: string | null;
   creatorAvatar: string | null;
-  invitedPlayer?: {
-      id: string;
-      name: string;
-      avatar: string | null;
-  }
 }
 
 export interface CreateRoomOutput {
@@ -107,6 +102,8 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
     joinedAt: serverTimestamp(),
     isHost: true,
   };
+  
+  const gameScores: Record<string, number> = { [creatorId]: 0 };
 
   const newRoomData: Omit<Room, 'id'> = {
       players: { [creatorId]: hostPlayer },
@@ -119,7 +116,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
         isPrivate: true,
         language: 'es',
       },
-      gameScores: { [creatorId]: 0 },
+      gameScores: gameScores,
       roundNumber: 0,
   };
 

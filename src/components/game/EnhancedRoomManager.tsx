@@ -3,13 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { 
   Users, 
-  Settings,
   Share2, 
-  Lock, 
-  Unlock,
-  UserX,
   LogOut,
   Play,
   Copy,
@@ -19,13 +17,13 @@ import {
   DoorOpen,
   Send,
   Gamepad2,
-  ClipboardCopy
+  ClipboardCopy,
+  UserPlus,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
     updatePlayerInRoom, 
-    updateRoomSettings, 
-    removePlayerFromRoom, 
     startGame, 
     submitPlayerAnswers,
     triggerGlobalStop,
@@ -38,7 +36,7 @@ import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
 import { RouletteWheel } from './components/roulette-wheel';
-import { Loader2 } from 'lucide-react';
+import { getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
@@ -86,6 +84,34 @@ export default function EnhancedRoomManager({
   const { translate, language } = useLanguage();
   const [timeLeft, setTimeLeft] = useState(0);
 
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [invitedFriends, setInvitedFriends] = useState<Set<string>>(new Set());
+  const [loadingFriends, setLoadingFriends] = useState(true);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      setLoadingFriends(true);
+      try {
+        const userFriends = await getFriends(currentUser.uid);
+        setFriends(userFriends);
+        setFilteredFriends(userFriends);
+      } catch (error) {
+        toast.error("No se pudieron cargar tus amigos.");
+      } finally {
+        setLoadingFriends(false);
+      }
+    };
+    fetchFriends();
+  }, [currentUser.uid]);
+  
+  useEffect(() => {
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const filtered = friends.filter(friend => friend.name.toLowerCase().includes(lowerCaseQuery));
+    setFilteredFriends(filtered);
+  }, [searchQuery, friends]);
+
   const players = useMemo(() => Object.values(room.players || {}), [room.players]);
   const roomSettings = useMemo(() => room.settings, [room.settings]);
   const categories = useMemo(() => CATEGORIES_BY_LANG[roomSettings.language] || CATEGORIES_BY_LANG.es, [roomSettings.language]);
@@ -95,11 +121,6 @@ export default function EnhancedRoomManager({
   const isHost = room.hostId === currentUser.uid;
 
   const inviteUrl = useMemo(() => {
-    if (typeof window !== 'undefined') {
-        // Asegura que el código se ejecute solo en el cliente
-        const origin = window.location.origin;
-        return `${origin}/multiplayer?roomId=${roomId}`;
-    }
     return `https://juego-stop.netlify.app/multiplayer?roomId=${roomId}`;
   }, [roomId]);
 
@@ -179,6 +200,16 @@ export default function EnhancedRoomManager({
         toast.error('No se pudo guardar tu respuesta.');
      }
   };
+  
+  const handleInviteFriend = async (friend: Friend) => {
+    try {
+      await sendChallengeNotification(currentUser.uid, currentUser.displayName || 'un amigo', friend.id, roomId);
+      toast.success(`Invitación enviada a ${friend.name}`);
+      setInvitedFriends(prev => new Set(prev).add(friend.id));
+    } catch(error) {
+      toast.error(`No se pudo invitar a ${friend.name}: ${(error as Error).message}`);
+    }
+  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteUrl).then(() => {
@@ -254,7 +285,7 @@ export default function EnhancedRoomManager({
 
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
-    <div className="w-full max-w-lg mx-auto bg-black/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20">
+    <div className="w-full max-w-2xl mx-auto bg-black/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-white/20">
         {/* Header */}
         <div className="text-center mb-6 pb-4 border-b border-white/20">
             <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
@@ -273,13 +304,22 @@ export default function EnhancedRoomManager({
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
                 <Users size={20} /> Jugadores en la Sala
             </h2>
-            <div className="bg-white/5 rounded-lg p-4 space-y-3">
+            <div className="bg-white/5 rounded-lg p-2 space-y-2">
                 {players.map(player => (
-                    <div key={player.id} className="flex justify-between items-center pb-2 border-b border-white/10 last:border-b-0">
-                        <span className={`font-medium ${player.id === currentUser.uid ? 'text-yellow-400' : ''}`}>
-                            {player.name} {player.id === currentUser.uid && '(Tú)'}
-                            {player.isHost && <Crown className="inline h-4 w-4 ml-1 text-yellow-500"/>}
-                        </span>
+                    <div key={player.id} className="flex justify-between items-center p-2 rounded-md">
+                         <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={player.avatar} alt={player.name} />
+                                <AvatarFallback>{player.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <span className={`font-medium ${player.id === currentUser.uid ? 'text-yellow-400' : ''}`}>
+                                    {player.name} {player.id === currentUser.uid && '(Tú)'}
+                                    {player.isHost && <Crown className="inline h-4 w-4 ml-1 text-yellow-500"/>}
+                                </span>
+                                <p className="text-xs text-white/60">Nivel 15</p>
+                            </div>
+                        </div>
                         {player.isReady ? (
                             <div className="text-green-400 text-xs font-bold bg-green-500/20 px-2 py-1 rounded-full">LISTO</div>
                         ) : (
@@ -289,14 +329,51 @@ export default function EnhancedRoomManager({
                 ))}
             </div>
         </div>
+        
+        {/* Friends Invite Section */}
+        <div className="bg-white/5 rounded-lg p-5 mb-6">
+             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
+                <UserPlus size={20}/> Invitar Amigos del Juego
+            </h2>
+            <Input 
+                placeholder="Buscar amigos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white/10 border-white/20 mb-3"
+            />
+            <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+                {loadingFriends ? <Loader2 className="mx-auto my-4 h-6 w-6 animate-spin"/> : (
+                    filteredFriends.length > 0 ? filteredFriends.map(friend => (
+                        <div key={friend.id} className="flex items-center justify-between p-2 rounded hover:bg-white/10">
+                             <div className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={friend.avatar || undefined} alt={friend.name} />
+                                    <AvatarFallback>{friend.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-medium text-sm">{friend.name}</p>
+                            </div>
+                            <Button 
+                                size="sm"
+                                variant={invitedFriends.has(friend.id) ? "secondary" : "default"}
+                                onClick={() => handleInviteFriend(friend)}
+                                disabled={invitedFriends.has(friend.id)}
+                                className={invitedFriends.has(friend.id) ? "bg-yellow-500 text-black" : "bg-green-600"}
+                            >
+                                {invitedFriends.has(friend.id) ? 'Invitado' : 'Invitar'}
+                            </Button>
+                        </div>
+                    )) : <p className="text-center text-sm text-white/60 py-4">No se encontraron amigos.</p>
+                )}
+            </div>
+        </div>
 
-        {/* Invite Section */}
+        {/* Invite Link Section */}
         <div className="bg-white/5 rounded-lg p-5 mb-6">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
-                <Send size={20}/> Invitar Amigos
+                <Send size={20}/> Compartir Enlace de Invitación
             </h2>
             <p className="text-sm opacity-90 mb-4">
-                Comparte este enlace con tus amigos para que se unan a la sala:
+                Usa este enlace para invitar a amigos que no estén en tu lista.
             </p>
             <div className="flex mb-4 bg-white/10 rounded-lg overflow-hidden border border-white/20">
                 <input readOnly value={inviteUrl} className="flex-grow p-3 text-sm bg-transparent outline-none truncate"/>
@@ -304,12 +381,15 @@ export default function EnhancedRoomManager({
                     <ClipboardCopy size={16}/> Copiar
                 </button>
             </div>
-             <div className="grid grid-cols-2 gap-3">
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <button onClick={() => handleShare('whatsapp')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
                     <WhatsappIcon /> WhatsApp
                 </button>
                  <button onClick={() => handleShare('telegram')} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
                     <TelegramIcon /> Telegram
+                </button>
+                 <button onClick={handleCopyLink} className="bg-white/10 hover:bg-white/20 p-2 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                    <Share2 /> Copiar Enlace
                 </button>
             </div>
         </div>
@@ -344,5 +424,3 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
-
-    
