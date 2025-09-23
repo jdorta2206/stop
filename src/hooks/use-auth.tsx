@@ -1,15 +1,14 @@
 
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo } from "react";
+import { createContext, useContext, type ReactNode, useCallback, useMemo, useEffect } from "react";
 import { useSignInWithGoogle, useSignInWithFacebook, useSignOut, useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from "@/lib/firebase"; 
 import type { User as FirebaseUser } from "firebase/auth";
 import { toast } from 'sonner';
+import { rankingManager } from "@/lib/ranking";
 
-// AppUser se usará en otras partes de la app, pero el hook solo expone FirebaseUser
 export interface AppUser extends FirebaseUser {
-  // Campos del perfil de la base de datos que se pueden añadir
   totalScore?: number;
   level?: string;
 }
@@ -41,9 +40,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
         const userCredential = await loginFunction();
         if (userCredential?.user) {
+           // Ensure user profile exists in Firestore after login
+           await rankingManager.getPlayerRanking(
+               userCredential.user.uid,
+               userCredential.user.displayName,
+               userCredential.user.photoURL
+            );
            return userCredential.user;
         }
-        // Si no hay userCredential, puede que el usuario haya cerrado la ventana emergente
         return undefined;
     } catch (e: any) {
        toast.error(`Error al iniciar sesión con ${providerName}`, {
@@ -71,9 +75,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [signOut]);
   
-  // Simplificamos el estado de carga y error. Solo nos importa el estado general
   const isLoading = authLoading || googleLoading || facebookLoading || signOutLoading;
-  const error = authError || signOutError; // Los errores de login se manejan con toasts
+  const error = authError || googleError || facebookError || signOutError;
 
   const value = useMemo(() => ({
     user: firebaseUser,

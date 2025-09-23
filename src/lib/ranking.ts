@@ -233,5 +233,3 @@ export const getLevelColor = (level: string): string => {
 export const getAchievementInfo = (achievementId: string) => {
   return ACHIEVEMENTS[achievementId];
 };
-
-    

@@ -44,14 +44,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [error]);
 
   const handleLogin = async (loginMethod: () => Promise<User | undefined>) => {
-    try {
-        const firebaseUser = await loginMethod();
-        if (firebaseUser?.uid) {
-            toast.success("Has iniciado sesión correctamente.");
-            onClose();
-        }
-    } catch (e: any) {
-        toast.error(`Error al iniciar sesión: ${e.message}`);
+    const firebaseUser = await loginMethod();
+    if (firebaseUser?.uid) {
+        toast.success("Has iniciado sesión correctamente.");
+        onClose();
     }
   }
 
