@@ -1,28 +1,41 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /rankings/{userId} {
-      allow get: if request.auth != null;
-      allow list: if request.auth != null;
-      allow create, update, delete: if request.auth.uid == userId;
 
+    // Reglas para la colección 'rankings'
+    match /rankings/{userId} {
+      // Cualquiera puede leer datos de perfiles para los rankings.
+      allow read: if request.auth != null;
+
+      // Un usuario solo puede escribir en su propio perfil.
+      allow write: if request.auth.uid == userId;
+
+      // Reglas para subcolecciones de un usuario
       match /friends/{friendId} {
-        allow read, write, delete: if request.auth.uid == userId;
+        allow read, write: if request.auth.uid == userId;
       }
 
       match /notifications/{notificationId} {
-        allow read, write, create, delete: if request.auth.uid == userId;
+        allow read, write: if request.auth.uid == userId;
       }
 
-      // Esta es la regla que faltaba
       match /gameHistory/{gameId} {
-      	allow read, write, create, delete: if request.auth.uid == userId;
+        allow read, write: if request.auth.uid == userId;
       }
     }
 
+    // Reglas para la colección 'rooms'
     match /rooms/{roomId} {
-      allow create: if request.auth != null;
-      allow read, update: if request.auth != null && (request.auth.uid == resource.data.hostId || request.auth.uid in resource.data.players);
+      // Cualquiera autenticado puede leer, crear y actualizar salas.
+      allow read, create, update: if request.auth != null;
+
+      // El borrado puede ser más restrictivo si es necesario, por ahora solo el host.
+      allow delete: if request.auth != null && resource.data.hostId == request.auth.uid;
+      
+      match /chat/{messageId} {
+        allow read, create: if request.auth != null;
+      }
     }
   }
 }
