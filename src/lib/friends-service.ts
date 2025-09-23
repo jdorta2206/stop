@@ -100,17 +100,16 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
     if (!recipientId) {
-        throw new Error("El ID del destinatario es requerido.");
+      throw new Error("El ID del destinatario es requerido.");
     }
-
+    
     const recipientDocRef = doc(db, 'rankings', recipientId);
     const recipientDoc = await getDoc(recipientDocRef);
     if (!recipientDoc.exists()) {
         throw new Error(`El jugador al que intentas invitar no existe.`);
     }
 
-    const notificationsRef = collection(db, "notifications");
-    
+    const notificationsRef = collection(db, 'notifications');
     const newNotification = {
         fromUserId: senderId,
         fromUser: senderName,
@@ -118,10 +117,10 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
         roomId: roomId,
         message: `¡${senderName} te ha desafiado a una partida de STOP!`,
         timestamp: Timestamp.now(),
-        type: 'room_invite',
-        status: 'pending'
+        type: 'room_invite' as const,
+        status: 'pending' as const,
     };
-
+    
     await addDoc(notificationsRef, newNotification);
 };
 
