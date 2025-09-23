@@ -3,7 +3,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { app } from "@/lib/firebase"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -36,9 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
-    // This hook is now just to set loading state, as we are not using redirect.
     const checkUser = async () => {
-      // Give time for useAuthState to initialize
       await new Promise(resolve => setTimeout(resolve, 50));
       try {
         const result = await getRedirectResult(auth);
@@ -72,22 +70,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  const handleLoginWithRedirect = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
+  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+      toast.success("Has iniciado sesión correctamente.");
+    } catch (error: any) {
+      console.error("Popup login failed:", error);
+      toast.error(`Error al iniciar sesión`, {
+        description: error.code === 'auth/popup-closed-by-user' 
+            ? 'La ventana de inicio de sesión fue cerrada.' 
+            : error.message || "Por favor, inténtalo de nuevo."
+      });
+    } finally {
+        setIsProcessingLogin(false);
+    }
   };
   
   const loginWithGoogle = useCallback(async () => {
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
-    await handleLoginWithRedirect(googleProvider);
+    await handleLogin(googleProvider);
   }, []);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
      facebookProvider.setCustomParameters({ 'display': 'popup' });
-     await handleLoginWithRedirect(facebookProvider);
+     await handleLogin(facebookProvider);
   }, []);
   
   const handleLogout = useCallback(async () => {
