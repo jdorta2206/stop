@@ -34,8 +34,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const auth = getAuth(app);
   const [user, authLoading, authError] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
+  const [isDevelopmentEnv, setIsDevelopmentEnv] = useState(false);
 
   useEffect(() => {
+    // This check will only run on the client-side
+    setIsDevelopmentEnv(window.location.hostname.includes('cloudworkstations.dev') || window.location.hostname === 'localhost');
+    
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
@@ -71,6 +75,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user]);
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
+    if (isDevelopmentEnv) {
+        toast.error("El inicio de sesión está deshabilitado en el entorno de desarrollo.", {
+            description: "Por favor, prueba la autenticación en la versión desplegada en Netlify."
+        });
+        return;
+    }
     setIsProcessingLogin(true);
     // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
     // simplemente redirige. El resultado se captura con getRedirectResult.
@@ -81,14 +91,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
     await handleLogin(googleProvider);
-  }, []);
+  }, [isDevelopmentEnv]);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
      facebookProvider.setCustomParameters({ 'display': 'popup' }); // display sigue siendo útil
      await handleLogin(facebookProvider);
-  }, []);
+  }, [isDevelopmentEnv]);
   
   const handleLogout = useCallback(async () => {
     try {
