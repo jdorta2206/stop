@@ -6,13 +6,12 @@ import { getFirestore } from 'firebase/firestore';
 // IMPORTANT: Replace this with your actual Firebase configuration.
 // You can get this from the Firebase console.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  "projectId": "global-stop",
+  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
+  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
+  "authDomain": "global-stop.firebaseapp.com",
+  "measurementId": "G-P41T2BEMKZ",
+  "messagingSenderId": "902072408470"
 };
 
 // Initialize Firebase App
