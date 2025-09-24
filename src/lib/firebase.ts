@@ -3,18 +3,17 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// CONFIGURACIÃ“N DE EJEMPLO - REEMPLAZAR CON LA DE TU NUEVO PROYECTO
+// CONFIGURACIÓN DE EJEMPLO - REEMPLAZAR CON LA DE TU NUEVO PROYECTO
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU-PROJECT-ID.firebaseapp.com",
-  projectId: "TU-PROJECT-ID",
-  storageBucket: "TU-PROJECT-ID.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID",
-  measurementId: "TU_MEASUREMENT_ID"
+  apiKey: "AIzaSyDgPzz5JbyxluiaCnakIycqAnKeif9ifcA",
+  authDomain: "stop-game-v2.firebaseapp.com",
+  projectId: "stop-game-v2",
+  storageBucket: "stop-game-v2.firebasestorage.app",
+  messagingSenderId: "668640003802",
+  appId: "1:668640003802:web:a185f56118989cca0c87e3"
 };
 
-// PatrÃ³n Singleton para asegurar que Firebase solo se inicialice una vez.
+// Patrón Singleton para asegurar que Firebase solo se inicialice una vez.
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
