@@ -1,9 +1,8 @@
 "use client";
 
-// Force re-build
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -25,53 +24,35 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Initialize Firebase Auth once
+const auth = getAuth(app);
+
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const auth = getAuth(app);
   const [user, authLoading, authError] = useAuthState(auth);
-  const [isProcessingLogin, setIsProcessingLogin] = useState(true);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
-    const checkRedirectResult = async () => {
-      if (isProcessingLogin) {
+    // This listener handles user state changes and profile creation/check
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
         try {
-          await getRedirectResult(auth);
-        } catch (error: any) {
-           let title = "Error al iniciar sesión";
-           let description = error.message || "Por favor, inténtalo de nuevo.";
-
-           if (error.code === 'auth/unauthorized-domain') {
-              title = "Dominio no autorizado";
-              description = "El dominio de esta aplicación no está autorizado para la autenticación. Revisa la configuración de Firebase.";
-           }
-           toast.error(title, { description });
-        } finally {
-          setIsProcessingLogin(false);
+          await rankingManager.getPlayerRanking(
+            user.uid,
+            user.displayName,
+            user.photoURL
+          );
+        } catch (error) {
+           console.error("Error ensuring player profile exists:", error);
+           toast.error("Hubo un problema al cargar tu perfil de jugador.");
         }
       }
-    };
-    if (!authLoading) {
-      checkRedirectResult();
-    } else {
-       setIsProcessingLogin(false);
-    }
-  }, [auth, authLoading]);
-
-  useEffect(() => {
-    if (user?.uid) {
-      rankingManager.getPlayerRanking(
-        user.uid,
-        user.displayName,
-        user.photoURL
-      ).catch(error => {
-        console.error("Error ensuring player profile exists:", error);
-        toast.error("Hubo un problema al cargar tu perfil de jugador.");
-      });
-    }
-  }, [user]);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
@@ -100,20 +81,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const loginWithGoogle = useCallback(async () => {
     const googleProvider = new GoogleAuthProvider();
-    googleProvider.setCustomParameters({ prompt: 'select_account' });
     await handleLogin(googleProvider);
-  }, [auth]);
+  }, []);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
-     facebookProvider.addScope('email');
-     facebookProvider.setCustomParameters({ 'display': 'popup' });
      await handleLogin(facebookProvider);
-  }, [auth]);
+  }, []);
   
   const handleLogout = useCallback(async () => {
     try {
-        await signOut(getAuth(app));
+        await signOut(auth);
         toast.success("Has cerrado sesión correctamente.");
     } catch (e: any) {
         toast.error("Error al cerrar sesión", { description: e.message });
@@ -121,17 +99,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
   
   const isLoading = authLoading || isProcessingLogin;
-  const error = authError;
 
   const value = useMemo(() => ({
     user: user,
     isLoading,
-    error: error || null,
+    error: authError || null,
     loginWithGoogle,
     loginWithFacebook,
     logout: handleLogout,
     isProcessingLogin,
-  }), [user, isLoading, error, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
+  }), [user, isLoading, authError, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
 
   return (
     <AuthContext.Provider value={value}>
