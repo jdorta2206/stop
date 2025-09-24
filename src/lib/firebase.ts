@@ -5,12 +5,13 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // CONFIGURACIÓN DE EJEMPLO - REEMPLAZAR CON LA DE TU NUEVO PROYECTO
 const firebaseConfig = {
-  apiKey: "AIzaSyDgPzz5JbyxluiaCnakIycqAnKeif9ifcA",
-  authDomain: "stop-game-v2.firebaseapp.com",
-  projectId: "stop-game-v2",
-  storageBucket: "stop-game-v2.firebasestorage.app",
-  messagingSenderId: "668640003802",
-  appId: "1:668640003802:web:a185f56118989cca0c87e3"
+  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
+  "authDomain": "global-stop.firebaseapp.com",
+  "projectId": "global-stop",
+  "storageBucket": "stop-game-v2.appspot.com",
+  "messagingSenderId": "902072408470",
+  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
+  "measurementId": "G-P41T2BEMKZ"
 };
 
 // Patrón Singleton para asegurar que Firebase solo se inicialice una vez.
