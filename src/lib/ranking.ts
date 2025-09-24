@@ -1,5 +1,5 @@
 // src/lib/ranking.ts
-import { db } from './firebase';
+import { db } from './firebase-config';
 import { 
     doc, 
     getDoc, 
@@ -233,5 +233,3 @@ export const getLevelColor = (level: string): string => {
 export const getAchievementInfo = (achievementId: string) => {
   return ACHIEVEMENTS[achievementId];
 };
-
-    

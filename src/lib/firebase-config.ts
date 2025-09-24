@@ -1,8 +1,10 @@
+// src/lib/firebase-config.ts
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore }from 'firebase/firestore';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
+// This is the configuration for the NEW "stop-game-v2" project.
 const firebaseConfig = {
   apiKey: "API_KEY",
   authDomain: "stop-game-v2.firebaseapp.com",
