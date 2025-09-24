@@ -4,7 +4,7 @@
 // Force re-build
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, signInWithRedirect, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -36,26 +36,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      await new Promise(resolve => setTimeout(resolve, 50));
+    const checkRedirectResult = async () => {
       try {
-        const result = await getRedirectResult(getAuth(app));
+        const result = await getRedirectResult(auth);
         if (result) {
            toast.success("Has iniciado sesión correctamente.");
         }
       } catch (error: any) {
         console.error("Redirect login failed:", error);
          toast.error(`Error al iniciar sesión`, {
-            description: error.code === 'auth/popup-closed-by-user' 
-                ? 'La ventana de inicio de sesión fue cerrada.' 
-                : error.message || "Por favor, inténtalo de nuevo."
+            description: error.message || "Por favor, inténtalo de nuevo."
         });
       } finally {
         setIsProcessingLogin(false);
       }
     };
-    checkUser();
-  }, []);
+    // Solo se ejecuta una vez al montar, después de que auth se inicializa
+    if (!authLoading) {
+      checkRedirectResult();
+    }
+  }, [auth, authLoading]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -72,19 +72,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    try {
-      await signInWithPopup(getAuth(app), provider);
-      toast.success("Has iniciado sesión correctamente.");
-    } catch (error: any) {
-      console.error("Popup login failed:", error);
-      toast.error(`Error al iniciar sesión`, {
-        description: error.code === 'auth/popup-closed-by-user' 
-            ? 'La ventana de inicio de sesión fue cerrada.' 
-            : error.message || "Por favor, inténtalo de nuevo."
-      });
-    } finally {
-        setIsProcessingLogin(false);
-    }
+    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
+    // simplemente redirige. El resultado se captura con getRedirectResult.
+    await signInWithRedirect(getAuth(app), provider);
   };
   
   const loginWithGoogle = useCallback(async () => {
@@ -96,7 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
-     facebookProvider.setCustomParameters({ 'display': 'popup' });
+     facebookProvider.setCustomParameters({ 'display': 'popup' }); // display sigue siendo útil
      await handleLogin(facebookProvider);
   }, []);
   
