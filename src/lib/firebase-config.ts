@@ -1,30 +1,26 @@
-// src/lib/firebase-config.ts
+// Import the functions you need from the SDKs you need
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
-
-// This is the configuration for the NEW "stop-game-v2" project.
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "API_KEY",
+  apiKey: "YOUR_API_KEY",
   authDomain: "stop-game-v2.firebaseapp.com",
   projectId: "stop-game-v2",
   storageBucket: "stop-game-v2.appspot.com",
-  messagingSenderId: "397399335694",
-  appId: "1:397399335694:web:53d3f448c34f2d338f972b"
+  messagingSenderId: "931758525832",
+  appId: "1:931758525832:web:6e6f7b9c4c44243128c73c",
+  measurementId: "G-85P0DBV5G3"
 };
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
 
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-
-auth = getAuth(app);
-db = getFirestore(app);
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 export { app, auth, db };
