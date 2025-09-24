@@ -1,8 +1,8 @@
 
 // src/lib/firebase.ts
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // IMPORTANT: This is the correct and definitive Firebase configuration for your project.
 const firebaseConfig = {
@@ -14,10 +14,18 @@ const firebaseConfig = {
   "messagingSenderId": "902072408470"
 };
 
-// Initialize Firebase App
-// This pattern ensures that we don't initialize the app more than once.
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Singleton pattern to ensure Firebase is only initialized once.
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
-export { app, auth, db };
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+
+auth = getAuth(app);
+db = getFirestore(app);
+
+export { app, auth, db, firebaseConfig };
