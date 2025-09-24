@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore }from 'firebase/firestore';
 
-// Configuración de Firebase para el proyecto stop-game-v2
 const firebaseConfig = {
   apiKey: "API_KEY",
   authDomain: "stop-game-v2.firebaseapp.com",
@@ -26,4 +25,4 @@ if (getApps().length === 0) {
 auth = getAuth(app);
 db = getFirestore(app);
 
-export { app, auth, db, firebaseConfig };
+export { app, auth, db };
