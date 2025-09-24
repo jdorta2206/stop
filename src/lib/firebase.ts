@@ -1,18 +1,18 @@
-// src/lib/firebase.ts
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// Este es un objeto de configuración de ejemplo.
-// Deberás reemplazarlo con la configuración de tu propio proyecto de Firebase.
+// Tu configuración REAL de Firebase
 const firebaseConfig = {
-  apiKey: "AIzXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abc123def456",
-  measurementId: "G-XXXXXXXXXX"
+  apiKey: "AIzaSyDw63qShh0TCDIFMggy_VV9PQ-fUvmNDJQ",
+  authDomain: "global-stop.firebaseapp.com",
+  databaseURL: "https://global-stop-default-rtdb.firebaseio.com",
+  projectId: "global-stop",
+  storageBucket: "global-stop.firebasestorage.app",
+  messagingSenderId: "902072408470",
+  appId: "1:902072408470:web:843e9f91308bb4ec4865b7",
+  measurementId: "G-DPIDN3R96E"
 };
 
 // Patrón Singleton para asegurar que Firebase solo se inicialice una vez.
