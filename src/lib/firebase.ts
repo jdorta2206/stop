@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// CONFIGURACIÓN DE EJEMPLO - REEMPLAZAR CON LA DE TU NUEVO PROYECTO
 const firebaseConfig = {
   "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
   "authDomain": "global-stop.firebaseapp.com",
