@@ -4,7 +4,7 @@
 // Force re-build
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithRedirect, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, getRedirectResult, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider } from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -34,30 +34,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const auth = getAuth(app);
   const [user, authLoading, authError] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
-  const [isDevelopmentEnv, setIsDevelopmentEnv] = useState(false);
 
   useEffect(() => {
-    // This check will only run on the client-side
-    setIsDevelopmentEnv(window.location.hostname.includes('cloudworkstations.dev') || window.location.hostname === 'localhost');
-    
-    const checkRedirectResult = async () => {
+    // Check for redirect result on initial load, although we are moving to popup
+    const checkRedirect = async () => {
       try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-           toast.success("Has iniciado sesión correctamente.");
-        }
-      } catch (error: any) {
-        console.error("Redirect login failed:", error);
-         toast.error(`Error al iniciar sesión`, {
-            description: error.message || "Por favor, inténtalo de nuevo."
-        });
+        await getRedirectResult(auth);
+      } catch(e) {
+        // Ignore errors, as popup is preferred
       } finally {
         setIsProcessingLogin(false);
       }
     };
-    // Solo se ejecuta una vez al montar, después de que auth se inicializa
     if (!authLoading) {
-      checkRedirectResult();
+        checkRedirect();
     }
   }, [auth, authLoading]);
 
@@ -75,30 +65,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user]);
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
-    if (isDevelopmentEnv) {
-        toast.error("El inicio de sesión está deshabilitado en el entorno de desarrollo.", {
-            description: "Por favor, prueba la autenticación en la versión desplegada en Netlify."
-        });
-        return;
-    }
     setIsProcessingLogin(true);
-    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
-    // simplemente redirige. El resultado se captura con getRedirectResult.
-    await signInWithRedirect(getAuth(app), provider);
+    try {
+        await signInWithPopup(auth, provider);
+        toast.success("Has iniciado sesión correctamente.");
+    } catch (error: any) {
+        console.error("Popup login failed:", error);
+        
+        let title = "Error al iniciar sesión";
+        let description = error.message || "Por favor, inténtalo de nuevo.";
+
+        if(error.code === 'auth/unauthorized-domain') {
+            title = "Dominio no autorizado";
+            description = "El dominio de esta aplicación no está autorizado para la autenticación. Revisa la configuración de Firebase.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            title = "Inicio de sesión cancelado";
+            description = "Has cerrado la ventana de inicio de sesión.";
+        }
+        
+        toast.error(title, { description });
+    } finally {
+        setIsProcessingLogin(false);
+    }
   };
   
   const loginWithGoogle = useCallback(async () => {
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: 'select_account' });
     await handleLogin(googleProvider);
-  }, [isDevelopmentEnv]);
+  }, [auth]);
   
   const loginWithFacebook = useCallback(async () => {
      const facebookProvider = new FacebookAuthProvider();
      facebookProvider.addScope('email');
-     facebookProvider.setCustomParameters({ 'display': 'popup' }); // display sigue siendo útil
+     facebookProvider.setCustomParameters({ 'display': 'popup' });
      await handleLogin(facebookProvider);
-  }, [isDevelopmentEnv]);
+  }, [auth]);
   
   const handleLogout = useCallback(async () => {
     try {
