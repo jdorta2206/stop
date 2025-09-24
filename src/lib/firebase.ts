@@ -1,10 +1,10 @@
+
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// IMPORTANT: Replace this with your actual Firebase configuration.
-// You can get this from the Firebase console.
+// IMPORTANT: This is the correct and definitive Firebase configuration for your project.
 const firebaseConfig = {
   "projectId": "global-stop",
   "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
