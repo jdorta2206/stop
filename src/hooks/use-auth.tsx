@@ -36,18 +36,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
-    // Check for redirect result on initial load, although we are moving to popup
-    const checkRedirect = async () => {
-      try {
-        await getRedirectResult(auth);
-      } catch(e) {
-        // Ignore errors, as popup is preferred
-      } finally {
-        setIsProcessingLogin(false);
+    const checkRedirectResult = async () => {
+      if (isProcessingLogin) {
+        try {
+          await getRedirectResult(auth);
+        } catch (error: any) {
+           let title = "Error al iniciar sesión";
+           let description = error.message || "Por favor, inténtalo de nuevo.";
+
+           if (error.code === 'auth/unauthorized-domain') {
+              title = "Dominio no autorizado";
+              description = "El dominio de esta aplicación no está autorizado para la autenticación. Revisa la configuración de Firebase.";
+           }
+           toast.error(title, { description });
+        } finally {
+          setIsProcessingLogin(false);
+        }
       }
     };
     if (!authLoading) {
-        checkRedirect();
+      checkRedirectResult();
+    } else {
+       setIsProcessingLogin(false);
     }
   }, [auth, authLoading]);
 
