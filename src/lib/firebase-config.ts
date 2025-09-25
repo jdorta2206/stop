@@ -7,12 +7,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration for stop-game-v2
 const firebaseConfig = {
-  "apiKey": "AIzaSyDgPzz5JbyxIuiCnAkIycqAnKeif9ifcA",
-  "authDomain": "stop-game-v2.firebaseapp.com",
-  "projectId": "stop-game-v2",
-  "storageBucket": "stop-game-v2.appspot.com",
-  "messagingSenderId": "668640003802",
-  "appId": "1:668640003802:web:a185f56118989cca0c87e3"
+  apiKey: "AIzaSyAJY3Jq9g_NfNnqVO9bY08i9a_3aZa_YjM",
+  authDomain: "stop-game-v2.firebaseapp.com",
+  projectId: "stop-game-v2",
+  storageBucket: "stop-game-v2.appspot.com",
+  messagingSenderId: "668640003802",
+  appId: "1:668640003802:web:a185f56118989cca0c87e3",
+  measurementId: "G-9Q2P2EFT6S"
 };
 
 // Initialize Firebase

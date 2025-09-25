@@ -55,6 +55,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           description = "Has cerrado la ventana de inicio de sesión. Por favor, intenta de nuevo.";
       } else if (authError.code === 'auth/cancelled-popup-request') {
           description = "Se ha cancelado la solicitud de inicio de sesión.";
+      } else if (authError.code === 'auth/api-key-not-valid') {
+          description = "La clave de API de Firebase no es válida. Por favor, contacta al administrador.";
       }
 
       toast.error("Error al iniciar sesión", { description });
