@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -125,7 +124,7 @@ export default function EnhancedRoomManager({
   const isHost = room.hostId === currentUser.uid;
 
   const inviteUrl = useMemo(() => {
-    return `https://juego-stop.netlify.app/multiplayer?roomId=${roomId}`;
+    return typeof window !== 'undefined' ? `${window.location.origin}/multiplayer?roomId=${roomId}` : '';
   }, [roomId]);
 
 
@@ -251,7 +250,7 @@ export default function EnhancedRoomManager({
 
   // --- RENDERIZADO CONDICIONAL POR ESTADO DE JUEGO ---
   
-  if (room.status === 'playing') {
+  if (room.status === 'playing' && room.gameState) {
       switch (room.gameState) {
           case 'SPINNING':
               return <RouletteWheel alphabet={alphabet} language={room.settings.language} onSpinComplete={() => {}} />;
