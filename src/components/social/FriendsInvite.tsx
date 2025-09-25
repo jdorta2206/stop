@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addFriend, searchUsers, type Friend } from '@/lib/friends-service';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 
 interface FriendsInviteProps {
   onFriendAdded: () => void;
@@ -106,5 +106,3 @@ export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
     </div>
   );
 }
-
-    

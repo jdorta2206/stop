@@ -2,7 +2,7 @@
 // src/components/missions/DailyMissionsCard.tsx
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from '@/hooks/use-auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MissionItem } from "./MissionItem";
 import { Loader2, Gift } from "lucide-react";
@@ -73,5 +73,3 @@ export function DailyMissionsCard() {
         </Card>
     );
 }
-
-    

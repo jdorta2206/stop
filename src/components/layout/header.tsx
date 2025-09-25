@@ -4,7 +4,7 @@
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
 import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import Link from 'next/link';
 import { Volume2, VolumeX, MessageSquare, Gamepad2 } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
@@ -60,7 +60,7 @@ export function AppHeader() {
   };
 
   const handleSendMessage = (text: string) => {
-    if (user && roomId) {
+    if (user && user.uid && roomId) {
       sendMessageToRoom(roomId, {
         text,
         sender: {
@@ -114,7 +114,7 @@ export function AppHeader() {
             <span className="text-xl font-bold text-white">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
-             {user && (
+             {user && user.uid && (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(true)} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
                   <MessageSquare className="h-5 w-5" />

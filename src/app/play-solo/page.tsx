@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
 import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import { rankingManager } from '@/lib/ranking';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '@/components/game/components/roulette-wheel';
@@ -110,7 +110,7 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
 
       // Save result in background, AFTER UI has updated
-      if (currentUser) {
+      if (currentUser && currentUser.uid) {
         rankingManager.saveGameResult({
           playerId: currentUser.uid,
           playerName: currentUser.displayName || 'Jugador',

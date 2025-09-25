@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -26,7 +26,7 @@ import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -112,7 +112,7 @@ export default function LeaderboardPage() {
     try {
       await addFriend(user.uid, player.id, player.playerName, player.photoURL);
       toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
-      fetchData(user.uid); // Refresh friends list
+      if(user) fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -228,5 +228,3 @@ export default function LeaderboardPage() {
     </div>
   );
 }
-
-    

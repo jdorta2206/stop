@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
@@ -126,4 +126,4 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
         </div>
     </Card>
   );
-};
+}

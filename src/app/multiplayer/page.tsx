@@ -3,7 +3,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { language } = useLanguage();
     
     const [room, setRoom] = useState<Room | null>(null);
@@ -35,7 +35,9 @@ function MultiplayerLobbyContent() {
             return;
         }
 
-        if (!user) {
+        if (!user || !user.uid || !user.displayName) {
+            // User not logged in, redirect or show message
+            toast.error("Debes iniciar sesión para unirte a una sala.");
             router.push('/');
             return;
         }
@@ -44,7 +46,7 @@ function MultiplayerLobbyContent() {
 
         const joinAndListen = async () => {
             try {
-                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador', user.photoURL);
+                await addPlayerToRoom(roomId, user.uid, user.displayName, user.photoURL);
 
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '@/lib/friends-service';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 
 interface PushNotificationsProps {
   userId: string;
@@ -33,7 +33,6 @@ export default function PushNotifications({
     }
 
     if (user) {
-      // The onNotificationsUpdate function now correctly queries the root 'notifications' collection.
       const unsubscribe = onNotificationsUpdate(user.uid, (newNotifications) => {
         const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
         const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));

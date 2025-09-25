@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/language-context';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth-context';
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 
 export default function AdminPage() {
     const { language } = useLanguage();
-    const { user, isLoading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
