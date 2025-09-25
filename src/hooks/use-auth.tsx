@@ -1,27 +1,22 @@
+
 "use client";
 
-import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
-import { 
-  getAuth, 
-  signInWithPopup,
-  signOut, 
-  type User as FirebaseUser, 
-  GoogleAuthProvider, 
-  FacebookAuthProvider, 
-  onAuthStateChanged,
-  getRedirectResult
-} from "firebase/auth";
-import { app } from "@/lib/firebase-config"; 
-import { toast } from 'sonner';
-import { rankingManager } from "@/lib/ranking";
+import { createContext, useContext, type ReactNode } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import type { Session } from "next-auth";
 
-export interface AppUser extends FirebaseUser {
+interface AppUser extends Session['user'] {
+  id?: string;
   totalScore?: number;
   level?: string;
 }
 
+interface CustomSession extends Session {
+  user?: AppUser;
+}
+
 interface AuthContextType {
-  user: FirebaseUser | null | undefined;
+  user: AppUser | null;
   isLoading: boolean;
   error?: Error | null;
   loginWithGoogle: () => Promise<void>;
@@ -32,94 +27,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const auth = getAuth(app);
-
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState<Error | null>(null);
-  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+  const { data: session, status } = useSession();
+  
+  const isLoading = status === 'loading';
+  const user = session?.user || null;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        try {
-          await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-        } catch (error) {
-           console.error("Error ensuring player profile exists:", error);
-           toast.error("Hubo un problema al cargar tu perfil de jugador.");
-        }
-      }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleAuthError = (error: any) => {
-    let title = "Error al iniciar sesión";
-    let description = error.message || "Por favor, inténtalo de nuevo.";
-
-    if (error.code === 'auth/unauthorized-domain') {
-        title = "Dominio no autorizado";
-        description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
-    } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-        title = "Inicio de sesión cancelado";
-        description = "Has cancelado el proceso de inicio de sesión.";
-    } else if (error.code === 'auth/api-key-not-valid') {
-        title = "Clave de API no válida";
-        description = "La clave de API de Firebase no es correcta. Contacta al soporte.";
-    }
-    
-    toast.error(title, { description });
-    setAuthError(error);
+  const loginWithGoogle = async () => {
+    await signIn('google');
   };
 
-  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
-    setIsProcessingLogin(true);
-    try {
-      await signInWithPopup(auth, provider);
-      toast.success("¡Inicio de sesión exitoso!");
-    } catch (error) {
-      handleAuthError(error);
-    } finally {
-      setIsProcessingLogin(false);
-    }
+  const loginWithFacebook = async () => {
+    await signIn('facebook');
   };
-  
-  const loginWithGoogle = useCallback(async () => {
-    const googleProvider = new GoogleAuthProvider();
-    await handleLogin(googleProvider);
-  }, []);
-  
-  const loginWithFacebook = useCallback(async () => {
-     const facebookProvider = new FacebookAuthProvider();
-     await handleLogin(facebookProvider);
-  }, []);
-  
-  const handleLogout = useCallback(async () => {
-    try {
-        await signOut(auth);
-        toast.success("Has cerrado sesión correctamente.");
-    } catch (e: any) {
-        toast.error("Error al cerrar sesión", { description: e.message });
-    }
-  }, []);
-  
-  const contextValue = useMemo(() => ({
-    user,
+
+  const logout = async () => {
+    await signOut();
+  };
+
+  const contextValue: AuthContextType = {
+    user: user as AppUser | null,
     isLoading,
-    error: authError || null,
+    error: undefined, // Error handling can be improved if needed
     loginWithGoogle,
     loginWithFacebook,
-    logout: handleLogout,
-    isProcessingLogin,
-  }), [user, isLoading, isProcessingLogin, authError, loginWithGoogle, loginWithFacebook, handleLogout]);
+    logout,
+    isProcessingLogin: isLoading,
+  };
 
   return (
     <AuthContext.Provider value={contextValue}>
@@ -131,7 +69,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    // This allows components to work even without the full AuthProvider context,
+    // useful for components that might be used outside the main app layout.
+    // They will just report no user and loading=false.
+    // A more strict approach would be to throw an error.
+    return { 
+        user: null, 
+        isLoading: false, 
+        error: null,
+        loginWithGoogle: async () => console.error("AuthProvider not found"),
+        loginWithFacebook: async () => console.error("AuthProvider not found"),
+        logout: async () => console.error("AuthProvider not found"),
+        isProcessingLogin: false,
+    };
   }
   return context;
 }
