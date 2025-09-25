@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebase-config';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,20 +38,30 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const provider = providerName === 'google' 
       ? new GoogleAuthProvider() 
       : new FacebookAuthProvider();
+    
     try {
       await signInWithPopup(auth, provider);
-      // The useEffect will handle closing the modal and showing the success toast.
-    } catch (error: any) {
-      console.error("Firebase Auth Error:", error);
-      toast.error("Error al iniciar sesión.", {
-        description: error.code === 'auth/account-exists-with-different-credential'
-          ? "Ya existe una cuenta con el mismo email pero con otro proveedor."
-          : error.message,
-      });
+      // The useEffect hook will handle closing the modal and showing the success toast upon `user` object change.
+    } catch (error) {
+      const authError = error as AuthError;
+      console.error("Firebase Auth Error:", authError.code, authError.message);
+      
+      let description = "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.";
+      if (authError.code === 'auth/account-exists-with-different-credential') {
+        description = "Ya existe una cuenta con este email, pero usando un proveedor de inicio de sesión diferente.";
+      } else if (authError.code === 'auth/unauthorized-domain') {
+          description = "Este dominio no está autorizado para realizar operaciones de autenticación. Por favor, contacta al administrador.";
+      } else if (authError.code === 'auth/popup-closed-by-user') {
+          description = "Has cerrado la ventana de inicio de sesión. Por favor, intenta de nuevo.";
+      } else if (authError.code === 'auth/cancelled-popup-request') {
+          description = "Se ha cancelado la solicitud de inicio de sesión.";
+      }
+
+      toast.error("Error al iniciar sesión", { description });
     } finally {
       setIsProcessingLogin(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
