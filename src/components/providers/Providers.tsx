@@ -6,11 +6,11 @@ import { LanguageProvider } from '@/contexts/language-context';
 import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from "@/components/ui/sonner";
-import { SessionProvider } from 'next-auth/react';
+import { AuthProvider } from '@/hooks/use-auth-context'; // Volver a AuthProvider
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <AuthProvider>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
@@ -24,6 +24,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>
-    </SessionProvider>
+    </AuthProvider>
   );
 }

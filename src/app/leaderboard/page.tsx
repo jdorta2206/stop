@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 import { toast } from 'sonner';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -25,9 +26,7 @@ import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const { data: session, status } = useSession();
-  const user = session?.user;
-  const isAuthLoading = status === 'loading';
+  const { user, loading: isAuthLoading } = useAuth();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -97,7 +96,7 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (user) {
-      fetchData(user.id);
+      fetchData(user.uid);
     } else if (!isAuthLoading) {
       fetchData(); // Fetch global data even if not logged in
     }
@@ -111,36 +110,36 @@ export default function LeaderboardPage() {
       return;
     }
     try {
-      await addFriend(user.id, player.id, player.playerName, player.photoURL);
+      await addFriend(user.uid, player.id, player.playerName, player.photoURL);
       toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
-      if(user) fetchData(user.id); // Refresh friends list
+      if(user) fetchData(user.uid); // Refresh friends list
     } catch (error) {
       toast.error((error as Error).message);
     }
   };
   
   const onFriendAdded = () => {
-      if(user) fetchData(user.id);
+      if(user) fetchData(user.uid);
   }
 
   const handleChallenge = async (playerToChallenge: PlayerScore) => {
-    if (!user || !user.name) {
+    if (!user || !user.displayName) {
       toast.error("Debes iniciar sesión para desafiar a alguien.");
       return;
     }
 
     try {
         const newRoom = await createRoom({
-            creatorId: user.id,
-            creatorName: user.name,
-            creatorAvatar: user.image,
+            creatorId: user.uid,
+            creatorName: user.displayName,
+            creatorAvatar: user.photoURL,
         });
 
         if (!newRoom || !newRoom.id) {
             throw new Error("La función `createRoom` no devolvió un ID de sala.");
         }
         
-        await sendChallengeNotification(user.id, user.name, playerToChallenge.id, newRoom.id);
+        await sendChallengeNotification(user.uid, user.displayName, playerToChallenge.id, newRoom.id);
         toast.info(`Se ha enviado una invitación a ${playerToChallenge.playerName}.`);
         router.push(`/multiplayer?roomId=${newRoom.id}`);
 
@@ -165,7 +164,7 @@ export default function LeaderboardPage() {
       <main className="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-white">Ranking & Amigos</h1>
-          <Button onClick={() => fetchData(user?.id)} disabled={isLoading} variant="outline">
+          <Button onClick={() => fetchData(user?.uid)} disabled={isLoading} variant="outline">
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? translate('common.loading') : translate('refresh')}
           </Button>
@@ -175,7 +174,7 @@ export default function LeaderboardPage() {
           <div className="lg:col-span-2 space-y-6">
             <GlobalLeaderboardCard 
               leaderboardData={globalLeaderboard}
-              currentUserId={user?.id}
+              currentUserId={user?.uid}
               onAddFriend={handleAddFriend}
               onChallenge={handleChallenge}
               language={language}
@@ -186,7 +185,7 @@ export default function LeaderboardPage() {
               <FriendsLeaderboardCard 
                 leaderboardData={friendsLeaderboard}
                 friendsList={friends}
-                currentUserId={user?.id}
+                currentUserId={user?.uid}
                 onChallenge={handleChallenge}
                 language={language}
                 translateUi={translate}

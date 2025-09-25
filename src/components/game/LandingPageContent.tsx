@@ -1,10 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from "next-auth/react";
+import { useAuth } from '@/hooks/use-auth-context';
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useLanguage } from '@/contexts/language-context';
 import { AppHeader } from '@/components/layout/header';
@@ -52,9 +53,7 @@ export function LandingPageContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [multiplayerModalOpen, setMultiplayerModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const { data: session, status } = useSession();
-  const user = session?.user;
-  const isAuthLoading = status === 'loading';
+  const { user, loading: isAuthLoading } = useAuth();
   const { language, translate } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
 

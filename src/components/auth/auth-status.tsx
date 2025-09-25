@@ -1,23 +1,18 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth-context';
 import { Button } from '@/components/ui/button';
 import { LogIn, Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserAccount } from './UserAccount';
 
 export function AuthStatus() {
-  const { data: session, status } = useSession();
+  const { user, loading } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  
-  if (!isMounted || status === 'loading') {
+  if (loading) {
     return (
       <Button variant="secondary" className="rounded-md" disabled>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -26,7 +21,7 @@ export function AuthStatus() {
     );
   }
 
-  if (session) {
+  if (user) {
     return <UserAccount />;
   }
 

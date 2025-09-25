@@ -9,7 +9,7 @@ import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { evaluateRound, type EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
 import type { GameState, LanguageCode, RoundResults } from '@/components/game/types';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 import { rankingManager } from '@/lib/ranking';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '@/components/game/components/roulette-wheel';
@@ -34,8 +34,7 @@ const ROUND_DURATION = 60; // seconds
 
 export default function PlaySoloPage() {
   const { language, translate } = useLanguage();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
 
   const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
@@ -111,11 +110,11 @@ export default function PlaySoloPage() {
       setGameState('RESULTS');
 
       // Save result in background, AFTER UI has updated
-      if (currentUser && currentUser.id) {
+      if (currentUser && currentUser.uid) {
         rankingManager.saveGameResult({
-          playerId: currentUser.id,
-          playerName: currentUser.name || 'Jugador',
-          photoURL: currentUser.image || null,
+          playerId: currentUser.uid,
+          playerName: currentUser.displayName || 'Jugador',
+          photoURL: currentUser.photoURL || null,
           score: playerTotalScore,
           categories: responses,
           letter: letter,
@@ -188,7 +187,7 @@ export default function PlaySoloPage() {
 
   const getRoundWinner = () => {
     if (playerRoundScore > aiRoundScore) {
-      return user?.name || 'Jugador';
+      return user?.displayName || 'Jugador';
     }
     if (aiRoundScore > playerRoundScore) {
       return 'IA';

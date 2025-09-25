@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/language-context';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 import { Button } from '@/components/ui/button';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -13,9 +14,7 @@ import { toast } from 'sonner';
 
 export default function AdminPage() {
     const { language } = useLanguage();
-    const { data: session, status } = useSession();
-    const user = session?.user;
-    const authLoading = status === 'loading';
+    const { user, loading: authLoading } = useAuth();
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);

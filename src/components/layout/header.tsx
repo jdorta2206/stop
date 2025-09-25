@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useLanguage, type LanguageOption } from '@/contexts/language-context';
 import { useCallback, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 import Link from 'next/link';
 import { Volume2, VolumeX, MessageSquare, Gamepad2 } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
@@ -16,8 +17,7 @@ import { toast } from 'sonner';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -60,13 +60,13 @@ export function AppHeader() {
   };
 
   const handleSendMessage = (text: string) => {
-    if (user && user.id && roomId) {
+    if (user && user.uid && roomId) {
       sendMessageToRoom(roomId, {
         text,
         sender: {
-          uid: user.id,
-          name: user.name || 'Anonymous',
-          avatar: user.image
+          uid: user.uid,
+          name: user.displayName || 'Anonymous',
+          avatar: user.photoURL
         }
       });
     }
@@ -114,14 +114,14 @@ export function AppHeader() {
             <span className="text-xl font-bold text-white">{translate('game.title')}</span>
           </Link>
           <div className="flex items-center space-x-2 sm:space-x-4">
-             {user && user.id && (
+             {user && user.uid && (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => setIsChatOpen(true)} className="rounded-full bg-black/20 text-white hover:bg-white/20 hover:text-white/80">
                   <MessageSquare className="h-5 w-5" />
                 </Button>
                 <PushNotifications 
-                  userId={user.id}
-                  username={user.name || 'Jugador'}
+                  userId={user.uid}
+                  username={user.displayName || 'Jugador'}
                   onJoinRoom={handleJoinRoomFromNotification}
                   onOpenChat={() => setIsChatOpen(true)}
                 />
@@ -155,7 +155,7 @@ export function AppHeader() {
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
           messages={chatMessages}
-          currentUserUid={user.id}
+          currentUserUid={user.uid}
           onSendMessage={handleSendMessage}
           translateUi={translate}
           language={language}

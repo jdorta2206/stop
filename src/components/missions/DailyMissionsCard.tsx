@@ -1,7 +1,8 @@
+
 // src/components/missions/DailyMissionsCard.tsx
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useAuth } from '@/hooks/use-auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MissionItem } from "./MissionItem";
 import { Loader2, Gift } from "lucide-react";
@@ -11,15 +12,14 @@ import { useEffect, useState } from "react";
 import type { MissionProgress } from "@/lib/missions";
 
 export function DailyMissionsCard() {
-    const { data: session } = useSession();
-    const user = session?.user;
+    const { user } = useAuth();
     const [missions, setMissions] = useState<MissionProgress[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchMissions = async () => {
         if (user) {
             setIsLoading(true);
-            const playerData = await rankingManager.getPlayerRanking(user.id);
+            const playerData = await rankingManager.getPlayerRanking(user.uid);
             setMissions(playerData?.dailyMissions || []);
             setIsLoading(false);
         }
@@ -36,7 +36,7 @@ export function DailyMissionsCard() {
     const handleClaim = async (missionId: string) => {
         if (!user) return;
         try {
-            await rankingManager.claimMissionReward(user.id, missionId);
+            await rankingManager.claimMissionReward(user.uid, missionId);
             toast.success("Has recibido tus monedas.", { description: "¡Recompensa Reclamada!" });
             fetchMissions(); // Refresh missions state
         } catch (error) {

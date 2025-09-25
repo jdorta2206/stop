@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '@/lib/friends-service';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 
 interface PushNotificationsProps {
   userId: string;
@@ -24,8 +25,7 @@ export default function PushNotifications({
   const [notifications, setNotifications] = useState<GameInvitation[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -33,8 +33,7 @@ export default function PushNotifications({
     }
 
     if (user) {
-      // The onNotificationsUpdate function now correctly queries the root 'notifications' collection.
-      const unsubscribe = onNotificationsUpdate(user.id, (newNotifications) => {
+      const unsubscribe = onNotificationsUpdate(user.uid, (newNotifications) => {
         const currentPendingIds = new Set(notifications.filter(n => n.status === 'pending').map(n => n.id));
         const newPendingNotification = newNotifications.find(n => n.status === 'pending' && !currentPendingIds.has(n.id));
 
