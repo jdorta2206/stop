@@ -35,7 +35,7 @@ function MultiplayerLobbyContent() {
             return;
         }
 
-        if (!user || !user.uid || !user.displayName) {
+        if (!user || !user.uid) {
             // User not logged in, redirect or show message
             toast.error("Debes iniciar sesión para unirte a una sala.");
             router.push('/');
@@ -46,7 +46,7 @@ function MultiplayerLobbyContent() {
 
         const joinAndListen = async () => {
             try {
-                await addPlayerToRoom(roomId, user.uid, user.displayName, user.photoURL);
+                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador Anónimo', user.photoURL);
 
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
