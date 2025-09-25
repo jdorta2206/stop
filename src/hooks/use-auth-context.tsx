@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase-config';
+import { auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { rankingManager } from '@/lib/ranking';
 
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: user.uid,
             totalScore: playerData.totalScore,
             level: playerData.level,
-            photoURL: playerData.photoURL || null,
+            photoURL: playerData.photoURL,
           };
           setAppUser(enrichedUser);
         } catch (e) {

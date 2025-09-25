@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, AuthError } from 'firebase/auth';
-import { auth } from '@/lib/firebase-config';
+import { signInWithPopup, AuthError } from 'firebase/auth';
+import { auth, googleProvider, facebookProvider } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth-context';
@@ -36,8 +36,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleLogin = async (providerName: 'google' | 'facebook') => {
     setIsProcessingLogin(true);
     const provider = providerName === 'google' 
-      ? new GoogleAuthProvider() 
-      : new FacebookAuthProvider();
+      ? googleProvider
+      : facebookProvider;
     
     try {
       await signInWithPopup(auth, provider);
@@ -54,7 +54,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           title = "Cuenta ya existe";
           description = "Ya existe una cuenta con este email, pero usando un proveedor diferente.";
           break;
-        case 'auth/unauthorized-domain':
         case 'auth/auth-domain-config-required':
           title = "Dominio no autorizado";
           description = "Este dominio no está autorizado. Por favor, revisa la configuración en la consola de Firebase.";
@@ -76,7 +75,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
           break;
         default:
-          description = `Código de error: ${authError.code}`;
+          description = authError.message || `Código de error: ${authError.code}`;
           break;
       }
 
