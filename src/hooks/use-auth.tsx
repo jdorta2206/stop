@@ -1,8 +1,17 @@
+
 "use client";
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithPopup,
+  signOut, 
+  type User as FirebaseUser, 
+  GoogleAuthProvider, 
+  FacebookAuthProvider, 
+  onAuthStateChanged,
+  getRedirectResult
+} from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -31,24 +40,25 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, authLoading, authError] = useAuthState(auth);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
       if (user) {
         try {
-          await rankingManager.getPlayerRanking(
-            user.uid,
-            user.displayName,
-            user.photoURL
-          );
+          await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
         } catch (error) {
            console.error("Error ensuring player profile exists:", error);
            toast.error("Hubo un problema al cargar tu perfil de jugador.");
         }
       }
+      setIsLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -56,18 +66,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsProcessingLogin(true);
     try {
       await signInWithPopup(auth, provider);
+      // On success, onAuthStateChanged will handle the user state update.
+      toast.success("¡Inicio de sesión exitoso!");
     } catch (error: any) {
-        console.error("Popup login failed:", error);
-        
         let title = "Error al iniciar sesión";
         let description = error.message || "Por favor, inténtalo de nuevo.";
 
-        if(error.code === 'auth/unauthorized-domain') {
+        if (error.code === 'auth/unauthorized-domain') {
             title = "Dominio no autorizado";
             description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            title = "Inicio de sesión cancelado";
+            description = "La ventana de inicio de sesión fue cerrada.";
         }
         
         toast.error(title, { description });
+        setAuthError(error);
     } finally {
         setIsProcessingLogin(false);
     }
@@ -92,20 +106,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
   
-  const isLoading = authLoading || isProcessingLogin;
-
-  const value = useMemo(() => ({
-    user: user,
+  const contextValue = useMemo(() => ({
+    user,
     isLoading,
     error: authError || null,
     loginWithGoogle,
     loginWithFacebook,
     logout: handleLogout,
     isProcessingLogin,
-  }), [user, isLoading, authError, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
+  }), [user, isLoading, isProcessingLogin, authError, loginWithGoogle, loginWithFacebook, handleLogout]);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
