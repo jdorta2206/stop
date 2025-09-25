@@ -6,18 +6,6 @@ import FacebookProvider from "next-auth/providers/facebook"
 const authOptions: NextAuthOptions = {
   providers: [],
   secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: '/', // Redirect to home page for sign-in
-  },
-  callbacks: {
-    async session({ session, token }) {
-      // Pass the UID from the token to the session
-      if (session.user && token.sub) {
-        (session.user as any).id = token.sub;
-      }
-      return session;
-    },
-  },
 };
 
 // Only add Google provider if credentials are provided
