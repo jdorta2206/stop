@@ -8,12 +8,12 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  "projectId": "global-stop",
-  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
-  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
-  "authDomain": "global-stop.firebaseapp.com",
-  "storageBucket": "global-stop.appspot.com",
-  "messagingSenderId": "902072408470"
+  "projectId": "stop-game-v2",
+  "appId": "1:668640003802:web:a185f56118989cca0c87e3",
+  "apiKey": "AIzaSyDgPzz5JbyxIuiaCnaklycqAnKeifOfcA",
+  "authDomain": "stop-game-v2.firebaseapp.com",
+  "storageBucket": "stop-game-v2.appspot.com",
+  "messagingSenderId": "668640003802"
 };
 
 
