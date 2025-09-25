@@ -44,22 +44,43 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       // The useEffect hook will handle closing the modal and showing the success toast upon `user` object change.
     } catch (error) {
       const authError = error as AuthError;
-      console.error("Firebase Auth Error:", authError.code, authError.message);
+      console.error("Firebase Auth Error:", authError);
       
+      let title = "Error al iniciar sesión";
       let description = "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.";
-      if (authError.code === 'auth/account-exists-with-different-credential') {
-        description = "Ya existe una cuenta con este email, pero usando un proveedor de inicio de sesión diferente.";
-      } else if (authError.code === 'auth/unauthorized-domain') {
-          description = "Este dominio no está autorizado para realizar operaciones de autenticación. Por favor, contacta al administrador.";
-      } else if (authError.code === 'auth/popup-closed-by-user') {
-          description = "Has cerrado la ventana de inicio de sesión. Por favor, intenta de nuevo.";
-      } else if (authError.code === 'auth/cancelled-popup-request') {
+
+      switch (authError.code) {
+        case 'auth/account-exists-with-different-credential':
+          title = "Cuenta ya existe";
+          description = "Ya existe una cuenta con este email, pero usando un proveedor diferente.";
+          break;
+        case 'auth/unauthorized-domain':
+        case 'auth/auth-domain-config-required':
+          title = "Dominio no autorizado";
+          description = "Este dominio no está autorizado. Por favor, revisa la configuración en la consola de Firebase.";
+          break;
+        case 'auth/popup-closed-by-user':
+          title = "Ventana cerrada";
+          description = "Has cerrado la ventana de inicio de sesión antes de completar el proceso.";
+          break;
+        case 'auth/cancelled-popup-request':
+          title = "Solicitud cancelada";
           description = "Se ha cancelado la solicitud de inicio de sesión.";
-      } else if (authError.code === 'auth/api-key-not-valid') {
-          description = "La clave de API de Firebase no es válida. Por favor, contacta al administrador.";
+          break;
+        case 'auth/invalid-api-key':
+          title = "Clave de API inválida";
+          description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto.";
+          break;
+        case 'auth/network-request-failed':
+          title = "Error de red";
+          description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
+          break;
+        default:
+          description = `Código de error: ${authError.code}`;
+          break;
       }
 
-      toast.error("Error al iniciar sesión", { description });
+      toast.error(title, { description });
     } finally {
       setIsProcessingLogin(false);
     }
