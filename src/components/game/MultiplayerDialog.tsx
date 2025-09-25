@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { useLanguage } from '@/contexts/language-context';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -20,7 +19,8 @@ interface MultiplayerDialogProps {
 
 export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialogProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const { translate } = useLanguage();
   
   const [isCreating, setIsCreating] = useState(false);
@@ -35,9 +35,9 @@ export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialog
     setIsCreating(true);
     try {
       const newRoom = await createRoom({
-        creatorId: user.uid,
-        creatorName: user.displayName,
-        creatorAvatar: user.photoURL
+        creatorId: user.id,
+        creatorName: user.name,
+        creatorAvatar: user.image
       });
 
       if (!newRoom || !newRoom.id) {

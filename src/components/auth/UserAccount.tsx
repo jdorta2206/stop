@@ -1,4 +1,3 @@
-
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
@@ -10,19 +9,19 @@ import { useEffect, useState } from "react";
 
 export function UserAccount() {
   const { data: session } = useSession();
+  const user = session?.user;
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted || !session?.user) {
+  if (!isMounted || !user) {
     return (
         <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
     );
   }
   
-  const user = session.user;
   const fallbackContent = user.name ? user.name.charAt(0).toUpperCase() : <UserIcon />;
   const finalAvatarUrl = user.image || '';
 

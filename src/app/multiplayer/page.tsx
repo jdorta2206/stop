@@ -1,9 +1,8 @@
-
 "use client";
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
@@ -15,7 +14,9 @@ import { toast } from 'sonner';
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user, isLoading: authLoading } = useAuth();
+    const { data: session, status } = useSession();
+    const user = session?.user;
+    const authLoading = status === 'loading';
     const { language } = useLanguage();
     
     const [room, setRoom] = useState<Room | null>(null);
@@ -35,7 +36,7 @@ function MultiplayerLobbyContent() {
             return;
         }
 
-        if (!user) {
+        if (!user || !user.id || !user.name) {
             router.push('/');
             return;
         }
@@ -44,7 +45,7 @@ function MultiplayerLobbyContent() {
 
         const joinAndListen = async () => {
             try {
-                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador', user.photoURL);
+                await addPlayerToRoom(roomId, user.id, user.name, user.image);
 
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
@@ -88,13 +89,21 @@ function MultiplayerLobbyContent() {
     }
     
     if (user && room && roomId) {
+        // NextAuth user object doesn't have `uid`. It uses `id`. Let's adapt.
+        const currentUserForRoom = {
+          ...user,
+          uid: user.id,
+          displayName: user.name,
+          photoURL: user.image
+        } as any;
+        
         return (
             <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
                 <AppHeader />
                 <main className="flex-grow container mx-auto p-4 md:p-8 flex items-center justify-center">
                     <EnhancedRoomManager 
                         roomId={roomId}
-                        currentUser={user}
+                        currentUser={currentUserForRoom}
                         roomData={room}
                         onLeaveRoom={handleLeaveRoom}
                         onStartGame={handleStartGame}

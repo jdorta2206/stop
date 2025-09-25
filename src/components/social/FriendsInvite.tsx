@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,14 +9,15 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addFriend, searchUsers, type Friend } from '@/lib/friends-service';
-import { useAuth } from '@/hooks/use-auth';
+import { useSession } from 'next-auth/react';
 
 interface FriendsInviteProps {
   onFriendAdded: () => void;
 }
 
 export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
-  const { user } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +34,7 @@ export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
     try {
       const results = await searchUsers(query);
       // Filter out the current user from search results
-      const filteredResults = results.filter(result => result.id !== user?.uid);
+      const filteredResults = results.filter(result => result.id !== user?.id);
       setSearchResults(filteredResults);
       if (filteredResults.length === 0) {
         toast.info("No se encontraron jugadores con ese nombre.");
@@ -52,7 +52,7 @@ export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
        return;
     }
     try {
-      await addFriend(user.uid, friend.id, friend.name, friend.avatar);
+      await addFriend(user.id, friend.id, friend.name, friend.avatar);
       toast.success(`${friend.name} ha sido añadido a tus amigos.`);
       setInvitedFriends(prev => new Set(prev).add(friend.id));
       onFriendAdded(); // Callback to refresh the friends list on the parent component
@@ -106,5 +106,3 @@ export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
     </div>
   );
 }
-
-    
