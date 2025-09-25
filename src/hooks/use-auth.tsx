@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithRedirect, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { getAuth, signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -55,11 +55,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
     try {
-      await signInWithRedirect(auth, provider);
-      // La redirección ocurrirá, el código siguiente no se ejecutará inmediatamente.
-      // El resultado se manejará cuando el usuario regrese a la app.
+      await signInWithPopup(auth, provider);
     } catch (error: any) {
-        console.error("Redirect login failed:", error);
+        console.error("Popup login failed:", error);
         
         let title = "Error al iniciar sesión";
         let description = error.message || "Por favor, inténtalo de nuevo.";
@@ -70,6 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         toast.error(title, { description });
+    } finally {
         setIsProcessingLogin(false);
     }
   };
@@ -93,7 +92,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
   
-  // `authLoading` de `useAuthState` se volverá true mientras se procesa la redirección.
   const isLoading = authLoading || isProcessingLogin;
 
   const value = useMemo(() => ({
