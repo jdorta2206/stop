@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { 
   getAuth, 
-  signInWithPopup,
+  signInWithRedirect,
   signOut, 
   type User as FirebaseUser, 
   GoogleAuthProvider, 
@@ -59,35 +59,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
     });
 
+    // Procesa el resultado de la redirección al cargar la página
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          toast.success("¡Inicio de sesión exitoso!");
+        }
+      })
+      .catch((error) => {
+        handleAuthError(error);
+      })
+      .finally(() => {
+        setIsProcessingLogin(false);
+      });
+
     return () => unsubscribe();
   }, []);
 
+  const handleAuthError = (error: any) => {
+    let title = "Error al iniciar sesión";
+    let description = error.message || "Por favor, inténtalo de nuevo.";
+
+    if (error.code === 'auth/unauthorized-domain') {
+        title = "Dominio no autorizado";
+        description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
+    } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        title = "Inicio de sesión cancelado";
+        description = "Has cancelado el proceso de inicio de sesión.";
+    } else if (error.code === 'auth/api-key-not-valid') {
+        title = "Clave de API no válida";
+        description = "La clave de API de Firebase no es correcta. Contacta al soporte.";
+    }
+    
+    toast.error(title, { description });
+    setAuthError(error);
+  };
+
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    try {
-      await signInWithPopup(auth, provider);
-      // On success, onAuthStateChanged will handle the user state update.
-      toast.success("¡Inicio de sesión exitoso!");
-    } catch (error: any) {
-        let title = "Error al iniciar sesión";
-        let description = error.message || "Por favor, inténtalo de nuevo.";
-
-        if (error.code === 'auth/unauthorized-domain') {
-            title = "Dominio no autorizado";
-            description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
-        } else if (error.code === 'auth/popup-closed-by-user') {
-            title = "Inicio de sesión cancelado";
-            description = "La ventana de inicio de sesión fue cerrada.";
-        } else if (error.code === 'auth/api-key-not-valid') {
-            title = "Clave de API no válida";
-            description = "La clave de API de Firebase no es correcta. Contacta al soporte.";
-        }
-        
-        toast.error(title, { description });
-        setAuthError(error);
-    } finally {
-        setIsProcessingLogin(false);
-    }
+    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
+    // simplemente redirige. El resultado se captura con getRedirectResult.
+    await signInWithRedirect(auth, provider);
   };
   
   const loginWithGoogle = useCallback(async () => {
