@@ -1,5 +1,5 @@
 // src/lib/ranking.ts
-import { db } from './firebase-config';
+import { db } from './firebase';
 import { 
     doc, 
     getDoc, 
@@ -77,11 +77,12 @@ class RankingManager {
     let docSnap = await getDoc(playerDocRef);
 
     if (!docSnap.exists()) {
-      // If displayName is null or undefined (can happen on first login), provide a default.
       const finalDisplayName = displayName || 'Jugador Anónimo';
+      const finalPhotoURL = photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalDisplayName)}`;
+      
       const newPlayer: Omit<PlayerScore, 'id'> = {
           playerName: finalDisplayName,
-          photoURL: photoURL || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${finalDisplayName || 'player'}`,
+          photoURL: finalPhotoURL,
           totalScore: 0,
           gamesPlayed: 0,
           gamesWon: 0,
@@ -95,7 +96,6 @@ class RankingManager {
           missionsLastReset: new Date().toISOString().split('T')[0],
       };
       await setDoc(playerDocRef, newPlayer);
-      // Re-fetch the document to ensure we have the created data, including server-generated timestamps
       docSnap = await getDoc(playerDocRef);
     }
     
@@ -124,7 +124,6 @@ class RankingManager {
     const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
     const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
     
-    // Ensure player profile exists and missions are up-to-date before saving
     const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
 
     const finalGameResult = { ...gameResult, timestamp: serverTimestamp() };
