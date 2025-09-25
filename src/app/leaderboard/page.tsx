@@ -132,7 +132,7 @@ export default function LeaderboardPage() {
         const newRoom = await createRoom({
             creatorId: user.uid,
             creatorName: user.displayName,
-            creatorAvatar: user.photoURL,
+            creatorAvatar: user.photoURL || null,
         });
 
         if (!newRoom || !newRoom.id) {
