@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { 
   getAuth, 
-  signInWithRedirect, 
+  signInWithPopup,
   signOut, 
   type User as FirebaseUser, 
   GoogleAuthProvider, 
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
-  const [isProcessingLogin, setIsProcessingLogin] = useState(true);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -57,35 +57,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
       setIsLoading(false);
-      setIsProcessingLogin(false);
     });
-    
-    // Check for redirect result
-    getRedirectResult(auth)
-      .catch((error) => {
-        console.error("Redirect login failed:", error);
-        let title = "Error al iniciar sesión";
-        let description = error.message || "Por favor, inténtalo de nuevo.";
-
-        if (error.code === 'auth/unauthorized-domain') {
-            title = "Dominio no autorizado";
-            description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
-        }
-        toast.error(title, { description });
-        setAuthError(error);
-      })
-      .finally(() => {
-        setIsProcessingLogin(false);
-      });
 
     return () => unsubscribe();
   }, []);
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
-    // simplemente redirige. El resultado se captura con getRedirectResult.
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+      // On success, onAuthStateChanged will handle the user state update.
+      toast.success("¡Inicio de sesión exitoso!");
+    } catch (error: any) {
+        let title = "Error al iniciar sesión";
+        let description = error.message || "Por favor, inténtalo de nuevo.";
+
+        if (error.code === 'auth/unauthorized-domain') {
+            title = "Dominio no autorizado";
+            description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            title = "Inicio de sesión cancelado";
+            description = "La ventana de inicio de sesión fue cerrada.";
+        }
+        
+        toast.error(title, { description });
+        setAuthError(error);
+    } finally {
+        setIsProcessingLogin(false);
+    }
   };
   
   const loginWithGoogle = useCallback(async () => {
@@ -109,7 +108,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   const contextValue = useMemo(() => ({
     user,
-    isLoading: isLoading || isProcessingLogin,
+    isLoading,
     error: authError || null,
     loginWithGoogle,
     loginWithFacebook,
