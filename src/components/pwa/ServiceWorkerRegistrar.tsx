@@ -6,6 +6,9 @@ import { toast } from "sonner";
 export function ServiceWorkerRegistrar() {
 
   useEffect(() => {
+    // Se comenta temporalmente para evitar errores de CORS en entornos de desarrollo específicos
+    // como Cloud Workstations, donde las redirecciones internas interfieren con el fetch del sw.
+    /*
     if ('serviceWorker' in navigator) {
       const handleServiceWorker = () => {
         navigator.serviceWorker.register('/sw.js')
@@ -42,6 +45,7 @@ export function ServiceWorkerRegistrar() {
         window.removeEventListener('load', handleServiceWorker);
       };
     }
+    */
   }, []);
 
   return null; // Este componente no renderiza nada
