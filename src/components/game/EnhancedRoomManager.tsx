@@ -33,7 +33,7 @@ import {
     type Player, 
     type Room 
 } from '@/lib/room-service';
-import type { User } from 'firebase/auth';
+import type { AppUser } from '@/hooks/use-auth-context';
 import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
@@ -56,7 +56,7 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 
 interface EnhancedRoomManagerProps {
   roomId: string;
-  currentUser: User;
+  currentUser: AppUser;
   roomData: Room;
   onLeaveRoom: () => void;
   onStartGame: () => void;
