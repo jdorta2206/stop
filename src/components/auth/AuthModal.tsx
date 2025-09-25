@@ -1,12 +1,11 @@
 
 "use client";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useAuth } from '@/hooks/use-auth'; 
+import { signIn, useSession } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { User } from 'firebase/auth';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="18" height="18" {...props}>
@@ -29,23 +28,22 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { user, loginWithGoogle, loginWithFacebook, isProcessingLogin, error } = useAuth();
-  
-  useEffect(() => {
-    if (user && isOpen) {
-      onClose();
-    }
-  }, [user, isOpen, onClose]);
-  
-  useEffect(() => {
-    if (error) {
-       toast.error(error.message || "Ha ocurrido un error de autenticación.");
-    }
-  }, [error]);
+  const { data: session, status } = useSession();
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
-  const handleLogin = async (loginMethod: () => Promise<void>) => {
-    await loginMethod();
-    // No cerramos el modal aquí, la redirección se encargará
+  useEffect(() => {
+    if (status === 'authenticated' && isOpen) {
+      onClose();
+      toast.success("¡Inicio de sesión exitoso!");
+    } else if (status === 'unauthenticated' && isProcessingLogin) {
+      toast.error("Error al iniciar sesión.");
+      setIsProcessingLogin(false);
+    }
+  }, [status, isOpen, onClose, isProcessingLogin]);
+
+  const handleLogin = async (provider: 'google' | 'facebook') => {
+    setIsProcessingLogin(true);
+    await signIn(provider);
   }
 
   return (
@@ -61,7 +59,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {isProcessingLogin ? (
+          {isProcessingLogin || status === 'loading' ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="text-muted-foreground text-sm">Redirigiendo a la página de inicio de sesión...</p>
@@ -71,7 +69,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => handleLogin(loginWithGoogle)}
+                    onClick={() => handleLogin('google')}
                     disabled={isProcessingLogin}
                 >
                     <GoogleIcon />
@@ -80,7 +78,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                  <Button 
                     variant="outline" 
                     className="flex items-center justify-center gap-2 p-3 h-auto transition-colors"
-                    onClick={() => handleLogin(loginWithFacebook)}
+                    onClick={() => handleLogin('facebook')}
                     disabled={isProcessingLogin}
                 >
                     <FacebookIcon />

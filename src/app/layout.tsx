@@ -10,7 +10,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
-          <link rel="manifest" href="/manifest.json" />
+          
           <meta name="theme-color" content="#ef4444" />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">

@@ -1,3 +1,4 @@
+
 // Import the functions you need from the SDKs you need
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -8,11 +9,11 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration for global-stop
 const firebaseConfig = {
   "projectId": "global-stop",
-  "appId": "1:668640003802:web:968ab7545b736c9e052061",
-  "apiKey": "AIzaSyAF0-gIy3i_hMXuYm2W_5A2F_sAP3Y",
+  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
+  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
   "authDomain": "global-stop.firebaseapp.com",
   "storageBucket": "global-stop.appspot.com",
-  "messagingSenderId": "668640003802"
+  "messagingSenderId": "902072408470"
 };
 
 
