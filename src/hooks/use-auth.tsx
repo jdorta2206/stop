@@ -78,6 +78,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else if (error.code === 'auth/popup-closed-by-user') {
             title = "Inicio de sesión cancelado";
             description = "La ventana de inicio de sesión fue cerrada.";
+        } else if (error.code === 'auth/api-key-not-valid') {
+            title = "Clave de API no válida";
+            description = "La clave de API de Firebase no es correcta. Contacta al soporte.";
         }
         
         toast.error(title, { description });
