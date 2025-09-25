@@ -6,8 +6,9 @@ import { toast } from "sonner";
 export function ServiceWorkerRegistrar() {
 
   useEffect(() => {
-    // Se comenta temporalmente para evitar errores de CORS en entornos de desarrollo específicos
-    // como Cloud Workstations, donde las redirecciones internas interfieren con el fetch del sw.
+    // Se comenta completamente el registro del Service Worker para evitar conflictos
+    // con el flujo de autenticación del lado del servidor de NextAuth y las
+    // redirecciones internas del entorno de desarrollo.
     /*
     if ('serviceWorker' in navigator) {
       const handleServiceWorker = () => {
@@ -37,10 +38,8 @@ export function ServiceWorkerRegistrar() {
           });
       };
 
-      // Esperar a que la página se cargue completamente
       window.addEventListener('load', handleServiceWorker);
 
-      // Limpieza al desmontar el componente
       return () => {
         window.removeEventListener('load', handleServiceWorker);
       };
@@ -48,5 +47,5 @@ export function ServiceWorkerRegistrar() {
     */
   }, []);
 
-  return null; // Este componente no renderiza nada
+  return null;
 }
