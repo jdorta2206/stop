@@ -1,5 +1,5 @@
 // src/lib/ranking.ts
-import { db } from './firebase-config';
+import { db } from './firebase';
 import { 
     doc, 
     getDoc, 
