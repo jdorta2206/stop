@@ -46,7 +46,7 @@ function MultiplayerLobbyContent() {
 
         const joinAndListen = async () => {
             try {
-                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador Anónimo', user.photoURL);
+                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador Anónimo', user.photoURL || null);
 
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
