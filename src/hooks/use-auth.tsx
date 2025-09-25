@@ -5,11 +5,13 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import type { Session } from "next-auth";
 
-interface AppUser extends Session['user'] {
+// This is the user object you'll get from `useSession`.
+// You can add your own properties to it if you need to.
+type AppUser = Session["user"] & {
   id?: string;
   totalScore?: number;
   level?: string;
-}
+};
 
 interface CustomSession extends Session {
   user?: AppUser;
