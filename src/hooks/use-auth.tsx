@@ -63,9 +63,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         let title = "Error al iniciar sesión";
         let description = error.message || "Por favor, inténtalo de nuevo.";
 
-        if(error.code === 'auth/unauthorized-domain') {
+        if (error.code === 'auth/unauthorized-domain') {
             title = "Dominio no autorizado";
             description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
+        } else if (error.code === 'auth/api-key-not-valid') {
+            title = "Clave de API no válida";
+            description = "La clave de API de Firebase no es válida. Revisa tu configuración.";
         }
         
         toast.error(title, { description });
