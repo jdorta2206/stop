@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -12,7 +13,6 @@ export interface AppUser extends User {
   id: string; // Add a consistent id field
   totalScore?: number;
   level?: string;
-  photoURL?: string | null;
 }
 
 // Define the context value shape
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: user.uid,
           totalScore: playerData.totalScore,
           level: playerData.level,
-          photoURL: playerData.photoURL,
+          photoURL: playerData.photoURL || null,
         };
         setAppUser(enrichedUser);
       } else {

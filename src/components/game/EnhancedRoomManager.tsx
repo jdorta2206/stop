@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ import {
     type Player, 
     type Room 
 } from '@/lib/room-service';
-import type { User } from 'firebase/auth';
+import type { AppUser } from '@/hooks/use-auth-context';
 import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '@/contexts/language-context';
@@ -57,7 +56,7 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 
 interface EnhancedRoomManagerProps {
   roomId: string;
-  currentUser: User;
+  currentUser: AppUser;
   roomData: Room;
   onLeaveRoom: () => void;
   onStartGame: () => void;
@@ -125,7 +124,7 @@ export default function EnhancedRoomManager({
   const isHost = room.hostId === currentUser.uid;
 
   const inviteUrl = useMemo(() => {
-    return `https://juego-stop.netlify.app/multiplayer?roomId=${roomId}`;
+    return typeof window !== 'undefined' ? `${window.location.origin}/multiplayer?roomId=${roomId}` : '';
   }, [roomId]);
 
 
@@ -251,7 +250,7 @@ export default function EnhancedRoomManager({
 
   // --- RENDERIZADO CONDICIONAL POR ESTADO DE JUEGO ---
   
-  if (room.status === 'playing') {
+  if (room.status === 'playing' && room.gameState) {
       switch (room.gameState) {
           case 'SPINNING':
               return <RouletteWheel alphabet={alphabet} language={room.settings.language} onSpinComplete={() => {}} />;
