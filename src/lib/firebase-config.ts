@@ -1,3 +1,4 @@
+
 // Your web app's Firebase configuration for stop-game-v2
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
