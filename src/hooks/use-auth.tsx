@@ -2,8 +2,16 @@
 "use client";
 
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth, signInWithPopup, signOut, type User as FirebaseUser, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithRedirect, 
+  signOut, 
+  type User as FirebaseUser, 
+  GoogleAuthProvider, 
+  FacebookAuthProvider, 
+  onAuthStateChanged,
+  getRedirectResult
+} from "firebase/auth";
 import { app } from "@/lib/firebase-config"; 
 import { toast } from 'sonner';
 import { rankingManager } from "@/lib/ranking";
@@ -32,49 +40,52 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, authLoading, authError] = useAuthState(auth);
-  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | null>(null);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
       if (user) {
         try {
-          await rankingManager.getPlayerRanking(
-            user.uid,
-            user.displayName,
-            user.photoURL
-          );
+          await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
         } catch (error) {
            console.error("Error ensuring player profile exists:", error);
            toast.error("Hubo un problema al cargar tu perfil de jugador.");
         }
       }
+      setIsLoading(false);
+      setIsProcessingLogin(false);
     });
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
-    setIsProcessingLogin(true);
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-        console.error("Popup login failed:", error);
-        
+    
+    // Check for redirect result
+    getRedirectResult(auth)
+      .catch((error) => {
+        console.error("Redirect login failed:", error);
         let title = "Error al iniciar sesión";
         let description = error.message || "Por favor, inténtalo de nuevo.";
 
         if (error.code === 'auth/unauthorized-domain') {
             title = "Dominio no autorizado";
             description = "El dominio de esta aplicación no está autorizado. Revisa la configuración de Firebase.";
-        } else if (error.code === 'auth/api-key-not-valid') {
-            title = "Clave de API no válida";
-            description = "La clave de API de Firebase no es válida. Revisa tu configuración.";
         }
-        
         toast.error(title, { description });
-    } finally {
+        setAuthError(error);
+      })
+      .finally(() => {
         setIsProcessingLogin(false);
-    }
+      });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
+    setIsProcessingLogin(true);
+    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
+    // simplemente redirige. El resultado se captura con getRedirectResult.
+    await signInWithRedirect(auth, provider);
   };
   
   const loginWithGoogle = useCallback(async () => {
@@ -96,20 +107,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
   
-  const isLoading = authLoading || isProcessingLogin;
-
-  const value = useMemo(() => ({
-    user: user,
-    isLoading,
+  const contextValue = useMemo(() => ({
+    user,
+    isLoading: isLoading || isProcessingLogin,
     error: authError || null,
     loginWithGoogle,
     loginWithFacebook,
     logout: handleLogout,
     isProcessingLogin,
-  }), [user, isLoading, authError, loginWithGoogle, loginWithFacebook, handleLogout, isProcessingLogin]);
+  }), [user, isLoading, isProcessingLogin, authError, loginWithGoogle, loginWithFacebook, handleLogout]);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
