@@ -4,7 +4,7 @@
 import { createContext, useContext, type ReactNode, useCallback, useMemo, useState, useEffect } from "react";
 import { 
   getAuth, 
-  signInWithRedirect,
+  signInWithPopup,
   signOut, 
   type User as FirebaseUser, 
   GoogleAuthProvider, 
@@ -59,20 +59,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(false);
     });
 
-    // Procesa el resultado de la redirección al cargar la página
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          toast.success("¡Inicio de sesión exitoso!");
-        }
-      })
-      .catch((error) => {
-        handleAuthError(error);
-      })
-      .finally(() => {
-        setIsProcessingLogin(false);
-      });
-
     return () => unsubscribe();
   }, []);
 
@@ -97,9 +83,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const handleLogin = async (provider: GoogleAuthProvider | FacebookAuthProvider): Promise<void> => {
     setIsProcessingLogin(true);
-    // signInWithRedirect no devuelve una promesa que resuelva con el usuario,
-    // simplemente redirige. El resultado se captura con getRedirectResult.
-    await signInWithRedirect(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+      toast.success("¡Inicio de sesión exitoso!");
+    } catch (error) {
+      handleAuthError(error);
+    } finally {
+      setIsProcessingLogin(false);
+    }
   };
   
   const loginWithGoogle = useCallback(async () => {
