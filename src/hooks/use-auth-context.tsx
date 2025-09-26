@@ -27,40 +27,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, loading, error] = useAuthState(auth);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    const processUser = async () => {
-      setIsProcessing(true);
-      if (user) {
-        try {
-          // Use the rankingManager to get or create the player profile
-          const playerData = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-          
-          const enrichedUser: AppUser = {
-            ...user,
-            id: user.uid,
-            totalScore: playerData.totalScore,
-            level: playerData.level,
-            photoURL: playerData.photoURL,
-          };
-          setAppUser(enrichedUser);
-        } catch (e) {
-            console.error("Error processing user data:", e);
-            setAppUser(null);
-        }
-      } else {
-        setAppUser(null);
-      }
-      setIsProcessing(false);
-    };
-
-    processUser();
+    if (user) {
+      const enrichedUser: AppUser = {
+        ...user,
+        id: user.uid,
+      };
+      setAppUser(enrichedUser);
+    } else {
+      setAppUser(null);
+    }
   }, [user]);
 
   const value = {
     user: appUser,
-    loading: loading || isProcessing,
+    loading: loading,
     error,
   };
 
