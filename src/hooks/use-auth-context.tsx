@@ -25,24 +25,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Create the provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, loading, error] = useAuthState(auth);
+  const [user, authLoading, error] = useAuthState(auth);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      const enrichedUser: AppUser = {
-        ...user,
-        id: user.uid,
-      };
-      setAppUser(enrichedUser);
-    } else {
-      setAppUser(null);
-    }
+    const initializeUser = async () => {
+      if (user) {
+        // Here you could fetch additional user data if needed
+        const enrichedUser: AppUser = {
+          ...user,
+          id: user.uid,
+        };
+        setAppUser(enrichedUser);
+      } else {
+        setAppUser(null);
+      }
+      setIsInitializing(false);
+    };
+
+    initializeUser();
   }, [user]);
 
   const value = {
     user: appUser,
-    loading: loading,
+    loading: authLoading || isInitializing, // Combine both loading states
     error,
   };
 
