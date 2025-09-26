@@ -42,9 +42,22 @@ if (typeof window !== 'undefined') {
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+googleProvider.setCustomParameters({ 
+    prompt: 'select_account',
+    auth_type: 'rerequest',
+    display: 'popup'
+});
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
+
 
 const facebookProvider = new FacebookAuthProvider();
+facebookProvider.setCustomParameters({
+    'display': 'popup'
+});
+facebookProvider.addScope('email');
+facebookProvider.addScope('public_profile');
+
 
 // Export the initialized services
 export { app, auth, db, googleProvider, facebookProvider };
