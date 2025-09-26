@@ -1,11 +1,11 @@
 
-// Your web app's Firebase configuration for stop-game-v2
+// Your web app's Firebase configuration for global-stop
 export const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  authDomain: "global-stop.firebaseapp.com",
+  projectId: "global-stop",
+  storageBucket: "global-stop.appspot.com",
+  messagingSenderId: "277985396554",
+  appId: "1:277985396554:web:485a3c9e95c1b563459c04",
+  measurementId: "G-65Y9J10H4M"
 };
