@@ -1,9 +1,7 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Your web app's Firebase configuration for global-stop
 // This is the CORRECT configuration for the "Stop" app.
@@ -12,9 +10,9 @@ export const firebaseConfig = {
     authDomain: "global-stop.firebaseapp.com",
     databaseURL: "https://global-stop-default-rtdb.firebaseio.com",
     projectId: "global-stop",
-    storageBucket: "global-stop.firebasestorage.app",
+    storageBucket: "global-stop.appspot.com",
     messagingSenderId: "902072408470",
-    appId: "1:902072408470:web:843e9f91308bb4ec4865b7",
+    appId: "1:902072408470:web:9db3b3c3c1a3915a12bada",
     measurementId: "G-DP1DM3R96E"
   };
 
@@ -26,6 +24,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- App Check ---
+// App Check has been temporarily disabled to resolve a reCAPTCHA configuration issue.
+// Once the reCAPTCHA key is correctly configured in the Google Cloud Console for the
+// correct domains (including localhost), this can be re-enabled.
+/*
 if (typeof window !== 'undefined') {
   try {
       const appCheck = initializeAppCheck(app, {
@@ -36,6 +38,7 @@ if (typeof window !== 'undefined') {
       console.error("Error initializing App Check", e);
   }
 }
+*/
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
