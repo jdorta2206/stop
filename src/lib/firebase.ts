@@ -22,14 +22,7 @@ const db = getFirestore(app);
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ 
-    prompt: 'select_account',
-});
-
 const facebookProvider = new FacebookAuthProvider();
-facebookProvider.setCustomParameters({
-    'display': 'popup'
-});
 
 
 // Export the initialized services
