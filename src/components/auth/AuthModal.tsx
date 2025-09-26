@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, AuthError } from 'firebase/auth';
-import { auth } from '@/lib/firebase-config';
+import { signInWithPopup, AuthError } from 'firebase/auth';
+import { auth, googleProvider, facebookProvider } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth-context';
@@ -27,39 +27,60 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
+    // Si el usuario ya está logueado y el modal está abierto, ciérralo.
     if (user && isOpen) {
-      onClose();
       toast.success("¡Inicio de sesión exitoso!");
+      onClose();
     }
   }, [user, isOpen, onClose]);
 
   const handleLogin = async (providerName: 'google' | 'facebook') => {
     setIsProcessingLogin(true);
     const provider = providerName === 'google' 
-      ? new GoogleAuthProvider() 
-      : new FacebookAuthProvider();
+      ? googleProvider
+      : facebookProvider;
     
     try {
       await signInWithPopup(auth, provider);
-      // The useEffect hook will handle closing the modal and showing the success toast upon `user` object change.
+      // El useEffect de arriba se encargará de cerrar el modal cuando `user` se actualice.
     } catch (error) {
       const authError = error as AuthError;
-      console.error("Firebase Auth Error:", authError.code, authError.message);
+      console.error("Firebase Auth Error:", authError);
       
+      let title = "Error al iniciar sesión";
       let description = "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.";
-      if (authError.code === 'auth/account-exists-with-different-credential') {
-        description = "Ya existe una cuenta con este email, pero usando un proveedor de inicio de sesión diferente.";
-      } else if (authError.code === 'auth/unauthorized-domain') {
-          description = "Este dominio no está autorizado para realizar operaciones de autenticación. Por favor, contacta al administrador.";
-      } else if (authError.code === 'auth/popup-closed-by-user') {
-          description = "Has cerrado la ventana de inicio de sesión. Por favor, intenta de nuevo.";
-      } else if (authError.code === 'auth/cancelled-popup-request') {
-          description = "Se ha cancelado la solicitud de inicio de sesión.";
-      } else if (authError.code === 'auth/api-key-not-valid') {
-          description = "La clave de API de Firebase no es válida. Por favor, contacta al administrador.";
+
+      switch (authError.code) {
+        case 'auth/account-exists-with-different-credential':
+          title = "Cuenta ya existe";
+          description = "Ya existe una cuenta con este email, pero usando un proveedor diferente.";
+          break;
+        case 'auth/popup-closed-by-user':
+          title = "Ventana cerrada";
+          description = "Has cerrado la ventana de inicio de sesión antes de completar el proceso.";
+          break;
+        case 'auth/cancelled-popup-request':
+           title = "Solicitud cancelada";
+           description = "Se ha cancelado la solicitud de inicio de sesión.";
+           break;
+        case 'auth/auth-domain-config-required':
+          title = "Dominio no autorizado";
+          description = "Este dominio no está autorizado en la configuración de Firebase.";
+          break;
+        case 'auth/api-key-not-valid':
+             title = "Clave de API inválida";
+             description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto.";
+             break;
+        case 'auth/network-request-failed':
+          title = "Error de red";
+          description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
+          break;
+        default:
+          description = authError.message || `Código de error: ${authError.code}`;
+          break;
       }
 
-      toast.error("Error al iniciar sesión", { description });
+      toast.error(title, { description });
     } finally {
       setIsProcessingLogin(false);
     }
