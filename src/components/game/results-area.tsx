@@ -4,7 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/use-auth-context';
 import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
@@ -22,8 +22,7 @@ interface ResultsAreaProps {
 
 export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }: ResultsAreaProps) {
   const router = useRouter();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
   
   if (!roundResults) {
     return (
@@ -34,7 +33,7 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     );
   }
 
-  const playerName = user?.name || translateUi('game.results.labels.you');
+  const playerName = user?.displayName || translateUi('game.results.labels.you');
   
   const renderResultRow = (category: string) => {
     const playerResult = roundResults[category]?.player;
@@ -128,5 +127,3 @@ export function ResultsArea({ roundResults, playerRoundScore, aiRoundScore, roun
     </Card>
   );
 };
-
-    
