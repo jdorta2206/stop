@@ -27,9 +27,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
+    // Si el usuario ya está logueado y el modal está abierto, ciérralo.
     if (user && isOpen) {
-      onClose();
       toast.success("¡Inicio de sesión exitoso!");
+      onClose();
     }
   }, [user, isOpen, onClose]);
 
@@ -41,7 +42,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     
     try {
       await signInWithPopup(auth, provider);
-      // The useEffect hook will handle closing the modal and showing the success toast upon `user` object change.
+      // El useEffect de arriba se encargará de cerrar el modal cuando `user` se actualice.
     } catch (error) {
       const authError = error as AuthError;
       console.error("Firebase Auth Error:", authError);
@@ -54,22 +55,22 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           title = "Cuenta ya existe";
           description = "Ya existe una cuenta con este email, pero usando un proveedor diferente.";
           break;
-        case 'auth/auth-domain-config-required':
-          title = "Dominio no autorizado";
-          description = "Este dominio no está autorizado. Por favor, revisa la configuración en la consola de Firebase.";
-          break;
         case 'auth/popup-closed-by-user':
           title = "Ventana cerrada";
           description = "Has cerrado la ventana de inicio de sesión antes de completar el proceso.";
           break;
         case 'auth/cancelled-popup-request':
-          title = "Solicitud cancelada";
-          description = "Se ha cancelado la solicitud de inicio de sesión.";
+           title = "Solicitud cancelada";
+           description = "Se ha cancelado la solicitud de inicio de sesión.";
+           break;
+        case 'auth/auth-domain-config-required':
+          title = "Dominio no autorizado";
+          description = "Este dominio no está autorizado en la configuración de Firebase.";
           break;
-        case 'auth/invalid-api-key':
-          title = "Clave de API inválida";
-          description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto.";
-          break;
+        case 'auth/api-key-not-valid':
+             title = "Clave de API inválida";
+             description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto.";
+             break;
         case 'auth/network-request-failed':
           title = "Error de red";
           description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
