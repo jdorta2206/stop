@@ -26,17 +26,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // --- App Check ---
-// Temporarily commented out to resolve ReCAPTCHA issues during development.
-// if (typeof window !== 'undefined') {
-//   try {
-//       const appCheck = initializeAppCheck(app, {
-//           provider: new ReCaptchaV3Provider('6Ld-pB8pAAAAAAn_2ENuYTub2z392E5K7lq3yJ9B'),
-//           isTokenAutoRefreshEnabled: true
-//       });
-//   } catch (e) {
-//       console.error("Error initializing App Check", e);
-//   }
-// }
+if (typeof window !== 'undefined') {
+  try {
+      const appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider('6Ld-pB8pAAAAAAn_2ENuYTub2z392E5K7lq3yJ9B'),
+          isTokenAutoRefreshEnabled: true
+      });
+  } catch (e) {
+      console.error("Error initializing App Check", e);
+  }
+}
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
