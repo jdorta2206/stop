@@ -1,3 +1,4 @@
+
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
@@ -8,7 +9,6 @@ import { getFirestore } from 'firebase/firestore';
 export const firebaseConfig = {
     apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
     authDomain: "global-stop.firebaseapp.com",
-    databaseURL: "https://global-stop-default-rtdb.firebaseio.com",
     projectId: "global-stop",
     storageBucket: "global-stop.appspot.com",
     messagingSenderId: "902072408470",
