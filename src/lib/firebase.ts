@@ -2,16 +2,15 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Your web app's Firebase configuration for global-stop
 export const firebaseConfig = {
-  apiKey: "AIzaSyDw53q5HnBTCDIFMggy_YV9PQ-fUvrNDJQ",
+  apiKey: "AIzaSyC2k78iF5f3c7A9b1e7D5fG3h2j1k9L8M",
   authDomain: "global-stop.firebaseapp.com",
   projectId: "global-stop",
   storageBucket: "global-stop.appspot.com",
   messagingSenderId: "902072408470",
-  appId: "1:902072408470:web:a9b19b24c5e791a84865b7",
+  appId: "1:902072408470:web:8c51e0b0e51701354865b7",
   measurementId: "G-P41T2BEMKZ"
 };
 
@@ -21,18 +20,6 @@ export const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// Initialize App Check
-// if (typeof window !== 'undefined') {
-//   // Pass your reCAPTCHA v3 site key (public) to the provider.
-//   // Make sure to add this to your environment variables.
-//   // IMPORTANT: This key is public and safe to expose.
-//   const appCheck = initializeAppCheck(app, {
-//     provider: new ReCaptchaV3Provider('6Ld-pB8pAAAAAAn_2ENuYTub2z392E5K7lq3yJ9B'), // Replace with your actual public reCAPTCHA site key
-//     isTokenAutoRefreshEnabled: true
-//   });
-// }
-
 
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
