@@ -1,16 +1,14 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase-config';
+import { auth } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { rankingManager } from '@/lib/ranking';
 
 // Define the shape of our user object, extending Firebase's User
 export interface AppUser extends User {
-  id: string; // Add a consistent id field
+  id: string; 
   totalScore?: number;
   level?: string;
 }
@@ -33,18 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const processUser = async () => {
+      setIsProcessing(true);
       if (user) {
-        // Use the rankingManager to get or create the player profile
-        const playerData = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
-        
-        const enrichedUser: AppUser = {
-          ...user,
-          id: user.uid,
-          totalScore: playerData.totalScore,
-          level: playerData.level,
-          photoURL: playerData.photoURL || null,
-        };
-        setAppUser(enrichedUser);
+        try {
+          // Use the rankingManager to get or create the player profile
+          const playerData = await rankingManager.getPlayerRanking(user.uid, user.displayName, user.photoURL);
+          
+          const enrichedUser: AppUser = {
+            ...user,
+            id: user.uid,
+            totalScore: playerData.totalScore,
+            level: playerData.level,
+            photoURL: playerData.photoURL,
+          };
+          setAppUser(enrichedUser);
+        } catch (e) {
+            console.error("Error processing user data:", e);
+            setAppUser(null);
+        }
       } else {
         setAppUser(null);
       }
