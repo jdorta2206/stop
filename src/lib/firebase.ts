@@ -3,7 +3,18 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
-import { firebaseConfig } from '@/lib/firebase-config';
+
+// Your web app's Firebase configuration for global-stop
+export const firebaseConfig = {
+  apiKey: "AIzaSyDw53q5HnBTCDIFMggy_YV9PQ-fUvrNDJQ",
+  authDomain: "global-stop.firebaseapp.com",
+  projectId: "global-stop",
+  storageBucket: "global-stop.appspot.com",
+  messagingSenderId: "902072408470",
+  appId: "1:902072408470:web:a9b19b24c5e791a84865b7",
+  measurementId: "G-P41T2BEMKZ"
+};
+
 
 // Initialize Firebase App
 // This pattern ensures that we don't initialize the app more than once.
