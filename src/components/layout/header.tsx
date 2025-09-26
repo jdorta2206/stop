@@ -33,10 +33,12 @@ export function AppHeader() {
     const storedMute = localStorage.getItem('globalStopMuted') === 'true';
     setIsMuted(storedMute);
 
-    const currentRoomId = pathname.includes('/multiplayer') 
-      ? pathname.split('roomId=')[1] 
-      : 'global';
-    setRoomId(currentRoomId);
+    if (pathname) {
+      const currentRoomId = pathname.includes('/multiplayer') 
+        ? pathname.split('roomId=')[1] 
+        : 'global';
+      setRoomId(currentRoomId);
+    }
     
   }, [pathname]);
 
