@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/contexts/language-context";
+import { useLanguage } from "../contexts/language-context";
 import { AlertTriangle } from "lucide-react";
 
 export default function NotFound() {
