@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useLanguage } from '../contexts/language-context';
+import { useLanguage } from '../../contexts/language-context';
 import { toast } from 'sonner';
-import { GameArea } from '../components/game/components/game-area';
-import { AppHeader } from '../components/layout/header';
-import { AppFooter } from '../components/layout/footer';
-import { evaluateRound, type EvaluateRoundOutput } from '../ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode, RoundResults } from '../components/game/types';
-import { useAuth } from '../hooks/use-auth-context';
-import { rankingManager } from '../lib/ranking';
+import { GameArea } from '../../components/game/components/game-area';
+import { AppHeader } from '../../components/layout/header';
+import { AppFooter } from '../../components/layout/footer';
+import { evaluateRound, type EvaluateRoundOutput } from '../../ai/flows/validate-player-word-flow';
+import type { GameState, LanguageCode, RoundResults } from '../../components/game/types';
+import { useAuth } from '../../hooks/use-auth-context';
+import { rankingManager } from '../../lib/ranking';
 import { Loader2 } from 'lucide-react';
-import { RouletteWheel } from '../components/game/components/roulette-wheel';
-import { ResultsArea } from '../components/game/results-area';
+import { RouletteWheel } from '../../components/game/components/roulette-wheel';
+import { ResultsArea } from '../../components/game/results-area';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
