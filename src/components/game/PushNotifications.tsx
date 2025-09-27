@@ -1,13 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '@/lib/friends-service';
-import { useAuth } from '@/hooks/use-auth-context';
+import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '../../lib/friends-service';
+import { useAuth } from '../../hooks/use-auth-context';
 
 interface PushNotificationsProps {
   userId: string;
