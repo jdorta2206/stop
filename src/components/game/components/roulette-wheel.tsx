@@ -2,9 +2,9 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { Language } from '@/contexts/language-context';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
+import type { Language } from '../../../contexts/language-context';
+import { cn } from '../../../lib/utils';
 
 interface RouletteWheelProps {
   onSpinComplete: (letter: string) => void;

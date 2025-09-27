@@ -1,6 +1,6 @@
 import { Trophy } from 'lucide-react';
 import { LeaderboardTable } from './leaderboard-table';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import type { GlobalLeaderboardCardProps } from '../types/leaderboard-types';
 
 export function GlobalLeaderboardCard({
@@ -40,5 +40,3 @@ export function GlobalLeaderboardCard({
     </Card>
   );
 }
-
-    
