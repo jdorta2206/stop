@@ -3,13 +3,13 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth-context';
+import { useAuth } from '../../hooks/use-auth-context';
 import { Loader2 } from 'lucide-react';
-import { AppHeader } from '@/components/layout/header';
-import { AppFooter } from '@/components/layout/footer';
-import EnhancedRoomManager from '@/components/game/EnhancedRoomManager';
-import { useLanguage } from '@/contexts/language-context';
-import { onRoomUpdate, addPlayerToRoom, type Room } from '@/lib/room-service';
+import { AppHeader } from '../../components/layout/header';
+import { AppFooter } from '../../components/layout/footer';
+import EnhancedRoomManager from '../../components/game/EnhancedRoomManager';
+import { useLanguage } from '../../contexts/language-context';
+import { onRoomUpdate, addPlayerToRoom, type Room } from '../../lib/room-service';
 import { toast } from 'sonner';
 
 function MultiplayerLobbyContent() {
