@@ -1,10 +1,10 @@
 
 "use client";
 
-import { AppHeader } from '@/components/layout/header';
-import { AppFooter } from '@/components/layout/footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLanguage } from '@/contexts/language-context';
+import { AppHeader } from '../../components/layout/header';
+import { AppFooter } from '../../components/layout/footer';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { useLanguage } from '../../contexts/language-context';
 
 export default function PrivacyPolicyPage() {
   const { language } = useLanguage();
