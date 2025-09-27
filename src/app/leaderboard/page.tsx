@@ -3,25 +3,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLanguage } from '@/contexts/language-context';
-import { useAuth } from '@/hooks/use-auth-context';
+import { useLanguage } from '../../contexts/language-context';
+import { useAuth } from '../../hooks/use-auth-context';
 import { toast } from 'sonner';
-import { AppHeader } from '@/components/layout/header';
-import { AppFooter } from '@/components/layout/footer';
-import { Button } from '@/components/ui/button';
+import { AppHeader } from '../../components/layout/header';
+import { AppFooter } from '../../components/layout/footer';
+import { Button } from '../../components/ui/button';
 import { Loader2, RefreshCw, UserPlus } from 'lucide-react';
-import { rankingManager, type PlayerScore } from '@/lib/ranking';
-import type { GameResult } from '@/components/game/types';
-import { GlobalLeaderboardCard } from '@/components/game/components/global-leaderboard-card';
-import { PersonalHighScoreCard } from '@/components/game/components/personal-high-score-card';
-import { GameHistoryCard } from '@/components/game/components/game-history-card';
-import { AchievementsCard } from '@/components/game/components/achievements-card';
-import { addFriend, getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
-import { FriendsLeaderboardCard } from '@/components/game/components/friends-leaderboard-card';
-import FriendsInvite from '@/components/social/FriendsInvite';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { createRoom, addPlayerToRoom } from '@/lib/room-service';
-import { DailyMissionsCard } from '@/components/missions/DailyMissionsCard';
+import { rankingManager, type PlayerScore } from '../../lib/ranking';
+import type { GameResult } from '../../components/game/types';
+import { GlobalLeaderboardCard } from '../../components/game/components/global-leaderboard-card';
+import { PersonalHighScoreCard } from '../../components/game/components/personal-high-score-card';
+import { GameHistoryCard } from '../../components/game/components/game-history-card';
+import { AchievementsCard } from '../../components/game/components/achievements-card';
+import { addFriend, getFriends, sendChallengeNotification, type Friend } from '../../lib/friends-service';
+import { FriendsLeaderboardCard } from '../../components/game/components/friends-leaderboard-card';
+import FriendsInvite from '../../components/social/FriendsInvite';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { createRoom, addPlayerToRoom } from '../../lib/room-service';
+import { DailyMissionsCard } from '../../components/missions/DailyMissionsCard';
 
 export default function LeaderboardPage() {
   const router = useRouter();
