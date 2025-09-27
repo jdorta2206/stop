@@ -2,14 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useLanguage } from "@/contexts/language-context";
-import { useAuth } from "@/hooks/use-auth-context";
-import { Button } from "@/components/ui/button";
-import { AppHeader } from "@/components/layout/header";
-import { AppFooter } from "@/components/layout/footer";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { useLanguage } from "../../contexts/language-context";
+import { useAuth } from "../../hooks/use-auth-context";
+import { Button } from "../../components/ui/button";
+import { AppHeader } from "../../components/layout/header";
+import { AppFooter } from "../../components/layout/footer";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../../components/ui/card";
 import { Loader2, ShieldCheck, Trash2, Users, BarChart2 } from "lucide-react";
-import { rankingManager, type PlayerScore } from "@/lib/ranking";
+import { rankingManager, type PlayerScore } from "../../lib/ranking";
 import { toast } from "sonner";
 
 export default function AdminPage() {
