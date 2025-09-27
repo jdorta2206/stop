@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Input } from '../ui/input';
 import { 
   Users, 
   Share2, 
@@ -32,13 +32,13 @@ import {
     startNextRound,
     type Player, 
     type Room 
-} from '@/lib/room-service';
-import type { AppUser } from '@/hooks/use-auth-context';
+} from '../../lib/room-service';
+import type { AppUser } from '../../hooks/use-auth-context';
 import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
-import { useLanguage } from '@/contexts/language-context';
+import { useLanguage } from '../../contexts/language-context';
 import { RouletteWheel } from './components/roulette-wheel';
-import { getFriends, sendChallengeNotification, type Friend } from '@/lib/friends-service';
+import { getFriends, sendChallengeNotification, type Friend } from '../../lib/friends-service';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],

@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth-context';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '../../hooks/use-auth-context';
+import { Button } from '../ui/button';
 import { LogIn, Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserAccount } from './UserAccount';
