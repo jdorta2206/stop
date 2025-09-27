@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useLanguage } from '@/contexts/language-context';
-import { AppHeader } from '@/components/layout/header';
-import { AppFooter } from '@/components/layout/footer';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useLanguage } from '../../contexts/language-context';
+import { AppHeader } from '../../components/layout/header';
+import { AppFooter } from '../../components/layout/footer';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Gamepad2, BrainCircuit, Lightbulb } from 'lucide-react';
 
