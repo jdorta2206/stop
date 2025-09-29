@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useLanguage, type LanguageOption } from '@/contexts/language-context';
+import { useLanguage, type LanguageOption } from '../../contexts/language-context';
 import { useCallback, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth-context';
+import { Button } from '../ui/button';
+import { useAuth } from '../../hooks/use-auth-context';
 import Link from 'next/link';
 import { Volume2, VolumeX, MessageSquare, Gamepad2 } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
-import { onChatUpdate, sendMessageToRoom, getRoom } from '@/lib/room-service';
+import { onChatUpdate, sendMessageToRoom, getRoom } from '../../lib/room-service';
 import { AuthStatus } from '../auth/auth-status';
 import type { ChatMessage } from '../chat/chat-message-item';
 import { usePathname, useRouter } from 'next/navigation';
@@ -167,3 +167,5 @@ export function AppHeader() {
     </>
   );
 }
+
+    
