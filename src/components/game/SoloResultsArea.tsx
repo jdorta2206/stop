@@ -48,13 +48,13 @@ export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, 
     return (
       <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
         <td className="p-3 font-semibold">{category}</td>
-        <td className={`p-3 flex items-center gap-2 ${!playerResult.isValid && playerResult.response && playerResult.response !== '-' ? 'line-through text-white/60' : ''}`}>
-           {playerResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : (playerResult.response && playerResult.response !== '-') ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+        <td className={`p-3 flex items-center gap-2 ${!playerResult.isValid && playerResult.response ? 'line-through text-white/60' : ''}`}>
+           {playerResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : playerResult.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
            <span>{playerResult.response || '-'}</span>
         </td>
         <td className={`p-3 font-bold ${getScoreClass(playerResult.score)}`}>{playerResult.score} pts</td>
-        <td className={`p-3 flex items-center gap-2 ${!aiResult.isValid && aiResult.response && aiResult.response !== '-' ? 'line-through text-white/60' : ''}`}>
-           {aiResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : (aiResult.response && aiResult.response !== '-') ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+        <td className={`p-3 flex items-center gap-2 ${!aiResult.isValid && aiResult.response ? 'line-through text-white/60' : ''}`}>
+           {aiResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : aiResult.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
            <span>{aiResult.response || '-'}</span>
         </td>
         <td className={`p-3 font-bold ${getScoreClass(aiResult.score)}`}>{aiResult.score} pts</td>
@@ -114,5 +114,3 @@ export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, 
     </Card>
   );
 }
-
-    
