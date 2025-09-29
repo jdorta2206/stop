@@ -20,5 +20,3 @@ export type RoundResults = Record<string, {
     player: ResultDetail;
     ai: ResultDetail;
 }>;
-
-    
