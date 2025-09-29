@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
@@ -36,8 +35,8 @@ export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, 
   const playerName = user?.displayName || translateUi('game.results.labels.you');
   
   const renderResultRow = (category: string) => {
-    const playerResult = roundResults[category].player;
-    const aiResult = roundResults[category].ai;
+    const playerResult = roundResults[category]?.player;
+    const aiResult = roundResults[category]?.ai;
     
     const getScoreClass = (score: number) => {
         if (score === 10) return 'text-green-400';
@@ -48,16 +47,16 @@ export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, 
     return (
       <tr key={category} className="border-b border-primary-foreground/10 last:border-b-0 hover:bg-white/5">
         <td className="p-3 font-semibold">{category}</td>
-        <td className={`p-3 flex items-center gap-2 ${!playerResult.isValid && playerResult.response ? 'line-through text-white/60' : ''}`}>
-           {playerResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : playerResult.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
-           <span>{playerResult.response || '-'}</span>
+        <td className={`p-3 flex items-center gap-2 ${!playerResult?.isValid && playerResult?.response ? 'line-through text-white/60' : ''}`}>
+           {playerResult?.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : playerResult?.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+           <span>{playerResult?.response || '-'}</span>
         </td>
-        <td className={`p-3 font-bold ${getScoreClass(playerResult.score)}`}>{playerResult.score} pts</td>
-        <td className={`p-3 flex items-center gap-2 ${!aiResult.isValid && aiResult.response ? 'line-through text-white/60' : ''}`}>
-           {aiResult.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : aiResult.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
-           <span>{aiResult.response || '-'}</span>
+        <td className={`p-3 font-bold ${getScoreClass(playerResult?.score ?? 0)}`}>{playerResult?.score ?? 0} pts</td>
+        <td className={`p-3 flex items-center gap-2 ${!aiResult?.isValid && aiResult?.response ? 'line-through text-white/60' : ''}`}>
+           {aiResult?.isValid ? <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" /> : aiResult?.response ? <XCircle className="h-5 w-5 text-red-400 shrink-0"/> : null}
+           <span>{aiResult?.response || '-'}</span>
         </td>
-        <td className={`p-3 font-bold ${getScoreClass(aiResult.score)}`}>{aiResult.score} pts</td>
+        <td className={`p-3 font-bold ${getScoreClass(aiResult?.score ?? 0)}`}>{aiResult?.score ?? 0} pts</td>
       </tr>
     )
   };
