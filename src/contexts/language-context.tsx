@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { UI_TEXTS } from '@/constants/ui-texts'; // Import UI_TEXTS
+import { UI_TEXTS } from '../constants/ui-texts'; // Import UI_TEXTS
 
 export type Language = 'es' | 'en' | 'fr' | 'pt';
 

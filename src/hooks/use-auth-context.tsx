@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '../lib/firebase';
 import type { User } from 'firebase/auth';
-import { rankingManager } from '@/lib/ranking';
+import { rankingManager } from '../lib/ranking';
 
 // Define the shape of our user object, extending Firebase's User
 export interface AppUser extends User {

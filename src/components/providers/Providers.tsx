@@ -1,11 +1,12 @@
+
 "use client";
 
 import React from 'react';
-import { LanguageProvider } from '@/contexts/language-context';
+import { LanguageProvider } from '../../contexts/language-context';
 import { ThemeProvider } from 'next-themes';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from '@/hooks/use-auth-context';
+import { TooltipProvider } from '../ui/tooltip';
+import { Toaster } from "../ui/sonner";
+import { AuthProvider } from '../../hooks/use-auth-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
