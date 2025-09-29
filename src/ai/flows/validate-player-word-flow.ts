@@ -16,8 +16,8 @@ const ResultDetailSchema = z.object({
 
 // Estructura para los resultados de una categoría, incluyendo al jugador y a la IA
 const CategoryResultSchema = z.object({
-    player: ResultDetailSchema,
-    ai: ResultDetailSchema,
+    player: ResultDetailSchema.optional(),
+    ai: ResultDetailSchema.optional(),
 });
 
 // El output final de la IA es un objeto con los resultados por categoría
@@ -149,3 +149,5 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
   return await localEvaluateRound(input);
 }
+
+    
