@@ -1,12 +1,12 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { Crown, Loader2, Trophy, RotateCcw, LogOut } from 'lucide-react';
-import type { Room, Player } from '@/lib/room-service';
-import { useLanguage } from '@/contexts/language-context';
+import type { Room, Player } from '../../../lib/room-service';
+import { useLanguage } from '../../../contexts/language-context';
 
 interface MultiplayerResultsAreaProps {
   room: Room;
