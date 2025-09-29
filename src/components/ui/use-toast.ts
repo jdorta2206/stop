@@ -18,5 +18,3 @@ export const useToast = () => {
         dismiss: (toastId?: string | number) => sonnerToast.dismiss(toastId),
     };
 };
-
-    
