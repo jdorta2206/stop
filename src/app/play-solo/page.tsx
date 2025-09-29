@@ -266,7 +266,3 @@ export default function PlaySoloPage() {
     </div>
   );
 }
-
-    
-
-
