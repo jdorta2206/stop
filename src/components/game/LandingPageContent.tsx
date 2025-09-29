@@ -5,16 +5,16 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/use-auth-context';
-import { AuthModal } from "@/components/auth/AuthModal";
-import { useLanguage } from '@/contexts/language-context';
-import { AppHeader } from '@/components/layout/header';
-import { AppFooter } from '@/components/layout/footer';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '../../hooks/use-auth-context';
+import { AuthModal } from "../auth/AuthModal";
+import { useLanguage } from '../../contexts/language-context';
+import { AppHeader } from '../layout/header';
+import { AppFooter } from '../layout/footer';
+import { Dialog, DialogContent } from '../ui/dialog';
+import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import ContactsManager from './ContactsManager';
-import MultiplayerDialog from '@/components/game/MultiplayerDialog';
+import MultiplayerDialog from './MultiplayerDialog';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
