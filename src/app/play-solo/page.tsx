@@ -13,7 +13,7 @@ import { useAuth } from '../../hooks/use-auth-context';
 import { rankingManager } from '../../lib/ranking';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '../../components/game/components/roulette-wheel';
-import { ResultsArea } from '../../components/game/results-area';
+import { SoloResultsArea } from '../../components/game/SoloResultsArea';
 
 // Constants
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
@@ -233,7 +233,7 @@ export default function PlaySoloPage() {
         );
       case 'RESULTS':
         return (
-          <ResultsArea
+          <SoloResultsArea
             key={`results-${currentLetter}`}
             roundResults={roundResults}
             playerRoundScore={playerRoundScore}
