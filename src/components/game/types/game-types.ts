@@ -15,11 +15,6 @@ export interface ResultDetail {
     isValid: boolean;
 }
 
-// Estructura de resultados por categoría para un jugador
-export type SinglePlayerCategoryResult = {
-    [key: string]: ResultDetail;
-};
-
 // Objeto que mapea nombres de categoría a sus resultados
 export type RoundResults = Record<string, {
     player: ResultDetail;
