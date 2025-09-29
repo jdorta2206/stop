@@ -1,5 +1,5 @@
 
-import type { Language } from '@/contexts/language-context';
+import type { Language } from '../../contexts/language-context';
 import Link from 'next/link';
 
 interface AppFooterProps {

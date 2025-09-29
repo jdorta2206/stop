@@ -1,3 +1,4 @@
+
 // global-stop/src/components/game/personal-high-score-card.tsx
 
 "use client";

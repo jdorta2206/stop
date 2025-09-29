@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { MessageSquare, Send, X } from 'lucide-react';
 import { ChatMessageItem, type ChatMessage } from './chat-message-item';
-import type { Language } from '@/contexts/language-context';
+import type { Language } from '../../contexts/language-context';
 
 interface ChatPanelProps {
   isOpen: boolean;
