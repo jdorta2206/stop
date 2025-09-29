@@ -7,11 +7,11 @@ const PlayerResponseSchema = z.object({
   word: z.string().optional().describe('La palabra escrita por el jugador.'),
 });
 
-// Estructura para el resultado detallado de una palabra
+// Estructura para el resultado detallado de una palabra (más estricta)
 const ResultDetailSchema = z.object({
-  response: z.string().describe("La palabra que se evaluó. Debe ser una cadena vacía si no se proporcionó ninguna palabra."),
-  isValid: z.boolean().describe("Si la palabra fue considerada válida (pertenece a la categoría, empieza con la letra, es real). Es `false` si no se proporcionó palabra."),
-  score: z.number().describe("La puntuación obtenida para esta palabra (10, 5, o 0).")
+  response: z.string().describe("La palabra que se evaluó. Es una cadena vacía si no se proporcionó ninguna."),
+  isValid: z.boolean().describe("Si la palabra fue considerada válida. Es `false` si no se proporcionó palabra."),
+  score: z.number().describe("La puntuación obtenida (10, 5, o 0).")
 });
 
 // Estructura para los resultados de una categoría, incluyendo al jugador y a la IA
@@ -149,7 +149,3 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
   return await localEvaluateRound(input);
 }
-
-    
-
-    
