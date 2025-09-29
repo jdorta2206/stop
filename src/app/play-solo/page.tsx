@@ -105,7 +105,7 @@ export default function PlaySoloPage() {
       setTotalPlayerScore(prev => prev + playerTotalScore);
       setAiRoundScore(calculatedAiScore);
       setTotalAiScore(prev => prev + calculatedAiScore);
-      setRoundResults(results);
+      setRoundResults(results as RoundResults);
       
       setGameState('RESULTS');
 
@@ -268,3 +268,4 @@ export default function PlaySoloPage() {
 }
 
     
+
