@@ -1,5 +1,6 @@
+
 // src/components/game/types/player-types.ts
-import type { MissionProgress } from "@/lib/missions";
+import type { MissionProgress } from "../../../lib/missions";
 
 export interface Player {
   id: string;

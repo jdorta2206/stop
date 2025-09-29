@@ -2,8 +2,8 @@
 "use client";
 
 import * as React from 'react';
-import type { Language } from '@/contexts/language-context';
-import { Button } from '@/components/ui/button';
+import type { Language } from '../../../contexts/language-context';
+import { Button } from '../../../components/ui/button';
 
 const internalStopButtonTexts: Record<Language, { ariaDefaultLabel: string }> = {
   es: { ariaDefaultLabel: "Detener la ronda" },

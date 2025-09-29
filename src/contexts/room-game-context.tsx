@@ -2,8 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
-import type { PlayerInLobby } from '@/types/player';
-import type { GameState, RoundResults, PlayerResponses } from '@/components/game/types/game-types';
+import type { PlayerInLobby } from '../types/player';
+import type { GameState, RoundResults, PlayerResponses } from '../components/game/types/game-types';
 
 export interface RoomGameContextValue {
   activeRoomId: string | null;

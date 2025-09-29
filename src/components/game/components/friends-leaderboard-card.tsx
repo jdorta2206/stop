@@ -1,10 +1,11 @@
+
 "use client";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../ui/card';
 import { LeaderboardTable } from './leaderboard-table';
 import { Users } from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import type { PlayerScore } from '../types';
+import type { PlayerScore } from '../../../components/game/types';
 import type { Language } from '../../../contexts/language-context';
 import type { Friend } from '../../../lib/friends-service';
 

@@ -1,4 +1,5 @@
-import { type Language } from '@/contexts/language-context';
+
+import { type Language } from '../contexts/language-context';
 
 export const UI_TEXTS = {
   // Textos generales
