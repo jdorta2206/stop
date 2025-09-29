@@ -1,4 +1,3 @@
-
 export type GameState = 'IDLE' | 'SPINNING' | 'PLAYING' | 'EVALUATING' | 'RESULTS';
 
 export type GameMode = 'solo' | 'multiplayer';
@@ -20,5 +19,3 @@ export type RoundResults = Record<string, {
     player: ResultDetail;
     ai: ResultDetail;
 }>;
-
-    

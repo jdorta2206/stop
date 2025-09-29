@@ -114,5 +114,3 @@ export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, 
     </Card>
   );
 }
-
-    
