@@ -1,3 +1,4 @@
+
 import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768; // Puedes ajustar este valor según tus necesidades

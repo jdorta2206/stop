@@ -1,5 +1,6 @@
+
 // src/lib/missions.ts
-import type { GameResult } from "@/components/game/types";
+import type { GameResult } from "../components/game/types";
 
 export interface Mission {
     id: 'win_games' | 'play_games' | 'score_high' | 'play_multiplayer' | 'get_perfect_score' | 'win_streak';

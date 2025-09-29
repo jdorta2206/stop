@@ -1,3 +1,4 @@
+
 // src/lib/ranking.ts
 import { db } from './firebase';
 import { 
@@ -16,7 +17,7 @@ import {
     Timestamp,
     writeBatch
 } from "firebase/firestore";
-import type { GameResult } from '@/components/game/types';
+import type { GameResult } from '../components/game/types';
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
 
 const LEVELS = [
