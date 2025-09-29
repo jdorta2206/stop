@@ -1,10 +1,11 @@
 
+
 import { useState, useEffect, useMemo } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Card, CardContent, CardHeader, CardFooter } from "../ui/card";
 import { Users, Search, X, Plus, Phone, MessageSquare, BookUser, Check } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { toast } from 'sonner';
 
 interface Contact {

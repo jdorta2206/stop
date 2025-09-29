@@ -1,3 +1,4 @@
+
 import { db } from './firebase';
 import { 
     doc, 
@@ -16,12 +17,12 @@ import {
     where,
     Timestamp
 } from "firebase/firestore";
-import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '@/components/game/types/game-types';
-import type { EvaluateRoundOutput } from '@/ai/flows/validate-player-word-flow';
-import { evaluateRound } from '@/ai/flows/validate-player-word-flow';
-import type { Language } from '@/contexts/language-context';
+import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '../components/game/types/game-types';
+import type { EvaluateRoundOutput } from '../ai/flows/validate-player-word-flow';
+import { evaluateRound } from '../ai/flows/validate-player-word-flow';
+import type { Language } from '../contexts/language-context';
 import { rankingManager } from './ranking';
-import type { ChatMessage } from '@/components/chat/chat-message-item';
+import type { ChatMessage } from '../components/chat/chat-message-item';
 
 export interface Player {
     id: string;
