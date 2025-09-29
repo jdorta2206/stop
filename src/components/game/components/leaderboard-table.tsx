@@ -1,13 +1,13 @@
 
 "use client";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { UserCircle, UserPlus, Sword, Crown, Trophy, Copy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from '../../ui/button';
+import { Skeleton } from "../../ui/skeleton";
 import type { PlayerScore } from '../types';
-import { type Language } from '@/contexts/language-context';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { type Language } from '../../../contexts/language-context';
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar';
 import { toast } from 'sonner';
 
 interface LeaderboardTableProps {

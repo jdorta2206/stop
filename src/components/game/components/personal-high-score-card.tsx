@@ -2,10 +2,10 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Trophy } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useLanguage } from '@/contexts/language-context';
+import { cn } from '../../../lib/utils';
+import { useLanguage } from '../../../contexts/language-context';
 
 interface PersonalHighScoreCardProps {
   highScore: number;

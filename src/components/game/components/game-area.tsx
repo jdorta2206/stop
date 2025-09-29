@@ -1,10 +1,10 @@
 
 "use client";
 
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '../../ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
+import { Button } from '../../ui/button';
+import { Progress } from '../../ui/progress';
 
 interface GameAreaProps {
   currentLetter: string | null;

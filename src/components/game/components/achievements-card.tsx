@@ -1,9 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Award, BadgeCheck } from 'lucide-react';
 import { getAchievementInfo, ACHIEVEMENTS } from '../../../lib/ranking';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 
 interface AchievementsCardProps {
   achievements: string[];

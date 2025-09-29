@@ -1,10 +1,11 @@
+
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth-context';
-import type { RoundResults } from '@/components/game/types';
+import { Button } from '../../ui/button';
+import { useAuth } from '../../../hooks/use-auth-context';
+import type { RoundResults } from '../types';
 import { useRouter } from 'next/navigation';
 
 interface ResultsAreaProps {

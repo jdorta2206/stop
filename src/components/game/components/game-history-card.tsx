@@ -1,14 +1,14 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { ScrollArea } from '../../ui/scroll-area';
+import { Badge } from '../../ui/badge';
 import { History, Loader2 } from 'lucide-react';
-import type { GameResult } from '@/components/game/types';
+import type { GameResult } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS, fr, ptBR } from 'date-fns/locale';
-import { useLanguage } from '@/contexts/language-context';
+import { useLanguage } from '../../../contexts/language-context';
 import { useEffect, useState } from 'react';
 
 interface GameHistoryCardProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../../ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../ui/card';
 import { LeaderboardTable } from './leaderboard-table';
 import { Users } from 'lucide-react';
 import { cn } from '../../../lib/utils';
