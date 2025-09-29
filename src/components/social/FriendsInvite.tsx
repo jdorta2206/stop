@@ -1,16 +1,17 @@
 
+
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { 
   Loader2,
   UserPlus,
   Search
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { addFriend, searchUsers, type Friend } from '@/lib/friends-service';
-import { useAuth } from '@/hooks/use-auth-context';
+import { addFriend, searchUsers, type Friend } from '../../lib/friends-service';
+import { useAuth } from '../../hooks/use-auth-context';
 
 interface FriendsInviteProps {
   onFriendAdded: () => void;

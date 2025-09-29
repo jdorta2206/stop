@@ -1,9 +1,10 @@
+
 // src/components/missions/MissionItem.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import type { MissionProgress } from "@/lib/missions";
+import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
+import type { MissionProgress } from "../../lib/missions";
 import { Check, Coins } from "lucide-react";
 import { useState } from "react";
 
@@ -54,5 +55,3 @@ export function MissionItem({ mission, onClaim }: MissionItemProps) {
         </div>
     );
 }
-
-    

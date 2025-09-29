@@ -2,14 +2,14 @@
 // src/components/missions/DailyMissionsCard.tsx
 "use client";
 
-import { useAuth } from '@/hooks/use-auth-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '../../hooks/use-auth-context';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { MissionItem } from "./MissionItem";
 import { Loader2, Gift } from "lucide-react";
-import { rankingManager } from "@/lib/ranking";
+import { rankingManager } from "../../lib/ranking";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import type { MissionProgress } from "@/lib/missions";
+import type { MissionProgress } from "../../lib/missions";
 
 export function DailyMissionsCard() {
     const { user } = useAuth();

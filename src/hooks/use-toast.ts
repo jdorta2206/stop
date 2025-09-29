@@ -1,4 +1,5 @@
 
+
 "use client";
 
 // Este archivo se deja por compatibilidad de importaciones, pero ya no se usa.
@@ -6,7 +7,7 @@
 // La funcionalidad se ha movido a `src/components/ui/use-toast.ts`.
 
 import * as React from "react";
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+import type { ToastActionElement, ToastProps } from "../components/ui/toast";
 
 const LIMITE_TOASTS = 1;
 const RETRASO_ELIMINACION = 1_000_000;
