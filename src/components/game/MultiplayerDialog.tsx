@@ -3,14 +3,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth-context';
-import { useLanguage } from '@/contexts/language-context';
+import { useAuth } from '../../hooks/use-auth-context';
+import { useLanguage } from '../../contexts/language-context';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { Loader2, PartyPopper, Users } from 'lucide-react';
-import { createRoom, getRoom } from '@/lib/room-service';
+import { createRoom, getRoom } from '../../lib/room-service';
 
 
 interface MultiplayerDialogProps {
