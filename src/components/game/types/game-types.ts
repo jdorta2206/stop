@@ -16,6 +16,6 @@ export interface ResultDetail {
 
 // Objeto que mapea nombres de categoría a sus resultados
 export type RoundResults = Record<string, {
-    player: ResultDetail;
-    ai: ResultDetail;
+    player?: ResultDetail;
+    ai?: ResultDetail;
 }>;
