@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { ScrollArea } from '../ui/scroll-area';
 import { Check, RefreshCw, User } from 'lucide-react';
 
 const AVATAR_STYLES = [
