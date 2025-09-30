@@ -1,7 +1,20 @@
 import { Trophy } from 'lucide-react';
 import { LeaderboardTable } from './leaderboard-table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import type { GlobalLeaderboardCardProps } from '../types/leaderboard-types';
+import type { PlayerScore } from '../../../lib/ranking';
+import type { Language } from '../../../contexts/language-context';
+
+export interface GlobalLeaderboardCardProps {
+  leaderboardData: PlayerScore[];
+  language: Language;
+  currentUserId?: string;
+  onAddFriend: (player: PlayerScore) => void;
+  onChallenge: (player: PlayerScore) => void;
+  translateUi: any; 
+  className?: string;
+  isLoading?: boolean;
+}
+
 
 export function GlobalLeaderboardCard({
   leaderboardData,
