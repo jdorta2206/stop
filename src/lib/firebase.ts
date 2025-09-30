@@ -8,16 +8,7 @@ import {
   browserLocalPersistence 
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  "projectId": "global-stop",
-  "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
-  "apiKey": "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
-  "authDomain": "global-stop.firebaseapp.com",
-  "measurementId": "G-P41T2BEMKZ",
-  "messagingSenderId": "902072408470"
-};
+import { firebaseConfig } from './firebase-config';
 
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -32,7 +23,6 @@ const db = getFirestore(app);
 // --- Providers ---
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
-
 
 // Export the initialized services
 export { app, auth, db, googleProvider, facebookProvider };
