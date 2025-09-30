@@ -1,5 +1,5 @@
 
-import type { Language } from "../../../contexts/language-context";
+import type { Language } from "../../contexts/language-context";
 import type { PlayerScore } from '../../../lib/ranking';
 
 export interface EnrichedPlayerScore extends PlayerScore {
