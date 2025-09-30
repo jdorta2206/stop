@@ -27,7 +27,6 @@ export function LeaderboardTable({
   onChallenge,
   isLoading = false,
   isFriendsLeaderboard = false,
-  language,
 }: LeaderboardTableProps) {
     
   const localeForNumber = typeof window !== "undefined" ? window.navigator.language : 'en-US';
