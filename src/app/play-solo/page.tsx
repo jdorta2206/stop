@@ -8,7 +8,7 @@ import { GameArea } from '../../components/game/components/game-area';
 import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import { evaluateRound, type EvaluateRoundOutput } from '../../ai/flows/validate-player-word-flow';
-import type { GameState, LanguageCode, RoundResults } from '../../components/game/types';
+import type { GameState, LanguageCode, RoundResults } from '../../components/game/types/game-types';
 import { useAuth } from '../../hooks/use-auth-context';
 import { rankingManager } from '../../lib/ranking';
 import { Loader2 } from 'lucide-react';
