@@ -61,19 +61,32 @@ pnpm run dev
 pnpm run build
 ```
 
-## 🔥 ¡MUY IMPORTANTE! Configuración de Firebase para Login
+## 🔥 ¡MUY IMPORTANTE! Configuración de Firebase para que el Login funcione
 
-Para que el inicio de sesión con Google y Facebook funcione, necesitas autorizar el dominio de tu aplicación en Firebase.
+Para que el inicio de sesión con Google y Facebook funcione, necesitas configurar dos cosas en tu proyecto de Firebase. **Este es un paso crucial y la causa del error `auth/internal-error`**.
 
-1.  **Ve a la Consola de Firebase:** [https://console.firebase.google.com](https://console.firebase.google.com)
+1.  **Ir a la Consola de Firebase:** Abre [https://console.firebase.google.com](https://console.firebase.google.com).
 2.  **Selecciona tu proyecto** (ej: `global-stop`).
 3.  En el menú de la izquierda, navega a **Authentication**.
-4.  Haz clic en la pestaña **Settings**.
-5.  Selecciona la sub-pestaña **Authorized domains**.
-6.  Haz clic en **Add domain**.
-7.  Añade el dominio donde tienes desplegada la aplicación (ej: `juego-stop.netlify.app`) y también `localhost` para las pruebas locales.
 
-Este paso es **crucial**. Sin él, Firebase bloqueará los intentos de inicio de sesión por seguridad.
+### Parte 1: Activar los Proveedores de Inicio de Sesión
+
+1.  Dentro de **Authentication**, ve a la pestaña **Sign-in method**.
+2.  Verás una lista de proveedores (Google, Facebook, etc.).
+3.  Haz clic en **Google** en la lista.
+4.  Activa el interruptor que dice **Habilitar**.
+5.  Selecciona un correo electrónico de asistencia al proyecto y haz clic en **Guardar**.
+6.  Repite el proceso para **Facebook**: haz clic en Facebook, habilítalo y guarda (no necesitas App ID ni App Secret para pruebas básicas si ya están configuradas).
+
+### Parte 2: Autorizar los Dominios
+
+1.  Dentro de **Authentication**, ve a la pestaña **Settings**.
+2.  Selecciona la sub-pestaña **Authorized domains**.
+3.  Haz clic en **Add domain**.
+4.  Añade el dominio donde tienes desplegada la aplicación (ej: `juego-stop.netlify.app`).
+5.  Añade también `localhost` para que funcione en tu entorno de desarrollo.
+
+**Sin completar estos dos pasos, Firebase bloqueará todos los intentos de inicio de sesión por seguridad.**
 
 ## 🎮 Cómo Jugar
 
