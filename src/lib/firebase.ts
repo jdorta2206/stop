@@ -1,6 +1,12 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  FacebookAuthProvider, 
+  initializeAuth, 
+  browserLocalPersistence 
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
@@ -16,8 +22,11 @@ const firebaseConfig = {
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Get Auth service directly, avoiding potential Identity Platform conflicts
-const auth = getAuth(app);
+// Force initialization with browser persistence to bypass Identity Platform issues
+const auth = typeof window !== 'undefined' 
+  ? initializeAuth(app, { persistence: browserLocalPersistence })
+  : getAuth(app);
+
 const db = getFirestore(app);
 
 // --- Providers ---
