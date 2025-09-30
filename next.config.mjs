@@ -1,13 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Opciones para deshabilitar la advertencia de fuente de Google Fonts si es necesario
-  experimental: {
-    fontLoaders: [
-      { loader: '@next/font/google', options: { subsets: ['latin'] } },
-    ],
-  },
-  // Si tienes imágenes de dominios externos, configúralos aquí
   images: {
     remotePatterns: [
       {
@@ -16,17 +9,35 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'platform-lookaside.fbsbx.com',
+        hostname: 'graph.facebook.com',
       },
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',
       },
-       {
-        protocol: 'https',
-        hostname: 'placehold.co',
-      }
     ],
+  },
+  webpack: (config, { isServer }) => {
+    // Configuración para manejar correctamente los archivos de audio si se usan en el futuro
+    config.module.rules.push({
+      test: /\.(ogg|mp3|wav|mpe?g)$/i,
+      exclude: config.exclude,
+      use: [
+        {
+          loader: require.resolve('url-loader'),
+          options: {
+            limit: config.inlineImageLimit,
+            fallback: require.resolve('file-loader'),
+            publicPath: `${config.assetPrefix}/_next/static/images/`,
+            outputPath: `${isServer ? '../' : ''}static/images/`,
+            name: '[name]-[hash].[ext]',
+            esModule: config.esModule || false,
+          },
+        },
+      ],
+    });
+
+    return config;
   },
 };
 
