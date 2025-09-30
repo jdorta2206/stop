@@ -3,26 +3,29 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  FacebookAuthProvider, 
-  initializeAuth, 
-  browserLocalPersistence 
+  FacebookAuthProvider,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { firebaseConfig } from './firebase-config';
 
-// Initialize Firebase App
+// Configuración de Firebase integrada directamente
+const firebaseConfig = {
+  projectId: "global-stop",
+  appId: "1:902072408470:web:a9b19b24c5e791a84865b7",
+  apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
+  authDomain: "global-stop.firebaseapp.com",
+  measurementId: "G-P41T2BEMKZ",
+  messagingSenderId: "902072408470",
+};
+
+// Inicializar la aplicación de Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Force initialization with browser persistence to bypass Identity Platform issues
-const auth = typeof window !== 'undefined' 
-  ? initializeAuth(app, { persistence: browserLocalPersistence })
-  : getAuth(app);
-
+// Obtener los servicios
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- Providers ---
+// Crear y exportar los proveedores
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 
-// Export the initialized services
 export { app, auth, db, googleProvider, facebookProvider };
