@@ -1,10 +1,9 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration is now loaded from environment variables
+// Your web app's Firebase configuration
 const firebaseConfig = {
   "projectId": "global-stop",
   "appId": "1:902072408470:web:a9b19b24c5e791a84865b7",
@@ -14,9 +13,10 @@ const firebaseConfig = {
   "messagingSenderId": "902072408470"
 };
 
-
 // Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Get Auth service directly, avoiding potential Identity Platform conflicts
 const auth = getAuth(app);
 const db = getFirestore(app);
 
