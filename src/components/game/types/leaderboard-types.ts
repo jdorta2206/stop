@@ -1,6 +1,6 @@
 
 import type { Language } from "../../../contexts/language-context";
-import type { PlayerScore } from './player-types';
+import type { PlayerScore } from '../../../lib/ranking';
 
 export interface EnrichedPlayerScore extends PlayerScore {
   isCurrentUser?: boolean;
@@ -31,7 +31,7 @@ export interface GlobalLeaderboardCardProps {
   currentUserId?: string;
   onAddFriend: (player: PlayerScore) => void;
   onChallenge: (player: PlayerScore) => void;
-  translateUi: any; 
+  translateUi: any;
   className?: string;
   isLoading?: boolean;
 }
