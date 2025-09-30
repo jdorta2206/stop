@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { ScrollArea } from '../../ui/scroll-area';
 import { Badge } from '../../ui/badge';
 import { History, Loader2 } from 'lucide-react';
-import type { GameResult } from '../types';
+import type { GameResult } from '../../../lib/ranking';
 import { formatDistanceToNow } from 'date-fns';
 import { es, enUS, fr, ptBR } from 'date-fns/locale';
 import { useLanguage } from '../../../contexts/language-context';
