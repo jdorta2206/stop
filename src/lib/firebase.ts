@@ -17,7 +17,7 @@ const firebaseConfig = {
   messagingSenderId: "902072408470",
 };
 
-// Inicializar la aplicación de Firebase
+// Inicializar la aplicación de Firebase de forma robusta
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Obtener los servicios
