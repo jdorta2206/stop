@@ -13,4 +13,5 @@ function Skeleton({
   )
 }
 
-export { Skeleton }
+export default Skeleton;
+export { Skeleton };
