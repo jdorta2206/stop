@@ -1,41 +1,37 @@
 
-// src/components/game/types/player-types.ts
-import type { MissionProgress } from "../../../lib/missions";
+import type { Language } from "../../../contexts/language-context";
+import type { PlayerScore } from './player-types';
 
-export interface Player {
-  id: string;
-  name: string;
-  avatar?: string | null;
+export interface EnrichedPlayerScore extends PlayerScore {
+  isCurrentUser?: boolean;
 }
 
-export interface PlayerScore {
-    id: string;
-    playerName: string;
-    photoURL?: string | null;
-    totalScore: number;
-    gamesPlayed: number;
-    gamesWon: number;
-    averageScore: number;
-    bestScore: number;
-    lastPlayed: any;
-    level: string;
-    achievements: string[];
-    coins: number;
-    dailyMissions: MissionProgress[];
-    missionsLastReset: string;
+export interface LeaderboardTableProps {
+  players: EnrichedPlayerScore[];
+  currentUserId?: string | null;
+  onAddFriend?: (player: EnrichedPlayerScore) => void;
+  onChallenge?: (player: EnrichedPlayerScore) => void;
+  isFriendsLeaderboard?: boolean;
+  isLoading?: boolean;
+  language: Language;
 }
 
+export interface LeaderboardCardProps {
+  leaderboardData: EnrichedPlayerScore[];
+  currentUserId?: string | null;
+  language: Language;
+  onChallenge: (player: EnrichedPlayerScore) => void;
+  translateUi: (key: string, replacements?: Record<string, string>) => string;
+  className?: string;
+}
 
-export interface GameResult {
-    id: string;
-    playerId: string;
-    playerName: string;
-    photoURL?: string | null;
-    score: number;
-    categories: Record<string, string>;
-    letter: string;
-    gameMode: 'solo' | 'multiplayer' | 'private';
-    roomId?: string;
-    timestamp: any; // Can be Firestore Timestamp on server, Date on client
-    won?: boolean;
+export interface GlobalLeaderboardCardProps {
+  leaderboardData: PlayerScore[];
+  language: Language;
+  currentUserId?: string;
+  onAddFriend: (player: PlayerScore) => void;
+  onChallenge: (player: PlayerScore) => void;
+  translateUi: any; 
+  className?: string;
+  isLoading?: boolean;
 }
