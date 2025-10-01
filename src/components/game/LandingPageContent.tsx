@@ -5,7 +5,8 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '../../hooks/use-auth-context';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 import { AuthModal } from "../auth/AuthModal";
 import { useLanguage } from '../../contexts/language-context';
 import { AppHeader } from '../layout/header';
@@ -53,7 +54,7 @@ export function LandingPageContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [multiplayerModalOpen, setMultiplayerModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const { user, loading: isAuthLoading } = useAuth();
+  const [user, isAuthLoading] = useAuthState(auth);
   const { language, translate } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
 

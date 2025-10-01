@@ -2,13 +2,13 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { signInWithPopup, AuthError } from 'firebase/auth';
 import { auth, googleProvider, facebookProvider } from '../../lib/firebase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '../../hooks/use-auth-context';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" width="18" height="18" {...props}><path fill="#4285F4" d="M21.35 11.1h-9.2v2.7h5.3c-.2 1.1-.9 2-2.1 2.7v1.9c2.1-1 3.8-3.1 3.8-5.7 0-.6-.1-1.1-.2-1.6z"></path><path fill="#34A853" d="M12.15 21.5c2.5 0 4.6-.8 6.1-2.2l-1.9-1.5c-.8.5-1.9.9-3.2.9-2.5 0-4.6-1.7-5.3-4H2.9v1.9C4.6 19.5 7.9 21.5 12.15 21.5z"></path><path fill="#FBBC05" d="M7.85 14.3c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V9H2.9c-.7 1.4-1.2 3-1.2 4.7s.5 3.3 1.2 4.7l4.9-1.9z"></path><path fill="#EA4335" d="M12.15 6.5c1.4 0 2.6.5 3.5 1.4l1.8-1.8C15.9 4.6 14.1 3.5 12.15 3.5c-4.2 0-7.5 2.9-9.2 6.6l4.9 1.9c.7-2.2 2.9-3.9 5.3-3.9z"></path></svg>
@@ -24,7 +24,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { user, loading } = useAuth();
+  const [user, loading] = useAuthState(auth);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
@@ -51,8 +51,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       let title = "Error al iniciar sesión";
       let description = "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.";
 
-      // *** MEJORA IMPORTANTE: Manejar errores específicos de Firebase ***
-      // Este es un paso crucial que faltaba.
       switch (authError.code) {
         case 'auth/account-exists-with-different-credential':
           title = "Cuenta ya existe";
