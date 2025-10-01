@@ -101,7 +101,7 @@ class RankingManager {
           gamesWon: 0,
           averageScore: 0,
           bestScore: 0,
-          lastPlayed: serverTimestamp(),
+          lastPlayed: Timestamp.now(), // FIX: Use Timestamp.now() instead of serverTimestamp() here
           level: this.calculateLevel(0),
           achievements: [],
           coins: 50, // Monedas iniciales
