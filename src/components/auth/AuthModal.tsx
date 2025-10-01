@@ -51,10 +51,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       let title = "Error al iniciar sesión";
       let description = "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.";
 
+      // *** MEJORA IMPORTANTE: Manejar errores específicos de Firebase ***
+      // Este es un paso crucial que faltaba.
       switch (authError.code) {
         case 'auth/account-exists-with-different-credential':
           title = "Cuenta ya existe";
-          description = "Ya existe una cuenta con este email, pero usando un proveedor diferente.";
+          description = "Ya existe una cuenta con este email, pero fue creada con un proveedor diferente (ej: Google en vez de Facebook). Intenta iniciar sesión con el otro proveedor.";
           break;
         case 'auth/popup-closed-by-user':
           title = "Ventana cerrada";
@@ -64,20 +66,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
            title = "Solicitud cancelada";
            description = "Se ha cancelado la solicitud de inicio de sesión.";
            break;
+        case 'auth/internal-error':
+            title = "Error de Configuración de Firebase";
+            description = "Esto usualmente significa que los proveedores (Google, Facebook) no están habilitados en la Consola de Firebase o el dominio no está autorizado. Revisa el README.md para la solución."
+            break;
         case 'auth/auth-domain-config-required':
           title = "Dominio no autorizado";
-          description = "Este dominio no está autorizado en la configuración de Firebase.";
+          description = "Este dominio no está autorizado. Ve a la Consola de Firebase > Authentication > Settings > Authorized domains y añade el dominio de tu app.";
           break;
         case 'auth/api-key-not-valid':
              title = "Clave de API inválida";
-             description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto.";
+             description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto en `src/lib/firebase.ts`.";
              break;
         case 'auth/network-request-failed':
           title = "Error de red";
           description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
           break;
         default:
-          description = authError.message || `Código de error: ${authError.code}`;
+          description = `Detalle: ${authError.message || 'Error desconocido'}. Código: ${authError.code}`;
           break;
       }
 
