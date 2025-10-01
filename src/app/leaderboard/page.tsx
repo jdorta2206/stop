@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '../../contexts/language-context';
-import { useAuth } from '../../hooks/use-auth-context';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 import { toast } from 'sonner';
 import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
@@ -19,13 +20,13 @@ import { addFriend, getFriends, sendChallengeNotification, type Friend } from '.
 import { FriendsLeaderboardCard } from '../../components/game/components/friends-leaderboard-card';
 import FriendsInvite from '../../components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { createRoom, addPlayerToRoom } from '../../lib/room-service';
+import { createRoom } from '../../lib/room-service';
 import { DailyMissionsCard } from '../../components/missions/DailyMissionsCard';
 
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const { user, loading: isAuthLoading } = useAuth();
+  const [user, isAuthLoading] = useAuthState(auth);
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);

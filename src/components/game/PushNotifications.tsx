@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -6,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Bell, BellRing, Users, Gamepad2, Trophy, MessageSquare, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateNotificationStatus, onNotificationsUpdate, type GameInvitation } from '../../lib/friends-service';
-import { useAuth } from '../../hooks/use-auth-context';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 
 interface PushNotificationsProps {
   userId: string;
@@ -24,7 +26,7 @@ export default function PushNotifications({
   const [notifications, setNotifications] = useState<GameInvitation[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  const { user } = useAuth();
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     if ('Notification' in window) {

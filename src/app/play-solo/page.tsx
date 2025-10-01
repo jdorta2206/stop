@@ -9,7 +9,8 @@ import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import { evaluateRound, type EvaluateRoundOutput } from '../../ai/flows/validate-player-word-flow';
 import type { GameState, LanguageCode, RoundResults } from '../../components/game/types/game-types';
-import { useAuth } from '../../hooks/use-auth-context';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 import { rankingManager } from '../../lib/ranking';
 import { Loader2 } from 'lucide-react';
 import { RouletteWheel } from '../../components/game/components/roulette-wheel';
@@ -34,7 +35,7 @@ const ROUND_DURATION = 60; // seconds
 
 export default function PlaySoloPage() {
   const { language, translate } = useLanguage();
-  const { user } = useAuth();
+  const [user] = useAuthState(auth);
 
   const [gameState, setGameState] = useState<GameState>('IDLE');
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);

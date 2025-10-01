@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/language-context";
-import { useAuth } from "../../hooks/use-auth-context";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 import { Button } from "../../components/ui/button";
 import { AppHeader } from "../../components/layout/header";
 import { AppFooter } from "../../components/layout/footer";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 
 export default function AdminPage() {
     const { language } = useLanguage();
-    const { user, loading: authLoading } = useAuth();
+    const [user, loading] = useAuthState(auth);
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +38,7 @@ export default function AdminPage() {
     };
 
     useEffect(() => {
-        if (!authLoading) {
+        if (!loading) {
             if (user?.email === 'jdorta2206@gmail.com') {
                 setIsAdmin(true);
                 fetchAdminData();
@@ -45,13 +46,13 @@ export default function AdminPage() {
                 setIsLoading(false);
             }
         }
-    }, [user, authLoading]);
+    }, [user, loading]);
 
     const handleBanUser = (userId: string) => {
         toast.error(`La lógica para banear al usuario ${userId} aún no está conectada.`);
     };
 
-    if (isLoading || authLoading) {
+    if (isLoading || loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-background">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />

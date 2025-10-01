@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import type { User } from 'firebase/auth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -33,7 +34,6 @@ import {
     type Player, 
     type Room 
 } from '../../lib/room-service';
-import type { AppUser } from '../../hooks/use-auth-context';
 import { GameArea } from './components/game-area';
 import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '../../contexts/language-context';
@@ -56,7 +56,7 @@ const ALPHABET_BY_LANG: Record<string, string[]> = {
 
 interface EnhancedRoomManagerProps {
   roomId: string;
-  currentUser: AppUser;
+  currentUser: User;
   roomData: Room;
   onLeaveRoom: () => void;
   onStartGame: () => void;

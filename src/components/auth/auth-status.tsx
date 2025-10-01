@@ -2,14 +2,15 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '../../hooks/use-auth-context';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../lib/firebase';
 import { Button } from '../ui/button';
 import { LogIn, Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserAccount } from './UserAccount';
 
 export function AuthStatus() {
-  const { user, loading } = useAuth();
+  const [user, loading] = useAuthState(auth);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   if (loading) {
@@ -22,7 +23,7 @@ export function AuthStatus() {
   }
 
   if (user) {
-    return <UserAccount />;
+    return <UserAccount user={user} />;
   }
 
   return (
