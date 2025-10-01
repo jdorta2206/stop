@@ -64,18 +64,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
            title = "Solicitud cancelada";
            description = "Se ha cancelado la solicitud de inicio de sesión.";
            break;
-        case 'auth/internal-error':
-            title = "Error de Configuración de Firebase";
-            description = "Esto usualmente significa que los proveedores (Google, Facebook) no están habilitados en la Consola de Firebase o el dominio no está autorizado. Revisa el README.md para la solución."
+        case 'auth/unauthorized-domain':
+            title = "Dominio no autorizado";
+            description = "Este dominio no está permitido para la autenticación. Asegúrate de que `localhost` y el dominio de tu app estén en la lista de 'Dominios autorizados' en la configuración de Authentication de Firebase.";
             break;
-        case 'auth/auth-domain-config-required':
-          title = "Dominio no autorizado";
-          description = "Este dominio no está autorizado. Ve a la Consola de Firebase > Authentication > Settings > Authorized domains y añade el dominio de tu app.";
-          break;
-        case 'auth/api-key-not-valid':
-             title = "Clave de API inválida";
-             description = "La clave de API de Firebase no es válida. Revisa la configuración del proyecto en `src/lib/firebase.ts`.";
-             break;
+        case 'auth/internal-error':
+            title = "Error Interno de Firebase";
+            description = "Esto usualmente significa que los proveedores (Google, Facebook) no están habilitados correctamente en la Consola de Firebase o hay un problema con la clave de API."
+            break;
         case 'auth/network-request-failed':
           title = "Error de red";
           description = "No se pudo conectar con los servidores de Firebase. Revisa tu conexión a internet.";
