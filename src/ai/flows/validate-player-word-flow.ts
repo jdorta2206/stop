@@ -1,4 +1,5 @@
 
+'use server';
 
 import { z } from 'zod';
 
@@ -147,6 +148,7 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
 
 
 export async function evaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
+  // Ahora llamamos directamente a la función local en lugar de cualquier cosa relacionada con la IA
   return await localEvaluateRound(input);
 }
 
