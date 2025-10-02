@@ -226,15 +226,17 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
-    for (const key in data) {
-        if(Object.prototype.hasOwnProperty.call(data, key)){
-            const typedKey = key as keyof Player;
-            // Ensure avatar is always a string
-            if(typedKey === 'avatar' && !data[typedKey]){
-                continue; // Do not update avatar to null or undefined
-            }
-            updateData[`players.${playerId}.${typedKey}`] = data[typedKey];
-        }
+    if (typeof data === 'object' && data !== null) {
+      for (const key in data) {
+          if(Object.prototype.hasOwnProperty.call(data, key)){
+              const typedKey = key as keyof Player;
+              // Ensure avatar is always a string
+              if(typedKey === 'avatar' && !data[typedKey]){
+                  continue; // Do not update avatar to null or undefined
+              }
+              updateData[`players.${playerId}.${typedKey}`] = data[typedKey];
+          }
+      }
     }
     
     const docSnap = await getDoc(roomDocRef);
