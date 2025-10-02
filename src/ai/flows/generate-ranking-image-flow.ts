@@ -63,5 +63,3 @@ const generateRankingTextFlow = ai.defineFlow(
 export async function generateRankingText(input: GenerateRankingImageInput): Promise<GenerateRankingImageOutput> {
   return await generateRankingTextFlow(input);
 }
-
-    
