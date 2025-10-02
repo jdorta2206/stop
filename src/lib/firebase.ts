@@ -1,4 +1,3 @@
-
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
@@ -8,14 +7,13 @@ import {
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Configuración de Firebase integrada directamente
+// Configuración de Firebase leída desde variables de entorno
 const firebaseConfig = {
-  projectId: "global-stop",
-  appId: "1:902072408470:web:a9b19b24c5e791a84865b7",
-  apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
-  authDomain: "global-stop.firebaseapp.com",
-  measurementId: "G-P41T2BEMKZ",
-  messagingSenderId: "902072408470",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 };
 
 // Inicializar la aplicación de Firebase de forma robusta para Next.js
