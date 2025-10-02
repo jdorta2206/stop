@@ -151,5 +151,3 @@ export async function evaluateRound(input: EvaluateRoundInput): Promise<Evaluate
   // Ahora llamamos directamente a la función local en lugar de cualquier cosa relacionada con la IA
   return await localEvaluateRound(input);
 }
-
-    
