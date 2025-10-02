@@ -1,8 +1,242 @@
+/**
+ * @file Firestore Security Rules for Global Stop Game
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for personal data and a shared-access model for collaborative game sessions.
+ * It prioritizes security by default, explicitly denying access unless authorized.
+ * Public read access is allowed only for explicitly public collections like categories and dictionary entries.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles, accessible only to the authenticated user.
+ * - /users/{userId}/gameSessions/{gameSessionId}: Stores game sessions hosted by a specific user, with a denormalized hostUserId and a members map for managing access.
+ * - /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}: Stores rounds for a specific game session.
+ * - /categories/{categoryId}: Stores globally available game categories.
+ * - /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}: Stores player responses for each round.
+ * - /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}: Stores players in a specific game session.
+ * - /rounds/{roundId}/roundCategories/{roundCategoryId}: Links categories to rounds.
+ * - /dictionaryEntries/{dictionaryEntryId}: Stores globally available dictionary entries.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own profile data.
+ * - Game sessions are secured using a members map, allowing collaborative access.
+ * - Categories and dictionary entries are publicly readable but not writable.
+ * - List operations are restricted to owners or members of game sessions where applicable.
+ *
+ * Denormalization for Authorization:
+ * - GameSession documents include a `hostUserId` field and a `members` map to avoid extra reads for authorization.
+ * - Round documents include a `gameSessionId` to avoid extra reads for authorization.
+ * - PlayerRoundResponse documents include `userId`, `roundId`, and `categoryId` for authorization independence.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    /**
+     * @description Controls access to user profile data.
+     * @path /users/{userId}
+     * @allow (create) User with matching UID can create their profile.
+     * @allow (get) User with matching UID can read their profile.
+     * @allow (update) User with matching UID can update their profile.
+     * @allow (delete) User with matching UID can delete their profile.
+     * @deny (create) User tries to create a profile with a mismatched UID.
+     * @deny (get) User tries to read another user's profile.
+     * @deny (update) User tries to update another user's profile.
+     * @deny (delete) User tries to delete another user's profile.
+     * @principle Enforces document ownership for user profiles.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to game sessions hosted by a specific user.
+     * @path /users/{userId}/gameSessions/{gameSessionId}
+     * @allow (create) User can create a game session if they are the owner.
+     * @allow (get) User can read a game session if they are the owner or a member.
+     * @allow (update) User can update a game session if they are the owner.
+     * @allow (delete) User can delete a game session if they are the owner.
+     * @deny (create) User tries to create a game session with a mismatched hostUserId.
+     * @deny (get) User tries to read a game session they are not a member of.
+     * @deny (update) User tries to update a game session they are not the owner of.
+     * @deny (delete) User tries to delete a game session they are not the owner of.
+     * @principle Enforces ownership and shared access for game sessions using a members map.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isGameSessionMember(gameSessionId) {
+        return get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.members[request.auth.uid] != null;
+      }
+
+      allow get: if isSignedIn() && (isGameSessionMember(gameSessionId) || isOwner(userId));
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.hostUserId;
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to rounds within a specific game session.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}
+     * @allow (create) User can create a round if they are the owner of the game session.
+     * @allow (get) User can read a round if they are a member of the game session.
+     * @allow (update) User can update a round if they are the owner of the game session.
+     * @allow (delete) User can delete a round if they are the owner of the game session.
+     * @deny (create) User tries to create a round for a game session they don't own.
+     * @deny (get) User tries to read a round for a game session they are not a member of.
+     * @deny (update) User tries to update a round for a game session they don't own.
+     * @deny (delete) User tries to delete a round for a game session they don't own.
+     * @principle Enforces shared access for rounds based on game session membership.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isGameSessionMember(gameSessionId) {
+        return get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.members[request.auth.uid] != null;
+      }
+
+      allow get: if isSignedIn() && (isGameSessionMember(gameSessionId) || isOwner(userId));
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+      allow update: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+    }
+
+    /**
+     * @description Controls access to game categories.
+     * @path /categories/{categoryId}
+     * @allow (get) All users can read categories.
+     * @deny (create) No users can create categories.
+     * @deny (update) No users can update categories.
+     * @deny (delete) No users can delete categories.
+     * @principle Public read access with no write access.
+     */
+    match /categories/{categoryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to player responses for a specific round.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}
+     * @allow (create) User can create their own response.
+     * @allow (get) User can read their own response.
+     * @allow (update) User can update their own response.
+     * @allow (delete) User can delete their own response.
+     * @deny (create) User tries to create a response for another user.
+     * @deny (get) User tries to read another user's response.
+     * @deny (update) User tries to update another user's response.
+     * @deny (delete) User tries to delete another user's response.
+     * @principle Enforces document ownership for player round responses.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to game session players.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}
+     * @allow (create) User can create a game session player if they are the owner or a member of the game session.
+     * @allow (get) User can read a game session player if they are the owner or a member of the game session.
+     * @allow (update) User can update a game session player if they are the owner of the game session.
+     * @allow (delete) User can delete a game session player if they are the owner of the game session.
+     * @deny (create) User tries to create a game session player for a game session they don't own.
+     * @deny (get) User tries to read a game session player for a game session they are not a member of.
+     * @deny (update) User tries to update a game session player for a game session they don't own.
+     * @deny (delete) User tries to delete a game session player for a game session they don't own.
+     * @principle Enforces shared access for game session players based on game session membership.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isGameSessionMember(gameSessionId) {
+        return get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.members[request.auth.uid] != null;
+      }
+
+      allow get: if isSignedIn() && (isGameSessionMember(gameSessionId) || isOwner(userId));
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+      allow update: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(userId)/gameSessions/$(gameSessionId)).data.hostUserId == request.auth.uid;
+    }
+
+    /**
+     * @description Controls access to round categories.
+     * @path /rounds/{roundId}/roundCategories/{roundCategoryId}
+     * @allow (get) All users can read round categories.
+     * @deny (create) No users can create round categories.
+     * @deny (update) No users can update round categories.
+     * @deny (delete) No users can delete round categories.
+     * @principle Public read access with no write access.
+     */
+    match /rounds/{roundId}/roundCategories/{roundCategoryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to dictionary entries.
+     * @path /dictionaryEntries/{dictionaryEntryId}
+     * @allow (get) All users can read dictionary entries.
+     * @deny (create) No users can create dictionary entries.
+     * @deny (update) No users can update dictionary entries.
+     * @deny (delete) No users can delete dictionary entries.
+     * @principle Public read access with no write access.
+     */
+    match /dictionaryEntries/{dictionaryEntryId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
   }
 }

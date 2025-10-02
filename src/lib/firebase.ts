@@ -6,15 +6,7 @@ import {
   FacebookAuthProvider,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-
-// Configuración de Firebase incrustada directamente
-const firebaseConfig = {
-  apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
-  authDomain: "global-stop.firebaseapp.com",
-  projectId: "global-stop",
-  appId: "1:902072408470:web:a9b19b24c5e791a84865b7",
-  messagingSenderId: "902072408470",
-};
+import { firebaseConfig } from '../firebase/config';
 
 // Inicializar la aplicación de Firebase de forma robusta para Next.js
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
