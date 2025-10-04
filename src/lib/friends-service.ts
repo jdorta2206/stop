@@ -16,7 +16,7 @@ import {
     updateDoc,
     onSnapshot
 } from "firebase/firestore";
-import { useFirestore } from '../firebase';
+import { initializeFirebase } from '../firebase';
 
 export interface Friend {
     id: string; // This is the UID of the friend
@@ -37,9 +37,10 @@ export interface GameInvitation {
   status: 'pending' | 'accepted' | 'declined' | 'expired';
 }
 
+const db = initializeFirebase().firestore;
+
 // Function to search for users by name
 export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
-    const db = useFirestore();
     if (!nameQuery) return [];
     
     const usersRef = collection(db, 'rankings');
@@ -67,7 +68,6 @@ export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {
 
 // Function to add a friend
 export const addFriend = async (currentUserId: string, friendId: string, friendName: string, friendAvatar: string | null = null): Promise<void> => {
-    const db = useFirestore();
     if (currentUserId === friendId) {
         throw new Error("You cannot add yourself as a friend.");
     }
@@ -88,7 +88,6 @@ export const addFriend = async (currentUserId: string, friendId: string, friendN
 
 // Function to get a user's friends
 export const getFriends = async (userId: string): Promise<Friend[]> => {
-    const db = useFirestore();
     const friendsRef = collection(db, `rankings/${userId}/friends`);
     const q = query(friendsRef, orderBy('addedAt', 'desc'));
 
@@ -101,7 +100,6 @@ export const getFriends = async (userId: string): Promise<Friend[]> => {
 };
 
 export const sendChallengeNotification = async (senderId: string, senderName: string, recipientId: string, roomId: string): Promise<void> => {
-    const db = useFirestore();
     if (!recipientId) {
       throw new Error("El ID del destinatario es requerido.");
     }
@@ -129,7 +127,6 @@ export const sendChallengeNotification = async (senderId: string, senderName: st
 
 
 export const onNotificationsUpdate = (userId: string, callback: (notifications: GameInvitation[]) => void) => {
-    const db = useFirestore();
     const notificationsRef = collection(db, `notifications`);
     const q = query(
         notificationsRef, 
@@ -148,7 +145,6 @@ export const onNotificationsUpdate = (userId: string, callback: (notifications: 
 };
 
 export const updateNotificationStatus = async (notificationId: string, status: 'accepted' | 'declined'): Promise<void> => {
-    const db = useFirestore();
     const notificationDocRef = doc(db, `notifications`, notificationId);
     await updateDoc(notificationDocRef, { status });
 };

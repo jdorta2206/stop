@@ -1,4 +1,3 @@
-
 // src/lib/ranking.ts
 import { 
     doc, 
@@ -17,7 +16,7 @@ import {
     writeBatch
 } from "firebase/firestore";
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
-import { useFirestore } from '../firebase';
+import { getSdks, initializeFirebase } from '../firebase';
 
 export interface PlayerScore {
   id: string;
@@ -75,7 +74,7 @@ const COINS_PER_GAME = 10;
 const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 
 class RankingManager {
-  private db = useFirestore();
+  private db = initializeFirebase().firestore;
   private rankingsCollection = collection(this.db, 'rankings');
 
   async getPlayerRanking(
