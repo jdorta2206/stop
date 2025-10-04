@@ -4,8 +4,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '../../contexts/language-context';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
 import { toast } from 'sonner';
 import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
@@ -22,11 +20,12 @@ import FriendsInvite from '../../components/social/FriendsInvite';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { createRoom } from '../../lib/room-service';
 import { DailyMissionsCard } from '../../components/missions/DailyMissionsCard';
+import { useUser } from '../../firebase';
 
 export default function LeaderboardPage() {
   const router = useRouter();
   const { language, translate } = useLanguage();
-  const [user, isAuthLoading] = useAuthState(auth);
+  const { user, isUserLoading } = useUser();
 
   const [globalLeaderboard, setGlobalLeaderboard] = useState<PlayerScore[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -97,10 +96,10 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (user) {
       fetchData(user.uid);
-    } else if (!isAuthLoading) {
+    } else if (!isUserLoading) {
       fetchData(); // Fetch global data even if not logged in
     }
-  }, [user, isAuthLoading]);
+  }, [user, isUserLoading]);
 
   const handleAddFriend = async (player: PlayerScore) => {
     if (!user) {
@@ -150,7 +149,7 @@ export default function LeaderboardPage() {
     }
   };
 
-  if (isAuthLoading && isLoading) {
+  if (isUserLoading && isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-16 w-16 animate-spin" />
@@ -213,7 +212,7 @@ export default function LeaderboardPage() {
                   </CardContent>
                 </Card>
               </>
-            ) : !user && !isAuthLoading && (
+            ) : !user && !isUserLoading && (
               <div className="p-6 bg-card rounded-lg text-center">
                 <p className="mb-4">{translate('leaderboards.mustLogin')}</p>
                 <Button onClick={() => router.push('/')}>

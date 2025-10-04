@@ -1,5 +1,4 @@
 
-import { db } from './firebase';
 import { 
     doc, 
     getDoc, 
@@ -17,6 +16,7 @@ import {
     where,
     Timestamp
 } from "firebase/firestore";
+import { useFirestore } from '../firebase';
 import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '../components/game/types/game-types';
 import type { EvaluateRoundOutput } from '../ai/flows/validate-player-word-flow';
 import { evaluateRound } from '../ai/flows/validate-player-word-flow';
@@ -56,7 +56,7 @@ export interface Room {
     roundNumber: number;
 }
 
-const roomsCollection = collection(db, 'rooms');
+
 const ALPHABET = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
 
 function generateRoomId(length: number = 6): string {
@@ -81,6 +81,8 @@ export interface CreateRoomOutput {
 
 export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
   const { creatorId, creatorName, creatorAvatar } = input;
+  const db = useFirestore();
+  const roomsCollection = collection(db, 'rooms');
 
   if (!creatorId) {
     throw new Error('User is not authenticated.');
@@ -127,6 +129,8 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
 }
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     if (!roomId) return null;
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const docSnap = await getDoc(roomDocRef);
@@ -134,6 +138,8 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
 };
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
 
     await runTransaction(db, async (transaction) => {
@@ -184,6 +190,8 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
 };
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
@@ -224,6 +232,8 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
 
 
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
     if (typeof data === 'object' && data !== null) {
@@ -249,6 +259,8 @@ export const updatePlayerInRoom = async (roomId: string, playerId: string, data:
 
 
 export const updateRoomSettings = async (roomId: string, settings: Partial<Room['settings']>): Promise<void> => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const updateData: Record<string, any> = {};
      for (const key in settings) {
@@ -258,6 +270,8 @@ export const updateRoomSettings = async (roomId: string, settings: Partial<Room[
 };
 
 export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void) => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     return onSnapshot(roomDocRef, (doc) => {
         callback(doc.exists() ? { id: doc.id, ...doc.data() } as Room : null);
@@ -267,6 +281,8 @@ export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => vo
 // GAME LOGIC FUNCTIONS
 
 export const startGame = async (roomId: string) => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
@@ -288,6 +304,8 @@ export const startGame = async (roomId: string) => {
 };
 
 export const startNextRound = async (roomId: string) => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
@@ -310,6 +328,8 @@ export const startNextRound = async (roomId: string) => {
 }
 
 export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: PlayerResponseSet) => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     // Use dot notation for nested fields for atomic updates
     const updatePayload: { [key: string]: any } = {};
@@ -322,6 +342,8 @@ export const submitPlayerAnswers = async (roomId: string, playerId: string, answ
 
 
 export const triggerGlobalStop = async (roomId: string) => {
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     const room = await getRoom(roomId);
     if(room?.gameState === 'PLAYING') {
@@ -336,6 +358,8 @@ export const evaluateRoundForRoom = async (roomId: string) => {
         throw new Error("Room data is incomplete for evaluation.");
     }
     
+    const db = useFirestore();
+    const roomsCollection = collection(db, 'rooms');
     const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
     await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
 
@@ -425,6 +449,7 @@ export const evaluateRoundForRoom = async (roomId: string) => {
 
 // CHAT FUNCTIONS
 export const sendMessageToRoom = async (roomId: string, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<void> => {
+    const db = useFirestore();
     const chatCollectionRef = collection(db, `rooms/${roomId.toUpperCase()}/chat`);
     await addDoc(chatCollectionRef, {
         ...message,
@@ -433,6 +458,7 @@ export const sendMessageToRoom = async (roomId: string, message: Omit<ChatMessag
 };
 
 export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[]) => void) => {
+    const db = useFirestore();
     const chatCollectionRef = collection(db, `rooms/${roomId.toUpperCase()}/chat`);
     const q = query(chatCollectionRef, orderBy('timestamp', 'asc'), limit(50));
 

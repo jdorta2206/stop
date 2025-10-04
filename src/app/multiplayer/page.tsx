@@ -3,8 +3,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 import { Loader2 } from 'lucide-react';
 import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
@@ -16,7 +15,7 @@ import { toast } from 'sonner';
 function MultiplayerLobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [user, authLoading] = useAuthState(auth);
+    const { user, isUserLoading: authLoading } = useUser();
     const { language } = useLanguage();
     
     const [room, setRoom] = useState<Room | null>(null);

@@ -1,6 +1,7 @@
 
 import './globals.css';
 import { Providers } from '../components/providers/Providers';
+import { FirebaseClientProvider } from '../firebase/client-provider';
 
 export default function RootLayout({
   children,
@@ -14,9 +15,11 @@ export default function RootLayout({
           <meta name="theme-color" content="#ef4444" />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">
-        <Providers>
-          {children}
-        </Providers>
+        <FirebaseClientProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

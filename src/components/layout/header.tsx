@@ -4,8 +4,7 @@
 import { useLanguage, type LanguageOption } from '../../contexts/language-context';
 import { useCallback, useState, useEffect } from 'react';
 import { Button } from '../ui/button';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 import Link from 'next/link';
 import { Volume2, VolumeX, MessageSquare } from 'lucide-react';
 import { ChatPanel } from '../chat/chat-panel';
@@ -17,7 +16,7 @@ import PushNotifications from '../game/PushNotifications';
 
 export function AppHeader() {
   const { language, setLanguage, translate } = useLanguage();
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
   const router = useRouter();
   const pathname = usePathname();
 

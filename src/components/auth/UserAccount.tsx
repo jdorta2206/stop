@@ -1,7 +1,7 @@
 
 "use client";
 
-import { auth } from "../../lib/firebase";
+import { useAuth } from "../../firebase";
 import { Button } from "../ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "../ui/dropdown-menu";
@@ -14,6 +14,7 @@ interface UserAccountProps {
 }
 
 export function UserAccount({ user }: UserAccountProps) {
+  const auth = useAuth();
   
   if (!user) {
     return null; // Or a loading skeleton
