@@ -3,8 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 import { useLanguage } from '../../contexts/language-context';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
@@ -21,7 +20,7 @@ interface MultiplayerDialogProps {
 
 export default function MultiplayerDialog({ isOpen, onClose }: MultiplayerDialogProps) {
   const router = useRouter();
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
   const { translate } = useLanguage();
   
   const [isCreating, setIsCreating] = useState(false);

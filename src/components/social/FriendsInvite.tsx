@@ -11,15 +11,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addFriend, searchUsers, type Friend } from '../../lib/friends-service';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 
 interface FriendsInviteProps {
   onFriendAdded: () => void;
 }
 
 export default function FriendsInvite({ onFriendAdded }: FriendsInviteProps) {
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

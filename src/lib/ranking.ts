@@ -1,6 +1,4 @@
-
 // src/lib/ranking.ts
-import { db } from './firebase';
 import { 
     doc, 
     getDoc, 
@@ -18,6 +16,7 @@ import {
     writeBatch
 } from "firebase/firestore";
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
+import { getSdks, initializeFirebase } from '../firebase';
 
 export interface PlayerScore {
   id: string;
@@ -75,7 +74,8 @@ const COINS_PER_GAME = 10;
 const COINS_PER_WIN_MULTIPLIER = 3; // Gana 3 veces más si gana la partida
 
 class RankingManager {
-  private rankingsCollection = collection(db, 'rankings');
+  private db = initializeFirebase().firestore;
+  private rankingsCollection = collection(this.db, 'rankings');
 
   async getPlayerRanking(
     playerId: string,
@@ -135,7 +135,7 @@ class RankingManager {
         return null;
     }
     const playerDocRef = doc(this.rankingsCollection, gameResult.playerId);
-    const gameHistoryCollectionRef = collection(db, `rankings/${gameResult.playerId}/gameHistory`);
+    const gameHistoryCollectionRef = collection(this.db, `rankings/${gameResult.playerId}/gameHistory`);
     
     const playerRanking = await this.getPlayerRanking(gameResult.playerId, gameResult.playerName, gameResult.photoURL);
 
@@ -219,7 +219,7 @@ class RankingManager {
 
   async getGameHistory(playerId: string, historyLimit: number = 5): Promise<GameResult[]> {
     if (!playerId) return [];
-    const q = query(collection(db, `rankings/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
+    const q = query(collection(this.db, `rankings/${playerId}/gameHistory`), orderBy("timestamp", "desc"), limit(historyLimit));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GameResult));
   }

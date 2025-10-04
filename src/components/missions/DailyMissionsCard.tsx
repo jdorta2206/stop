@@ -2,8 +2,7 @@
 // src/components/missions/DailyMissionsCard.tsx
 "use client";
 
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { MissionItem } from "./MissionItem";
 import { Loader2, Gift } from "lucide-react";
@@ -13,7 +12,7 @@ import { useEffect, useState } from "react";
 import type { MissionProgress } from "../../lib/missions";
 
 export function DailyMissionsCard() {
-    const [user] = useAuthState(auth);
+    const { user } = useUser();
     const [missions, setMissions] = useState<MissionProgress[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 

@@ -1,5 +1,4 @@
 
-import { db } from './firebase';
 import { 
     doc, 
     getDoc, 
@@ -17,6 +16,7 @@ import {
     updateDoc,
     onSnapshot
 } from "firebase/firestore";
+import { initializeFirebase } from '../firebase';
 
 export interface Friend {
     id: string; // This is the UID of the friend
@@ -36,6 +36,8 @@ export interface GameInvitation {
   type: 'room_invite' | 'game_start' | 'game_finish' | 'chat_mention';
   status: 'pending' | 'accepted' | 'declined' | 'expired';
 }
+
+const db = initializeFirebase().firestore;
 
 // Function to search for users by name
 export const searchUsers = async (nameQuery: string): Promise<Friend[]> => {

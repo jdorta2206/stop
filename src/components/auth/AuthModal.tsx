@@ -2,11 +2,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { signInWithPopup, AuthError } from 'firebase/auth';
-import { auth, googleProvider, facebookProvider } from '../../lib/firebase';
+import { signInWithPopup, AuthError, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
+import { useAuth, useUser } from '../../firebase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,7 +23,8 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [user, loading] = useAuthState(auth);
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
 
   useEffect(() => {
@@ -38,8 +38,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleLogin = async (providerName: 'google' | 'facebook') => {
     setIsProcessingLogin(true);
     const provider = providerName === 'google' 
-      ? googleProvider
-      : facebookProvider;
+      ? new GoogleAuthProvider()
+      : new FacebookAuthProvider();
     
     try {
       await signInWithPopup(auth, provider);
@@ -100,7 +100,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {isProcessingLogin || loading ? (
+          {isProcessingLogin || isUserLoading ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="text-muted-foreground text-sm">Iniciando sesión...</p>

@@ -6,8 +6,7 @@ import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import type { RoundResults } from './types/game-types';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 
 interface SoloResultsAreaProps {
   roundResults: RoundResults | null;
@@ -23,7 +22,7 @@ interface SoloResultsAreaProps {
 
 export function SoloResultsArea({ roundResults, playerRoundScore, aiRoundScore, roundWinner, totalPlayerScore, totalAiScore, startNextRound, translateUi, currentLetter }: SoloResultsAreaProps) {
   const router = useRouter();
-  const [user] = useAuthState(auth);
+  const { user } = useUser();
   
   if (!roundResults) {
     return (

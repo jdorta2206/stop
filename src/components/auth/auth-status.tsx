@@ -2,18 +2,17 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
+import { useUser } from '../../firebase';
 import { Button } from '../ui/button';
 import { LogIn, Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserAccount } from './UserAccount';
 
 export function AuthStatus() {
-  const [user, loading] = useAuthState(auth);
+  const { user, isUserLoading } = useUser();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  if (loading) {
+  if (isUserLoading) {
     return (
       <Button variant="secondary" className="rounded-md" disabled>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

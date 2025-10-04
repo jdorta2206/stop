@@ -5,8 +5,6 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Users, Trophy, BrainCircuit, Lightbulb, Share2, Loader2, PartyPopper } from 'lucide-react';
 import Link from 'next/link';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../lib/firebase';
 import { AuthModal } from "../auth/AuthModal";
 import { useLanguage } from '../../contexts/language-context';
 import { AppHeader } from '../layout/header';
@@ -16,6 +14,7 @@ import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import ContactsManager from './ContactsManager';
 import MultiplayerDialog from './MultiplayerDialog';
+import { useUser } from '../../firebase';
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -54,7 +53,7 @@ export function LandingPageContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [multiplayerModalOpen, setMultiplayerModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [user, isAuthLoading] = useAuthState(auth);
+  const { user, isUserLoading } = useUser();
   const { language, translate } = useLanguage();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -158,7 +157,7 @@ export function LandingPageContent() {
               </Button>
             </Link>
             
-            {isMounted && !isAuthLoading && (
+            {isMounted && !isUserLoading && (
               <>
                 <Button 
                   variant="outline"
