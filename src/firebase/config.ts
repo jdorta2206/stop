@@ -1,11 +1,12 @@
 
-// POR FAVOR, REEMPLAZA ESTO CON LA CONFIGURACIÓN DE TU APP "Stop" DESDE LA CONSOLA DE FIREBASE
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-  apiKey: "AIzaSyDqP1TZxE1TBRBq8t0cOYbJg0ySd2n9Z2Q",
-  authDomain: "juego-stop-9a8a8.firebaseapp.com",
-  projectId: "juego-stop-9a8a8",
-  storageBucket: "juego-stop-9a8a8.appspot.com",
-  messagingSenderId: "1097782410993",
-  appId: "1:1097782410993:web:02b07e5f3f3c316719b66c",
+  apiKey: "AIzaSyDw63q5Hn0TCDIFMggy_YV9PQ-fUvmNDJQ",
+  authDomain: "global-stop.firebaseapp.com",
+  databaseURL: "https://global-stop-default-rtdb.firebaseio.com",
+  projectId: "global-stop",
+  storageBucket: "global-stop.firebasestorage.app",
+  messagingSenderId: "902072408470",
+  appId: "1:902072408470:web:843e9f91308bb4ec4865b7",
   measurementId: "G-DP1DM3R96E"
 };
