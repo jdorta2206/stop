@@ -11,8 +11,8 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className="h-full">
       <head>
-          
-          <meta name="theme-color" content="#ef4444" />
+          <link rel="manifest" href="/manifest.json" />
+          <meta name="theme-color" content="#C0474A" />
       </head>
       <body className="flex flex-col h-full bg-background text-foreground">
         <FirebaseClientProvider>
