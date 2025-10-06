@@ -18,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <LanguageProvider>
         <TooltipProvider>
           {children}
-          <Toaster />
+          <Toaster richColors />
         </TooltipProvider>
       </LanguageProvider>
     </ThemeProvider>
