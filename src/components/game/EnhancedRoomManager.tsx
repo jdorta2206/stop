@@ -321,7 +321,7 @@ export default function EnhancedRoomManager({
                   <div key={player.id} className="flex justify-between items-center p-2 rounded-md">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                              <AvatarImage src={player.avatar} alt={player.name} />
+                              <AvatarImage src={player.avatar || undefined} alt={player.name} />
                               <AvatarFallback>{player.name?.charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -440,3 +440,5 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
+
+    

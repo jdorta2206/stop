@@ -1,3 +1,4 @@
+
 // src/lib/ranking.ts
 import { 
     doc, 
@@ -16,7 +17,7 @@ import {
     writeBatch
 } from "firebase/firestore";
 import { checkMissions, getDailyMissions, type MissionProgress } from './missions';
-import { getSdks, initializeFirebase } from '../firebase';
+import { initializeFirebase } from '../firebase';
 
 export interface PlayerScore {
   id: string;
@@ -46,7 +47,7 @@ export interface GameResult {
     gameMode: 'solo' | 'multiplayer' | 'private';
     roomId?: string;
     timestamp: any; // Can be Firestore Timestamp on server, Date on client
-    won?: boolean;
+    won: boolean;
 }
 
 const LEVELS = [
@@ -129,7 +130,7 @@ class RankingManager {
     return { id: playerId, ...playerData };
   }
   
-  async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'> & { won: boolean }): Promise<PlayerScore | null> {
+  async saveGameResult(gameResult: Omit<GameResult, 'timestamp' | 'id'>): Promise<PlayerScore | null> {
     if (!gameResult.playerId) {
         console.error("saveGameResult requires a valid playerId.");
         return null;
@@ -203,7 +204,7 @@ class RankingManager {
     return LEVELS.slice().reverse().find(l => totalScore >= l.minScore)?.name || 'Principiante';
   }
 
-  private checkAchievements(playerScore: PlayerScore, gameResult: Omit<GameResult, 'id' | 'timestamp'> & { won: boolean }): string[] {
+  private checkAchievements(playerScore: PlayerScore, gameResult: Omit<GameResult, 'id' | 'timestamp'>): string[] {
     const newAchievements = new Set(playerScore.achievements);
     const gamesWon = playerScore.gamesWon + (gameResult.won ? 1 : 0);
 
@@ -245,3 +246,5 @@ export const getLevelColor = (level: string): string => {
 export const getAchievementInfo = (achievementId: string) => {
   return ACHIEVEMENTS[achievementId];
 };
+
+    
