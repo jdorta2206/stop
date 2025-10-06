@@ -4,8 +4,8 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { signInWithPopup, AuthError, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
-import { useAuth, useUser } from '../../firebase';
+import { signInWithPopup, AuthError, GoogleAuthProvider, FacebookAuthProvider, type Auth } from 'firebase/auth';
+import { useUser, initializeFirebase } from '../../firebase';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,9 +23,17 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+  
+  // Obtenemos una instancia fresca de auth aquí para asegurar que es la correcta
+  const [authInstance, setAuthInstance] = useState<Auth | null>(null);
+  
+  useEffect(() => {
+    // Inicializamos Firebase en el cliente para obtener la instancia de auth
+    const { auth } = initializeFirebase();
+    setAuthInstance(auth);
+  }, []);
 
   useEffect(() => {
     // Si el usuario ya está logueado y el modal está abierto, ciérralo.
@@ -36,13 +44,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   }, [user, isOpen, onClose]);
 
   const handleLogin = async (providerName: 'google' | 'facebook') => {
+    if (!authInstance) {
+        toast.error("Error de inicialización", { description: "La autenticación de Firebase no está lista." });
+        return;
+    }
+
     setIsProcessingLogin(true);
     const provider = providerName === 'google' 
       ? new GoogleAuthProvider()
       : new FacebookAuthProvider();
     
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(authInstance, provider);
       // El useEffect de arriba se encargará de cerrar el modal cuando `user` se actualice.
     } catch (error) {
       const authError = error as AuthError;
@@ -100,7 +113,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          {isProcessingLogin || isUserLoading ? (
+          {isProcessingLogin || isUserLoading || !authInstance ? (
              <div className="flex flex-col justify-center items-center p-8 space-y-2">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="text-muted-foreground text-sm">Iniciando sesión...</p>
@@ -132,3 +145,5 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     </Dialog>
   );
 }
+
+    
