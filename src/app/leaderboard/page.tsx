@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
       return;
     }
     try {
-      await addFriend(user.uid, player.id, player.playerName, player.photoURL);
+      await addFriend(user.uid, player.id, player.playerName, player.photoURL || undefined);
       toast.success(translate('leaderboards.friendAdded', { name: player.playerName }));
       if(user) fetchData(user.uid); // Refresh friends list
     } catch (error) {
