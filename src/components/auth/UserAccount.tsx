@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useAuth } from "../../firebase";
+import { useAuth, useUser } from "../../firebase";
 import { Button } from "../ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "../ui/dropdown-menu";
@@ -9,12 +9,9 @@ import { LogOut, User as UserIcon } from "lucide-react";
 import { signOut as firebaseSignOut } from "firebase/auth";
 import type { User } from 'firebase/auth';
 
-interface UserAccountProps {
-  user: User | null | undefined;
-}
-
-export function UserAccount({ user }: UserAccountProps) {
+export function UserAccount() {
   const auth = useAuth();
+  const { user } = useUser();
   
   if (!user) {
     return null; // Or a loading skeleton
