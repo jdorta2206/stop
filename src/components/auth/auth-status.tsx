@@ -22,7 +22,7 @@ export function AuthStatus() {
   }
 
   if (user) {
-    return <UserAccount user={user} />;
+    return <UserAccount />;
   }
 
   return (
