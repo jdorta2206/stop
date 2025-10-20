@@ -373,9 +373,10 @@ export const evaluateRoundForRoom = async (roomId: string) => {
             const playerAnswers = room.playerResponses[playerId] || {};
             
             // Define categories based on one of the player's responses or a default set
-            const categories = Object.keys(room.playerResponses[allPlayerIds[0]] || {});
+            const categories = Object.keys(room.settings.language ? CATEGORIES_BY_LANG[room.settings.language] : CATEGORIES_BY_LANG['es']).map(c => c.toLowerCase());
 
-            for (const category of categories) {
+
+            for (const category of Object.keys(playerAnswers)) {
                 const word = playerAnswers[category]?.trim().toLowerCase() || '';
                 let score = 0;
                 let isValid = false;
@@ -401,6 +402,13 @@ export const evaluateRoundForRoom = async (roomId: string) => {
         });
     });
 };
+
+const CATEGORIES_BY_LANG: Record<string, string[]> = {
+    es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
+    en: ["Name", "Place", "Animal", "Thing", "Color", "Fruit", "Brand"],
+    fr: ["Nom", "Lieu", "Animal", "Chose", "Couleur", "Fruit", "Marque"],
+    pt: ["Nome", "Lugar", "Animal", "Coisa", "Cor", "Fruta", "Marca"],
+  };
 
 // CHAT FUNCTIONS
 export const sendMessageToRoom = async (roomId: string, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<void> => {

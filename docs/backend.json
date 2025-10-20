@@ -116,7 +116,7 @@
   "firestore": {
     "/rooms/{roomId}": {
         "schema": { "$ref": "#/entities/Room" },
-        "description": "Stores multiplayer game rooms. Only authenticated users part of the game can read/write."
+        "description": "Stores multiplayer game rooms. Only authenticated users can read/write."
     },
     "/rankings/{userId}": {
         "schema": { "$ref": "#/entities/Ranking" },

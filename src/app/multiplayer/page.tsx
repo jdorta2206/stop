@@ -9,7 +9,7 @@ import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import EnhancedRoomManager from '../../components/game/EnhancedRoomManager';
 import { useLanguage } from '../../contexts/language-context';
-import { onRoomUpdate, addPlayerToRoom, removePlayerFromRoom, type Room, getRoom } from '../../lib/room-service';
+import { onRoomUpdate, addPlayerToRoom, removePlayerFromRoom, type Room } from '../../lib/room-service';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import type { User } from 'firebase/auth';
@@ -45,7 +45,7 @@ function MultiplayerLobbyContent() {
             return;
         }
 
-        if (!user || !user.uid) {
+        if (!user) {
             toast.error("Debes iniciar sesión para unirte a una sala.");
             router.push('/');
             return;
@@ -56,20 +56,15 @@ function MultiplayerLobbyContent() {
         const joinAndListen = async (currentUser: User) => {
             setIsLoading(true);
             try {
-                 const roomExists = await getRoom(roomId);
-                 if (!roomExists) {
-                     throw new Error("La sala no existe o el código es incorrecto.");
-                 }
-                
                 await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador Anónimo', currentUser.photoURL || null);
                 
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
                         setRoom(updatedRoom);
-                        // Asegurarse de que el jugador actual no haya sido expulsado
-                        if (!updatedRoom.players[currentUser.uid]) {
+                        if (updatedRoom.players && !updatedRoom.players[currentUser.uid]) {
                            setError("Fuiste expulsado o la sala ya no existe.");
                            toast.error('Ya no estás en esta sala.');
+                           if (unsubscribe) unsubscribe();
                            handleLeaveRoom();
                            return;
                         }
@@ -77,6 +72,7 @@ function MultiplayerLobbyContent() {
                     } else {
                         setError("La sala ha sido eliminada por el anfitrión.");
                         toast.error('La sala ya no existe.');
+                        if (unsubscribe) unsubscribe();
                         handleLeaveRoom();
                     }
                     setIsLoading(false);
@@ -89,8 +85,8 @@ function MultiplayerLobbyContent() {
                     userMessage = "No tienes permiso para unirte a esta sala o la sala no existe.";
                 } else if (err.message.includes("La sala está llena")) {
                     userMessage = "La sala está llena. No puedes unirte.";
-                } else {
-                    userMessage = err.message;
+                } else if (err.message.includes("La sala no existe")){
+                    userMessage = "La sala no existe o el código es incorrecto."
                 }
                 
                 setError(userMessage);
@@ -108,7 +104,7 @@ function MultiplayerLobbyContent() {
               unsubscribe();
             }
         };
-    }, [authLoading, user?.uid, roomId, router]);
+    }, [authLoading, user?.uid, roomId, router, handleLeaveRoom]);
 
 
     if (isLoading || authLoading) {
