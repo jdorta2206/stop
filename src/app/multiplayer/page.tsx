@@ -27,9 +27,11 @@ function MultiplayerLobbyContent() {
 
     const handleLeaveRoom = useCallback(async () => {
         if (user && roomId) {
-            await removePlayerFromRoom(roomId, user.uid).catch(err => {
+            try {
+                await removePlayerFromRoom(roomId, user.uid);
+            } catch(err) {
                 console.error("Error al intentar salir de la sala:", err);
-            });
+            }
         }
         router.push('/');
     }, [user, roomId, router]);
@@ -60,10 +62,17 @@ function MultiplayerLobbyContent() {
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
                         setRoom(updatedRoom);
+                        // Ensure current user is in the player list, if not, handle error (e.g., kicked)
+                        if (!updatedRoom.players[user.uid]) {
+                           setError("Fuiste expulsado de la sala o la sala se reinició.");
+                           toast.error('Ya no estás en esta sala.');
+                           handleLeaveRoom();
+                           return;
+                        }
                         setError(null);
                     } else {
                         // La sala ya no existe, el host la eliminó, etc.
-                        setError("La sala ya no existe o fuiste expulsado.");
+                        setError("La sala ya no existe o fue eliminada.");
                         toast.error('La sala ya no existe.');
                         handleLeaveRoom();
                     }
@@ -72,18 +81,18 @@ function MultiplayerLobbyContent() {
 
             } catch (err: any) {
                 console.error("Error al unirse o suscribirse a la sala:", err);
-                // Manejo de errores más específico
                 let userMessage = "No se pudo entrar a la sala.";
                 if (err.message.includes('permission-denied') || err.message.includes('Missing or insufficient permissions')) {
                     userMessage = "No tienes permiso para unirte a esta sala o la sala no existe.";
                 } else if (err.message.includes("La sala está llena")) {
                     userMessage = "La sala está llena. No puedes unirte.";
+                } else {
+                    userMessage = err.message;
                 }
                 
                 setError(userMessage);
                 toast.error(userMessage);
                 setIsLoading(false);
-                // No redirigir inmediatamente para que el usuario pueda leer el mensaje
             }
         };
 
@@ -92,8 +101,9 @@ function MultiplayerLobbyContent() {
         // Limpieza: Cuando el componente se desmonta (usuario navega fuera, cierra la pestaña)
         return () => {
             unsubscribe();
-            // No eliminamos al jugador aquí, porque podría ser una recarga de página.
-            // La lógica para manejar jugadores offline debería estar en otro lugar (ej. funciones de presencia de Firebase)
+            // The handleLeaveRoom function is called explicitly by the user via a button.
+            // Automatically removing the player on component unmount can be problematic
+            // with page reloads. A better presence system would use Firestore's presence features.
         };
     }, [authLoading, user?.uid, roomId, router, handleLeaveRoom]);
 
@@ -103,7 +113,7 @@ function MultiplayerLobbyContent() {
             <div className="flex flex-col h-screen items-center justify-center bg-background text-center">
                 <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
                 <p className="text-lg">Entrando a la sala...</p>
-                <p className="text-sm text-muted-foreground mt-2">Asegúrate de tener permiso para unirte.</p>
+                <p className="text-sm text-muted-foreground mt-2">Asegúrate de que el código sea correcto.</p>
             </div>
         );
     }

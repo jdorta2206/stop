@@ -81,7 +81,6 @@ const db = initializeFirebase().firestore;
 
 export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutput> {
   const { creatorId, creatorName, creatorAvatar } = input;
-  const roomsCollection = collection(db, 'rooms');
 
   if (!creatorId) {
     throw new Error('User is not authenticated.');
@@ -103,8 +102,6 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
     isHost: true,
   };
   
-  const gameScores: Record<string, number> = { [creatorId]: 0 };
-
   const newRoomData: Omit<Room, 'id'> = {
       players: { [creatorId]: hostPlayer },
       hostId: creatorId,
@@ -116,7 +113,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
         isPrivate: true,
         language: 'es',
       },
-      gameScores: gameScores,
+      gameScores: { [creatorId]: 0 },
       roundNumber: 0,
   };
 
@@ -128,28 +125,26 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
 }
 
 export const getRoom = async (roomId: string): Promise<Room | null> => {
-    const roomsCollection = collection(db, 'rooms');
     if (!roomId) return null;
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     const docSnap = await getDoc(roomDocRef);
     return docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as Room : null;
 };
 
 export const addPlayerToRoom = async (roomId: string, playerId: string, playerName: string, playerAvatar: string | null): Promise<void> => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
 
     await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomDocRef);
         if (!roomSnap.exists()) {
-            throw new Error("La sala no existe.");
+            throw new Error("La sala no existe o el código es incorrecto.");
         }
 
         const room = roomSnap.data() as Room;
         const playerPath = `players.${playerId}`;
         const finalPlayerName = playerName || 'Jugador Anónimo';
         
-        let finalPlayerAvatar = playerAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalPlayerName)}`;
+        const finalPlayerAvatar = playerAvatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(finalPlayerName)}`;
 
 
         if (room.players && room.players[playerId]) {
@@ -159,7 +154,6 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 [`${playerPath}.name`]: finalPlayerName,
                 [`${playerPath}.avatar`]: finalPlayerAvatar,
             };
-            // If the player joining is the host, ensure their host status is preserved.
             if(room.hostId === playerId){
                 updates[`${playerPath}.isHost`] = true;
             }
@@ -167,7 +161,7 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
         } else {
             // New player joining
             if (Object.keys(room.players || {}).length >= room.settings.maxPlayers) {
-                throw new Error("La sala está llena.");
+                throw new Error("La sala está llena. No puedes unirte.");
             }
             const newPlayer: Player = {
                 id: playerId,
@@ -176,21 +170,18 @@ export const addPlayerToRoom = async (roomId: string, playerId: string, playerNa
                 isReady: false,
                 status: 'online',
                 joinedAt: serverTimestamp(),
-                isHost: false, // A new player joining is never the host initially
+                isHost: false,
             };
             transaction.update(roomDocRef, { 
                 [playerPath]: newPlayer,
-                [`gameScores.${playerId}`]: 0 // Initialize score for new player
+                [`gameScores.${playerId}`]: 0 
             });
         }
     });
 };
 
 export const removePlayerFromRoom = async (roomId: string, playerId: string): Promise<void> => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
-    const room = await getRoom(roomId);
-    if (!room) return;
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
 
     await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomDocRef);
@@ -202,22 +193,18 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
         const playerPath = `players.${playerId}`;
         const gameScorePath = `gameScores.${playerId}`;
         
-        // Prepare updates to remove player data
         const updates: { [key: string]: any } = {
             [playerPath]: deleteField(),
             [gameScorePath]: deleteField(),
         };
 
-        // If the player leaving is the host, assign a new host
         if (currentRoom.hostId === playerId) {
             const otherPlayers = Object.keys(currentRoom.players).filter(id => id !== playerId);
             if (otherPlayers.length > 0) {
-                const newHostId = otherPlayers[0]; // Assign the first player in the list as the new host
+                const newHostId = otherPlayers.sort((a, b) => currentRoom.players[a].joinedAt - currentRoom.players[b].joinedAt)[0];
                 updates['hostId'] = newHostId;
                 updates[`players.${newHostId}.isHost`] = true;
             } else {
-                // If no players are left, maybe the room should be deleted or marked as inactive
-                // For now, just remove the host
                 updates['hostId'] = null; 
             }
         }
@@ -228,34 +215,20 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
 
 
 export const updatePlayerInRoom = async (roomId: string, playerId: string, data: Partial<Player>): Promise<void> => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     const updateData: Record<string, any> = {};
-    if (typeof data === 'object' && data !== null) {
-      for (const key in data) {
-          if(Object.prototype.hasOwnProperty.call(data, key)){
-              const typedKey = key as keyof Player;
-              // Ensure avatar is always a string
-              if(typedKey === 'avatar' && !data[typedKey]){
-                  continue; // Do not update avatar to null or undefined
-              }
-              updateData[`players.${playerId}.${typedKey}`] = data[typedKey];
-          }
-      }
+    for (const key in data) {
+        if(Object.prototype.hasOwnProperty.call(data, key)){
+            updateData[`players.${playerId}.${key as keyof Player}`] = data[key as keyof Player];
+        }
     }
     
-    const docSnap = await getDoc(roomDocRef);
-    if (docSnap.exists()) {
-        await updateDoc(roomDocRef, updateData);
-    } else {
-        console.warn(`Attempted to update player in a room that does not exist: ${roomId}`);
-    }
+    await updateDoc(roomDocRef, updateData);
 };
 
 
 export const updateRoomSettings = async (roomId: string, settings: Partial<Room['settings']>): Promise<void> => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     const updateData: Record<string, any> = {};
      for (const key in settings) {
         updateData[`settings.${key}`] = settings[key as keyof typeof settings];
@@ -263,9 +236,8 @@ export const updateRoomSettings = async (roomId: string, settings: Partial<Room[
     await updateDoc(roomDocRef, updateData);
 };
 
-export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void) => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void): (() => void) => {
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     return onSnapshot(roomDocRef, (doc) => {
         callback(doc.exists() ? { id: doc.id, ...doc.data() } as Room : null);
     });
@@ -274,8 +246,7 @@ export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => vo
 // GAME LOGIC FUNCTIONS
 
 export const startGame = async (roomId: string) => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     const room = await getRoom(roomId);
     if (!room) return;
     
@@ -287,45 +258,48 @@ export const startGame = async (roomId: string) => {
 
     await updateDoc(roomDocRef, {
         status: 'playing',
-        roundNumber: 1,
+        roundNumber: 0,
         gameScores: initialScores,
+        gameState: 'SPINNING', // Start directly with spinning
     });
-    // Start the first round after a short delay
-    await startNextRound(roomId);
 };
 
 export const startNextRound = async (roomId: string) => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
-    const room = await getRoom(roomId);
-    if (!room) return;
-
-    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-
-    const playerIds = Object.keys(room.players);
-    const initialResponses: PlayerResponses = {};
-    playerIds.forEach(id => {
-      initialResponses[id] = {};
-    });
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
 
     await updateDoc(roomDocRef, {
-        gameState: 'PLAYING',
-        currentLetter: letter,
-        playerResponses: initialResponses,
+        gameState: 'SPINNING',
+        playerResponses: {},
         roundResults: null,
-        roundStartedAt: serverTimestamp(),
-        roundNumber: (room.roundNumber || 0) + 1,
-        status: 'playing'
     });
 }
 
+export const spinWheelAndStartRound = async (roomId: string): Promise<void> => {
+    const roomDocRef = doc(db, 'rooms', roomId.toUpperCase());
+    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+
+    await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomDocRef);
+        if (!roomSnap.exists()) {
+            throw new Error("Room does not exist.");
+        }
+        const room = roomSnap.data() as Room;
+
+        transaction.update(roomDocRef, {
+            gameState: 'PLAYING',
+            currentLetter: letter,
+            roundStartedAt: serverTimestamp(),
+            roundNumber: (room.roundNumber || 0) + 1,
+            playerResponses: {},
+            roundResults: null,
+        });
+    });
+};
+
 export const submitPlayerAnswers = async (roomId: string, playerId: string, answers: PlayerResponseSet) => {
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
-    // Use dot notation for nested fields for atomic updates
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
     const updatePayload: { [key: string]: any } = {};
     for (const category in answers) {
-        // This ensures we are setting a field within the player's response object
         updatePayload[`playerResponses.${playerId}.${category}`] = answers[category];
     }
     await updateDoc(roomDocRef, updatePayload);
@@ -333,39 +307,42 @@ export const submitPlayerAnswers = async (roomId: string, playerId: string, answ
 
 
 export const triggerGlobalStop = async (roomId: string) => {
-    const room = await getRoom(roomId);
-    if(room?.gameState === 'PLAYING') {
-      const roomsCollection = collection(db, 'rooms');
-      const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
-      await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
-      await evaluateRoundForRoom(roomId);
-    }
+    const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
+    await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomDocRef);
+        if (!roomSnap.exists()) return;
+        const room = roomSnap.data() as Room;
+        if (room.gameState === 'PLAYING') {
+            transaction.update(roomDocRef, { gameState: 'EVALUATING' });
+        }
+    });
+    // Evaluation is now a separate step, triggered by the state change
+    await evaluateRoundForRoom(roomId);
 };
 
 export const evaluateRoundForRoom = async (roomId: string) => {
-    const room = await getRoom(roomId.toUpperCase());
-    if (!room || !room.currentLetter || !room.players) {
-        throw new Error("Room data is incomplete for evaluation.");
-    }
-    
-    const roomsCollection = collection(db, 'rooms');
-    const roomDocRef = doc(roomsCollection, roomId.toUpperCase());
-    await updateDoc(roomDocRef, { gameState: 'EVALUATING' });
+    const roomDocRef = doc(db, 'rooms', roomId.toUpperCase());
 
-    const allPlayerIds = Object.keys(room.players);
-    const allWordsByCategory: Record<string, string[]> = {};
-    
-    // 1. Collect all valid words from all players
-    for (const playerId of allPlayerIds) {
-        const playerAnswers = room.playerResponses?.[playerId] || {};
-        const categories = Object.keys(playerAnswers);
+    await runTransaction(db, async (transaction) => {
+        const roomSnap = await transaction.get(roomDocRef);
+        if (!roomSnap.exists()) {
+            throw new Error("Room data is incomplete for evaluation.");
+        }
+        const room = roomSnap.data() as Room;
 
-        for (const category of categories) {
-            const word = playerAnswers[category]?.trim().toLowerCase();
-            if (word) {
-                // Simplified validation: just check if it starts with the letter
-                // A full implementation would use a dictionary or an AI call here
-                if (word.startsWith(room.currentLetter.toLowerCase())) {
+        if (!room.currentLetter || !room.players || !room.playerResponses) {
+             transaction.update(roomDocRef, { gameState: 'RESULTS', roundResults: {}, gameScores: room.gameScores || {} });
+             return;
+        }
+
+        const allPlayerIds = Object.keys(room.players);
+        const allWordsByCategory: Record<string, string[]> = {};
+        
+        for (const playerId of allPlayerIds) {
+            const playerAnswers = room.playerResponses[playerId] || {};
+            for (const category in playerAnswers) {
+                const word = playerAnswers[category]?.trim().toLowerCase();
+                if (word && word.startsWith(room.currentLetter.toLowerCase())) {
                     if (!allWordsByCategory[category]) {
                         allWordsByCategory[category] = [];
                     }
@@ -373,67 +350,42 @@ export const evaluateRoundForRoom = async (roomId: string) => {
                 }
             }
         }
-    }
-    
-    // 2. Calculate scores
-    const finalResults: RoundResults = {};
-    const roundScores: Record<string, number> = {};
-    const newGameScores: Record<string, number> = room.gameScores || {};
+        
+        const finalResults: RoundResults = {};
+        const roundScores: Record<string, number> = {};
+        const newGameScores = { ...(room.gameScores || {}) };
 
-    for (const playerId of allPlayerIds) {
-        finalResults[playerId] = {};
-        roundScores[playerId] = 0;
-        const playerAnswers = room.playerResponses?.[playerId] || {};
-        const categories = Object.keys(playerAnswers);
+        for (const playerId of allPlayerIds) {
+            finalResults[playerId] = {};
+            roundScores[playerId] = 0;
+            const playerAnswers = room.playerResponses[playerId] || {};
+            const categories = Object.keys(room.playerResponses[allPlayerIds[0]] || {});
 
-        for (const category of categories) {
-            const word = playerAnswers[category]?.trim().toLowerCase() || '';
-            let score = 0;
-            let isValid = false;
 
-            if (word && word.startsWith(room.currentLetter.toLowerCase())) {
-                 const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
-                 if(wordOccurrences > 0) { // Should be at least 1 if submitted
-                    isValid = true;
-                    if (wordOccurrences === 1) {
-                        score = 10; // Unique word
-                    } else {
-                        score = 5; // Repeated word
-                    }
-                 }
+            for (const category of categories) {
+                const word = playerAnswers[category]?.trim().toLowerCase() || '';
+                let score = 0;
+                let isValid = false;
+
+                if (word && word.startsWith(room.currentLetter.toLowerCase())) {
+                     const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
+                     if(wordOccurrences > 0) {
+                        isValid = true; // Simplified validation
+                        score = (wordOccurrences === 1) ? 10 : 5;
+                     }
+                }
+                finalResults[playerId][category] = { response: playerAnswers[category] || '', score, isValid };
+                roundScores[playerId] += score;
             }
-
-            finalResults[playerId][category] = { response: playerAnswers[category] || '', score, isValid };
-            roundScores[playerId] += score;
+            newGameScores[playerId] = (newGameScores[playerId] || 0) + roundScores[playerId];
         }
-        newGameScores[playerId] = (newGameScores[playerId] || 0) + roundScores[playerId];
-    }
-    
-    // 3. Save results to Firestore and update game state
-    await updateDoc(roomDocRef, { 
-        roundResults: finalResults,
-        gameScores: newGameScores,
-        gameState: 'RESULTS'
-    });
-
-    // 4. Save individual game results for player history (optional but good for stats)
-    for (const playerId of allPlayerIds) {
-        const playerInfo = room.players[playerId];
-        const playerRoundScore = roundScores[playerId] || 0;
-        const won = playerRoundScore > 0 && playerRoundScore === Math.max(...Object.values(roundScores));
-
-        await rankingManager.saveGameResult({
-            playerId,
-            playerName: playerInfo.name,
-            photoURL: playerInfo.avatar,
-            score: playerRoundScore,
-            categories: room.playerResponses?.[playerId] || {},
-            letter: room.currentLetter,
-            gameMode: 'private',
-            roomId: roomId,
-            won
+        
+        transaction.update(roomDocRef, { 
+            roundResults: finalResults,
+            gameScores: newGameScores,
+            gameState: 'RESULTS'
         });
-    }
+    });
 };
 
 // CHAT FUNCTIONS

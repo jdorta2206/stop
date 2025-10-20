@@ -5,6 +5,8 @@ import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
 import type { Language } from '../../../contexts/language-context';
 import { cn } from '../../../lib/utils';
+import { useUser } from '../../../firebase';
+import { usePathname } from 'next/navigation';
 
 interface RouletteWheelProps {
   onSpinComplete: (letter: string) => void;
@@ -21,10 +23,10 @@ const ROULETTE_TEXTS = {
     pt: "Rodando por uma Letra!" 
   },
   description: { 
-    es: "Prepárate...", 
-    en: "Get ready...", 
-    fr: "Préparez-vous...", 
-    pt: "Prepare-se..." 
+    es: "El anfitrión está eligiendo la letra...", 
+    en: "The host is choosing the letter...", 
+    fr: "L'hôte choisit la lettre...", 
+    pt: "O anfitrião está escolhendo a letra..." 
   },
   spinningStatus: { 
     es: "Girando...", 
@@ -41,7 +43,6 @@ const ROULETTE_TEXTS = {
 };
 
 export function RouletteWheel({ onSpinComplete, alphabet, language, className }: RouletteWheelProps) {
-  const [isAnimating, setIsAnimating] = useState(true);
   const [displayLetter, setDisplayLetter] = useState<string>('?');
   const wheelRef = useRef<HTMLDivElement>(null);
   
@@ -50,46 +51,62 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
   };
   
   useEffect(() => {
-    if (alphabet.length > 0) {
+    if (alphabet.length === 0) return;
 
-        const wheel = wheelRef.current;
-        if (!wheel) return;
+    const wheel = wheelRef.current;
+    if (!wheel) return;
 
-        // Reset transform for re-spins
-        wheel.style.transition = 'none';
-        wheel.style.transform = 'rotate(0deg)';
+    let letterAnimationInterval: NodeJS.Timeout | undefined;
 
-        // Force reflow
-        void wheel.offsetWidth;
+    const startSpinningAnimation = () => {
+      // Animate letters in the center
+      letterAnimationInterval = setInterval(() => {
+          const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+          setDisplayLetter(randomLetter);
+      }, 80);
+    };
 
-        const targetIndex = Math.floor(Math.random() * alphabet.length);
-        const finalLetter = alphabet[targetIndex];
+    const stopSpinningAndShowResult = (finalLetter: string) => {
+        clearInterval(letterAnimationInterval);
+        const targetIndex = alphabet.indexOf(finalLetter);
+        if (targetIndex === -1) {
+            setDisplayLetter(finalLetter); // Fallback if letter not in alphabet
+            return;
+        }
 
         const segmentAngle = 360 / alphabet.length;
-        const targetAngle = 360 * 5 - (targetIndex * segmentAngle + segmentAngle / 2);
+        const currentRotation = parseFloat(wheel.style.transform.replace('rotate(', '').replace('deg)', '')) || 0;
+        const revolutions = Math.floor(currentRotation / 360) + 5; // Add more revolutions
+        const targetAngle = revolutions * 360 - (targetIndex * segmentAngle + segmentAngle / 2);
 
         wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.2, 1)';
         wheel.style.transform = `rotate(${targetAngle}deg)`;
 
-        // Animate letters in the center
-        const letterAnimationInterval = setInterval(() => {
-            const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
-            setDisplayLetter(randomLetter);
-        }, 80);
-
-
         setTimeout(() => {
-            clearInterval(letterAnimationInterval);
             setDisplayLetter(finalLetter);
-            
-            // Wait a moment on the final letter before completing
             setTimeout(() => {
-              setIsAnimating(false);
               onSpinComplete(finalLetter);
             }, 1000);
-            
-        }, 4000); // Stop letter animation at the same time the wheel stops
-    }
+        }, 4000);
+    };
+    
+    // The host will trigger the onSpinComplete which will then trigger the actual spin for everyone
+    // In this simplified version, we just simulate the spin.
+    startSpinningAnimation();
+    
+    // In a real scenario, the host would call a function that determines the letter
+    // and then `onSpinComplete` would be called for all clients with that letter.
+    // Let's simulate that the host calls `onSpinComplete` after a delay.
+    const spinTimeout = setTimeout(() => {
+        const finalLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+        stopSpinningAndShowResult(finalLetter);
+    }, 1000);
+
+
+    return () => {
+        clearInterval(letterAnimationInterval);
+        clearTimeout(spinTimeout);
+    };
   }, [alphabet, onSpinComplete]);
 
   return (
@@ -106,7 +123,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
         <div 
           className="relative my-4 w-56 h-56 md:w-64 md:h-64 flex items-center justify-center mx-auto"
           aria-label={translate('ariaLabel')}
-          aria-busy={isAnimating}
+          aria-busy={true}
         >
           <div className="absolute top-[-10px] left-1/2 -translate-x-1/2 z-10" style={{
               width: 0,
@@ -160,14 +177,10 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
           </div>
         </div>
 
-        {isAnimating && (
-          <p className="text-white/90 mt-4 font-semibold">
-            {translate('spinningStatus')}
-          </p>
-        )}
+        <p className="text-white/90 mt-4 font-semibold">
+          {translate('spinningStatus')}
+        </p>
       </CardContent>
     </Card>
   );
 }
-
-    

@@ -26,6 +26,7 @@ import {
     submitPlayerAnswers,
     triggerGlobalStop,
     startNextRound,
+    spinWheelAndStartRound,
     type Player, 
     type Room 
 } from '../../lib/room-service';
@@ -124,9 +125,10 @@ export default function EnhancedRoomManager({
 
   useEffect(() => {
     if (room.gameState === 'PLAYING' && room.roundStartedAt) {
-      // room.roundStartedAt could be a Firebase Timestamp. Convert it to milliseconds.
       const startTime = room.roundStartedAt.toMillis ? room.roundStartedAt.toMillis() : new Date(room.roundStartedAt).getTime();
-      const now = Date.now();
+      const serverTimeOffset = (serverTimestamp() as any)._methodName === 'serverTimestamp' ? 0 : (serverTimestamp() as any).seconds * 1000 - Date.now();
+      const now = Date.now() + serverTimeOffset;
+
       const elapsed = Math.floor((now - startTime) / 1000);
       const remaining = Math.max(0, room.settings.roundDuration - elapsed);
       setTimeLeft(remaining);
@@ -140,8 +142,7 @@ export default function EnhancedRoomManager({
         setTimeLeft(prev => {
             const newTime = prev - 1;
             if (newTime <= 0) {
-                // Only the host should automatically trigger the end of the round.
-                if(isHost) triggerGlobalStop(roomId);
+                if(isHost) triggerGlobalStop(roomId).catch(console.error);
                 return 0;
             }
             return newTime;
@@ -191,6 +192,17 @@ export default function EnhancedRoomManager({
        toast.error(`No se pudo detener la ronda: ${(error as Error).message}`);
     }
   };
+  
+  const handleSpinComplete = async (letter: string) => {
+    if (isHost) {
+      try {
+        await spinWheelAndStartRound(roomId);
+      } catch (error) {
+        toast.error("No se pudo iniciar la ronda.");
+        console.error(error);
+      }
+    }
+  }
 
   const handleMultiplayerInputChange = async (category: string, value: string) => {
      try {
@@ -249,7 +261,7 @@ export default function EnhancedRoomManager({
   if (room.status === 'playing' && room.gameState) {
       switch (room.gameState) {
           case 'SPINNING':
-              return <RouletteWheel alphabet={alphabet} language={room.settings.language} onSpinComplete={() => {}} />;
+              return <RouletteWheel alphabet={alphabet} language={room.settings.language} onSpinComplete={handleSpinComplete} />;
           case 'PLAYING':
               return (
                   <GameArea
@@ -294,7 +306,6 @@ export default function EnhancedRoomManager({
   // --- VISTA DEL LOBBY (SI NO SE ESTÁ JUGANDO o ESTÁ EN 'waiting') ---
   return (
     <div className="w-full max-w-2xl mx-auto bg-card/80 text-white rounded-2xl shadow-2xl p-6 backdrop-blur-lg border border-red-400/30">
-      {/* Header */}
       <div className="text-center mb-6 pb-4 border-b border-white/20">
           <h1 className="text-2xl font-bold mb-2 text-yellow-400">Sala Privada</h1>
           <h2 className="text-4xl font-bold tracking-widest bg-white/10 px-4 py-2 rounded-lg inline-block font-mono text-green-400">
@@ -307,7 +318,6 @@ export default function EnhancedRoomManager({
           </div>
       </div>
       
-      {/* Players Section */}
       <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
               <Users size={20} /> Jugadores en la Sala
@@ -338,7 +348,6 @@ export default function EnhancedRoomManager({
           </div>
       </div>
 
-      {/* Friends Invite Section */}
       <div className="bg-white/5 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
               <UserPlus size={20}/> Invitar Amigos del Juego
@@ -378,7 +387,6 @@ export default function EnhancedRoomManager({
           </div>
       </div>
 
-      {/* Share Link Section */}
       <div className="bg-white/5 rounded-lg p-5 mb-6">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-yellow-400">
               <Send size={20}/> Compartir Enlace de Invitación
@@ -405,7 +413,6 @@ export default function EnhancedRoomManager({
           </div>
       </div>
 
-      {/* Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Button
               onClick={handleToggleReady}
