@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '../../firebase';
 import { Loader2 } from 'lucide-react';
@@ -9,8 +9,9 @@ import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import EnhancedRoomManager from '../../components/game/EnhancedRoomManager';
 import { useLanguage } from '../../contexts/language-context';
-import { onRoomUpdate, addPlayerToRoom, type Room, removePlayerFromRoom } from '../../lib/room-service';
+import { onRoomUpdate, addPlayerToRoom, removePlayerFromRoom, type Room } from '../../lib/room-service';
 import { toast } from 'sonner';
+import { Button } from '../../components/ui/button';
 
 function MultiplayerLobbyContent() {
     const router = useRouter();
@@ -24,12 +25,14 @@ function MultiplayerLobbyContent() {
 
     const roomId = searchParams ? searchParams.get('roomId') : null;
 
-    const handleLeaveRoom = () => {
-        if(user && roomId) {
-            removePlayerFromRoom(roomId, user.uid);
+    const handleLeaveRoom = useCallback(async () => {
+        if (user && roomId) {
+            await removePlayerFromRoom(roomId, user.uid).catch(err => {
+                console.error("Error al intentar salir de la sala:", err);
+            });
         }
         router.push('/');
-    };
+    }, [user, roomId, router]);
 
     useEffect(() => {
         if (authLoading) return;
@@ -45,47 +48,74 @@ function MultiplayerLobbyContent() {
             return;
         }
 
+        setIsLoading(true);
         let unsubscribe: () => void = () => {};
 
         const joinAndListen = async () => {
             try {
+                // Primero intenta unirte a la sala. Esto fallará si las reglas de seguridad te lo impiden
                 await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador Anónimo', user.photoURL || null);
 
+                // Si unirse fue exitoso, suscríbete a las actualizaciones en tiempo real
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
                         setRoom(updatedRoom);
                         setError(null);
                     } else {
-                        setError("La sala ya no existe o no se pudo cargar.");
+                        // La sala ya no existe, el host la eliminó, etc.
+                        setError("La sala ya no existe o fuiste expulsado.");
                         toast.error('La sala ya no existe.');
                         handleLeaveRoom();
                     }
                     setIsLoading(false);
                 });
-            } catch (err) {
-                console.error("Error joining or listening to room:", err);
-                const errorMessage = (err as Error).message;
-                setError(errorMessage);
-                toast.error(errorMessage, { description: 'Error al unirse' });
+
+            } catch (err: any) {
+                console.error("Error al unirse o suscribirse a la sala:", err);
+                // Manejo de errores más específico
+                let userMessage = "No se pudo entrar a la sala.";
+                if (err.message.includes('permission-denied') || err.message.includes('Missing or insufficient permissions')) {
+                    userMessage = "No tienes permiso para unirte a esta sala o la sala no existe.";
+                } else if (err.message.includes("La sala está llena")) {
+                    userMessage = "La sala está llena. No puedes unirte.";
+                }
+                
+                setError(userMessage);
+                toast.error(userMessage);
                 setIsLoading(false);
-                setTimeout(() => router.push('/'), 3000);
+                // No redirigir inmediatamente para que el usuario pueda leer el mensaje
             }
         };
 
         joinAndListen();
 
+        // Limpieza: Cuando el componente se desmonta (usuario navega fuera, cierra la pestaña)
         return () => {
             unsubscribe();
+            // No eliminamos al jugador aquí, porque podría ser una recarga de página.
+            // La lógica para manejar jugadores offline debería estar en otro lugar (ej. funciones de presencia de Firebase)
         };
-    }, [authLoading, user?.uid, roomId, router]); // Dependency array simplified
+    }, [authLoading, user?.uid, roomId, router, handleLeaveRoom]);
+
 
     if (isLoading || authLoading) {
         return (
-            <div className="flex h-screen items-center justify-center bg-background">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                <p className="ml-4 text-lg">{error || 'Entrando a la sala...'}</p>
+            <div className="flex flex-col h-screen items-center justify-center bg-background text-center">
+                <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+                <p className="text-lg">Entrando a la sala...</p>
+                <p className="text-sm text-muted-foreground mt-2">Asegúrate de tener permiso para unirte.</p>
             </div>
         );
+    }
+    
+    if (error) {
+        return (
+             <div className="flex flex-col h-screen items-center justify-center bg-background text-center p-4">
+                <h2 className="text-2xl font-bold text-destructive mb-4">Error al unirse a la sala</h2>
+                <p className="text-lg mb-6 text-muted-foreground">{error}</p>
+                <Button onClick={() => router.push('/')} variant="outline">Volver al Inicio</Button>
+            </div>
+        )
     }
     
     if (user && room && roomId) {
@@ -105,23 +135,23 @@ function MultiplayerLobbyContent() {
         );
     }
 
-    // Fallback if room or user is missing after loading
+    // Fallback si la sala o el usuario no están disponibles después de la carga
     return (
-        <div className="flex flex-col h-screen items-center justify-center bg-background text-center">
+        <div className="flex flex-col h-screen items-center justify-center bg-background text-center p-4">
              <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
-             <p className="text-lg mb-2">{error || 'Redirigiendo...'}</p>
+             <p className="text-lg mb-2">Finalizando conexión...</p>
              <p className="text-sm text-muted-foreground">Si el problema persiste, por favor vuelve a la página de inicio.</p>
              <Button onClick={() => router.push('/')} variant="link" className="mt-4">Volver al Inicio</Button>
         </div>
     );
 }
 
-function MultiplayerLobby() {
+function MultiplayerPage() {
     return (
       <Suspense fallback={
         <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            <p className="ml-4 text-lg">Cargando...</p>
+            <p className="ml-4 text-lg">Cargando sala...</p>
         </div>
       }>
         <MultiplayerLobbyContent />
@@ -129,6 +159,4 @@ function MultiplayerLobby() {
     );
 }
 
-export default function MultiplayerPage() {
-    return <MultiplayerLobby />;
-}
+export default MultiplayerPage;

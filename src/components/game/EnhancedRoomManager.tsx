@@ -78,7 +78,7 @@ export default function EnhancedRoomManager({
   onLeaveRoom, 
 }: EnhancedRoomManagerProps) {
   const { translate, language } = useLanguage();
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(room.settings.roundDuration);
 
   const [friends, setFriends] = useState<Friend[]>([]);
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
@@ -124,7 +124,8 @@ export default function EnhancedRoomManager({
 
   useEffect(() => {
     if (room.gameState === 'PLAYING' && room.roundStartedAt) {
-      const startTime = room.roundStartedAt.toMillis();
+      // room.roundStartedAt could be a Firebase Timestamp. Convert it to milliseconds.
+      const startTime = room.roundStartedAt.toMillis ? room.roundStartedAt.toMillis() : new Date(room.roundStartedAt).getTime();
       const now = Date.now();
       const elapsed = Math.floor((now - startTime) / 1000);
       const remaining = Math.max(0, room.settings.roundDuration - elapsed);
@@ -139,6 +140,7 @@ export default function EnhancedRoomManager({
         setTimeLeft(prev => {
             const newTime = prev - 1;
             if (newTime <= 0) {
+                // Only the host should automatically trigger the end of the round.
                 if(isHost) triggerGlobalStop(roomId);
                 return 0;
             }
