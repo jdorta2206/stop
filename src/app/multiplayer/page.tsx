@@ -9,9 +9,10 @@ import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import EnhancedRoomManager from '../../components/game/EnhancedRoomManager';
 import { useLanguage } from '../../contexts/language-context';
-import { onRoomUpdate, addPlayerToRoom, removePlayerFromRoom, type Room } from '../../lib/room-service';
+import { onRoomUpdate, addPlayerToRoom, removePlayerFromRoom, type Room, getRoom } from '../../lib/room-service';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
+import type { User } from 'firebase/auth';
 
 function MultiplayerLobbyContent() {
     const router = useRouter();
@@ -49,30 +50,32 @@ function MultiplayerLobbyContent() {
             router.push('/');
             return;
         }
-
-        setIsLoading(true);
-        let unsubscribe: () => void = () => {};
-
-        const joinAndListen = async () => {
+        
+        let unsubscribe: (() => void) | null = null;
+        
+        const joinAndListen = async (currentUser: User) => {
+            setIsLoading(true);
             try {
-                // Primero intenta unirte a la sala. Esto fallará si las reglas de seguridad te lo impiden
-                await addPlayerToRoom(roomId, user.uid, user.displayName || 'Jugador Anónimo', user.photoURL || null);
-
-                // Si unirse fue exitoso, suscríbete a las actualizaciones en tiempo real
+                 const roomExists = await getRoom(roomId);
+                 if (!roomExists) {
+                     throw new Error("La sala no existe o el código es incorrecto.");
+                 }
+                
+                await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador Anónimo', currentUser.photoURL || null);
+                
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
                         setRoom(updatedRoom);
-                        // Ensure current user is in the player list, if not, handle error (e.g., kicked)
-                        if (!updatedRoom.players[user.uid]) {
-                           setError("Fuiste expulsado de la sala o la sala se reinició.");
+                        // Asegurarse de que el jugador actual no haya sido expulsado
+                        if (!updatedRoom.players[currentUser.uid]) {
+                           setError("Fuiste expulsado o la sala ya no existe.");
                            toast.error('Ya no estás en esta sala.');
                            handleLeaveRoom();
                            return;
                         }
                         setError(null);
                     } else {
-                        // La sala ya no existe, el host la eliminó, etc.
-                        setError("La sala ya no existe o fue eliminada.");
+                        setError("La sala ha sido eliminada por el anfitrión.");
                         toast.error('La sala ya no existe.');
                         handleLeaveRoom();
                     }
@@ -95,17 +98,17 @@ function MultiplayerLobbyContent() {
                 setIsLoading(false);
             }
         };
+        
+        if (user) {
+            joinAndListen(user);
+        }
 
-        joinAndListen();
-
-        // Limpieza: Cuando el componente se desmonta (usuario navega fuera, cierra la pestaña)
         return () => {
-            unsubscribe();
-            // The handleLeaveRoom function is called explicitly by the user via a button.
-            // Automatically removing the player on component unmount can be problematic
-            // with page reloads. A better presence system would use Firestore's presence features.
+            if (unsubscribe) {
+              unsubscribe();
+            }
         };
-    }, [authLoading, user?.uid, roomId, router, handleLeaveRoom]);
+    }, [authLoading, user?.uid, roomId, router]);
 
 
     if (isLoading || authLoading) {

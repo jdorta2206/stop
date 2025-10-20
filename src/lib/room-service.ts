@@ -201,10 +201,16 @@ export const removePlayerFromRoom = async (roomId: string, playerId: string): Pr
         if (currentRoom.hostId === playerId) {
             const otherPlayers = Object.keys(currentRoom.players).filter(id => id !== playerId);
             if (otherPlayers.length > 0) {
-                const newHostId = otherPlayers.sort((a, b) => currentRoom.players[a].joinedAt - currentRoom.players[b].joinedAt)[0];
+                const newHostId = otherPlayers.sort((a,b) => {
+                    const timeA = currentRoom.players[a].joinedAt?.toMillis() || 0;
+                    const timeB = currentRoom.players[b].joinedAt?.toMillis() || 0;
+                    return timeA - timeB;
+                })[0];
                 updates['hostId'] = newHostId;
                 updates[`players.${newHostId}.isHost`] = true;
             } else {
+                // If last player leaves, we could also delete the room
+                // For now, just nullify the host
                 updates['hostId'] = null; 
             }
         }
@@ -238,10 +244,15 @@ export const updateRoomSettings = async (roomId: string, settings: Partial<Room[
 
 export const onRoomUpdate = (roomId: string, callback: (room: Room | null) => void): (() => void) => {
     const roomDocRef = doc(db, "rooms", roomId.toUpperCase());
-    return onSnapshot(roomDocRef, (doc) => {
+    const unsubscribe = onSnapshot(roomDocRef, (doc) => {
         callback(doc.exists() ? { id: doc.id, ...doc.data() } as Room : null);
+    }, (error) => {
+        console.error("Error en la suscripción a la sala:", error);
+        callback(null);
     });
+    return unsubscribe;
 };
+
 
 // GAME LOGIC FUNCTIONS
 
@@ -274,9 +285,8 @@ export const startNextRound = async (roomId: string) => {
     });
 }
 
-export const spinWheelAndStartRound = async (roomId: string): Promise<void> => {
+export const spinWheelAndStartRound = async (roomId: string, letter: string): Promise<void> => {
     const roomDocRef = doc(db, 'rooms', roomId.toUpperCase());
-    const letter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
 
     await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomDocRef);
@@ -314,9 +324,10 @@ export const triggerGlobalStop = async (roomId: string) => {
         const room = roomSnap.data() as Room;
         if (room.gameState === 'PLAYING') {
             transaction.update(roomDocRef, { gameState: 'EVALUATING' });
+            // The evaluation is now triggered by this state change via a listener or separate call
         }
     });
-    // Evaluation is now a separate step, triggered by the state change
+     // After the state is set, trigger the evaluation.
     await evaluateRoundForRoom(roomId);
 };
 
@@ -338,6 +349,7 @@ export const evaluateRoundForRoom = async (roomId: string) => {
         const allPlayerIds = Object.keys(room.players);
         const allWordsByCategory: Record<string, string[]> = {};
         
+        // Populate all valid words submitted by all players
         for (const playerId of allPlayerIds) {
             const playerAnswers = room.playerResponses[playerId] || {};
             for (const category in playerAnswers) {
@@ -352,15 +364,16 @@ export const evaluateRoundForRoom = async (roomId: string) => {
         }
         
         const finalResults: RoundResults = {};
-        const roundScores: Record<string, number> = {};
         const newGameScores = { ...(room.gameScores || {}) };
 
+        // Calculate scores for each player
         for (const playerId of allPlayerIds) {
             finalResults[playerId] = {};
-            roundScores[playerId] = 0;
+            let roundScore = 0;
             const playerAnswers = room.playerResponses[playerId] || {};
+            
+            // Define categories based on one of the player's responses or a default set
             const categories = Object.keys(room.playerResponses[allPlayerIds[0]] || {});
-
 
             for (const category of categories) {
                 const word = playerAnswers[category]?.trim().toLowerCase() || '';
@@ -368,16 +381,17 @@ export const evaluateRoundForRoom = async (roomId: string) => {
                 let isValid = false;
 
                 if (word && word.startsWith(room.currentLetter.toLowerCase())) {
+                     // Very basic validation for now, just checking existence
                      const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
                      if(wordOccurrences > 0) {
-                        isValid = true; // Simplified validation
-                        score = (wordOccurrences === 1) ? 10 : 5;
+                        isValid = true;
+                        score = (wordOccurrences === 1) ? 10 : 5; // 10 if unique, 5 if repeated
                      }
                 }
                 finalResults[playerId][category] = { response: playerAnswers[category] || '', score, isValid };
-                roundScores[playerId] += score;
+                roundScore += score;
             }
-            newGameScores[playerId] = (newGameScores[playerId] || 0) + roundScores[playerId];
+            newGameScores[playerId] = (newGameScores[playerId] || 0) + roundScore;
         }
         
         transaction.update(roomDocRef, { 
@@ -415,5 +429,3 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
-
-    

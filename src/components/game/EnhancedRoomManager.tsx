@@ -35,6 +35,7 @@ import { MultiplayerResultsArea } from './components/multiplayer-results-area';
 import { useLanguage } from '../../contexts/language-context';
 import { RouletteWheel } from './components/roulette-wheel';
 import { getFriends, sendChallengeNotification, type Friend } from '../../lib/friends-service';
+import { Timestamp } from 'firebase/firestore';
 
 const CATEGORIES_BY_LANG: Record<string, string[]> = {
   es: ["Nombre", "Lugar", "Animal", "Objeto", "Color", "Fruta", "Marca"],
@@ -125,13 +126,16 @@ export default function EnhancedRoomManager({
 
   useEffect(() => {
     if (room.gameState === 'PLAYING' && room.roundStartedAt) {
-      const startTime = room.roundStartedAt.toMillis ? room.roundStartedAt.toMillis() : new Date(room.roundStartedAt).getTime();
-      const serverTimeOffset = (serverTimestamp() as any)._methodName === 'serverTimestamp' ? 0 : (serverTimestamp() as any).seconds * 1000 - Date.now();
-      const now = Date.now() + serverTimeOffset;
+        // Asegurarse que roundStartedAt es un objeto Timestamp de Firebase
+        const startTime = room.roundStartedAt instanceof Timestamp
+            ? room.roundStartedAt.toMillis()
+            : new Date(room.roundStartedAt).getTime();
 
-      const elapsed = Math.floor((now - startTime) / 1000);
-      const remaining = Math.max(0, room.settings.roundDuration - elapsed);
-      setTimeLeft(remaining);
+        const serverNow = Timestamp.now().toMillis();
+        const elapsed = Math.floor((serverNow - startTime) / 1000);
+        
+        const remaining = Math.max(0, room.settings.roundDuration - elapsed);
+        setTimeLeft(remaining);
     }
   }, [room.gameState, room.roundStartedAt, room.settings.roundDuration]);
   
@@ -194,9 +198,10 @@ export default function EnhancedRoomManager({
   };
   
   const handleSpinComplete = async (letter: string) => {
+    // La ruleta es solo visual para los no-hosts. El host es el único que realmente inicia la ronda.
     if (isHost) {
       try {
-        await spinWheelAndStartRound(roomId);
+        await spinWheelAndStartRound(roomId, letter);
       } catch (error) {
         toast.error("No se pudo iniciar la ronda.");
         console.error(error);
