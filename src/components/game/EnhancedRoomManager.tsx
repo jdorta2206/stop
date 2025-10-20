@@ -367,10 +367,10 @@ export default function EnhancedRoomManager({
                               size="sm"
                               variant={invitedFriends.has(friend.id) ? "secondary" : (errorFriends.has(friend.id) ? "destructive" : "default")}
                               onClick={() => handleInviteFriend(friend)}
-                              disabled={invitedFriends.has(friend.id) || errorFriends.has(friend.id)}
+                              disabled={invitedFriends.has(friend.id)}
                               className={`w-28 transition-colors duration-300 ${invitedFriends.has(friend.id) ? "bg-yellow-500 text-black hover:bg-yellow-600" : errorFriends.has(friend.id) ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}`}
                           >
-                              {invitedFriends.has(friend.id) ? 'Invitado' : errorFriends.has(friend.id) ? 'Error' : 'Invitar'}
+                              {invitedFriends.has(friend.id) ? 'Invitado' : errorFriends.has(friend.id) ? 'Reintentar' : 'Invitar'}
                           </Button>
                       </div>
                   )) : <p className="text-center text-sm text-white/60 py-4">No se encontraron amigos.</p>

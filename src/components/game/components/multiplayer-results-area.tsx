@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 import { Crown, Loader2, Trophy, RotateCcw, LogOut } from 'lucide-react';
-import type { Room, Player } from '../../../lib/room-service';
+import type { Room } from '../../../lib/room-service';
 import { useLanguage } from '../../../contexts/language-context';
 
 interface MultiplayerResultsAreaProps {
@@ -35,7 +35,11 @@ export function MultiplayerResultsArea({ room, currentUserId, isHost, onNextRoun
   // Calculate round scores
   const roundScores: Record<string, number> = {};
   players.forEach(p => {
-    roundScores[p.id] = Object.values(roundResults[p.id] || {}).reduce((sum, catResult) => sum + catResult.score, 0);
+    if(roundResults[p.id]) {
+      roundScores[p.id] = Object.values(roundResults[p.id]).reduce((sum, catResult) => sum + catResult.score, 0);
+    } else {
+      roundScores[p.id] = 0;
+    }
   });
   
   const sortedPlayers = [...players].sort((a, b) => (room.gameScores?.[b.id] || 0) - (room.gameScores?.[a.id] || 0));

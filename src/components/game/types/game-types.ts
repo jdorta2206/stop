@@ -1,7 +1,7 @@
 
 export type GameState = 'IDLE' | 'SPINNING' | 'PLAYING' | 'EVALUATING' | 'RESULTS';
 
-export type GameMode = 'solo' | 'multiplayer';
+export type GameMode = 'solo' | 'multiplayer' | 'private';
 
 export type LanguageCode = 'en' | 'es' | 'fr' | 'pt';
 
@@ -25,5 +25,3 @@ export type SinglePlayerRoundResults = Record<string, ResultDetail>;
 // Represents the results of ALL players for a round, keyed by player ID.
 // e.g., { "player1_id": { "CategoryA": { ... } }, "player2_id": { "CategoryA": { ... } } }
 export type RoundResults = Record<string, SinglePlayerRoundResults>;
-
-    

@@ -1,454 +1,138 @@
+
 {
   "entities": {
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
       "description": "Represents a user of the Global Stop game.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user."
-        },
-        "username": {
-          "type": "string",
-          "description": "The user's chosen username."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "profilePictureUrl": {
-          "type": "string",
-          "description": "URL to the user's profile picture.",
-          "format": "uri"
-        },
-        "registrationDate": {
-          "type": "string",
-          "description": "Date and time when the user registered.",
-          "format": "date-time"
-        },
-        "lastLogin": {
-          "type": "string",
-          "description": "Date and time of the user's last login.",
-          "format": "date-time"
-        },
-        "googleId": {
-          "type": "string",
-          "description": "User ID from Google OAuth, if the user registered with Google."
-        },
-        "facebookId": {
-          "type": "string",
-          "description": "User ID from Facebook OAuth, if the user registered with Facebook."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the user (Firebase Auth UID)." },
+        "displayName": { "type": "string", "description": "The user's public display name." },
+        "photoURL": { "type": "string", "description": "URL to the user's profile picture.", "format": "uri" },
+        "email": { "type": "string", "description": "The user's email address.", "format": "email" }
       },
-      "required": [
-        "id",
-        "username",
-        "email",
-        "registrationDate"
-      ]
+      "required": ["id", "displayName"]
     },
-    "GameSession": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GameSession",
-      "type": "object",
-      "description": "Represents a single game session of Global Stop.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the game session."
+    "Player": {
+        "title": "Player",
+        "type": "object",
+        "description": "Represents a player within a game room.",
+        "properties": {
+            "id": { "type": "string", "description": "The player's unique ID (matches Firebase Auth UID)." },
+            "name": { "type": "string", "description": "The player's display name." },
+            "avatar": { "type": "string", "description": "URL to the player's avatar." },
+            "isReady": { "type": "boolean", "description": "Indicates if the player is ready to start." },
+            "status": { "type": "string", "enum": ["online", "away", "offline"], "description": "Player's connection status." },
+            "joinedAt": { "type": "string", "format": "date-time", "description": "Timestamp when the player joined." },
+            "isHost": { "type": "boolean", "description": "Indicates if the player is the host of the room." }
         },
-        "startTime": {
-          "type": "string",
-          "description": "Date and time when the game session started.",
-          "format": "date-time"
-        },
-        "endTime": {
-          "type": "string",
-          "description": "Date and time when the game session ended.",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the game session (e.g., 'in progress', 'completed')."
-        },
-        "hostUserId": {
-          "type": "string",
-          "description": "Reference to User who hosted the game. (Relationship: User 1:N GameSession)"
-        }
-      },
-      "required": [
-        "id",
-        "startTime",
-        "status",
-        "hostUserId"
-      ]
+        "required": ["id", "name", "avatar", "isReady", "status", "isHost"]
     },
-    "Round": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Round",
-      "type": "object",
-      "description": "Represents a single round within a GameSession.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the round."
+    "Room": {
+        "title": "Room",
+        "type": "object",
+        "description": "Represents a multiplayer game room.",
+        "properties": {
+            "hostId": { "type": "string", "description": "The UID of the user hosting the room." },
+            "status": { "type": "string", "enum": ["waiting", "playing", "finished"], "description": "The current status of the room." },
+            "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the room was created." },
+            "settings": {
+                "type": "object",
+                "properties": {
+                    "maxPlayers": { "type": "number" },
+                    "roundDuration": { "type": "number" },
+                    "isPrivate": { "type": "boolean" },
+                    "language": { "type": "string", "enum": ["es", "en", "fr", "pt"] }
+                }
+            },
+            "players": {
+                "type": "object",
+                "additionalProperties": { "$ref": "#/entities/Player" }
+            },
+            "gameState": { "type": "string", "enum": ["IDLE", "SPINNING", "PLAYING", "EVALUATING", "RESULTS"] },
+            "currentLetter": { "type": "string" },
+            "roundNumber": { "type": "number" },
+            "roundStartedAt": { "type": "string", "format": "date-time" },
+            "playerResponses": { "type": "object" },
+            "roundResults": { "type": "object" },
+            "gameScores": { "type": "object" }
         },
-        "gameSessionId": {
-          "type": "string",
-          "description": "Reference to GameSession this round belongs to. (Relationship: GameSession 1:N Round)"
-        },
-        "letter": {
-          "type": "string",
-          "description": "The letter selected for this round."
-        },
-        "roundNumber": {
-          "type": "number",
-          "description": "The ordinal number of this round within the game session."
-        },
-        "stopTime": {
-          "type": "string",
-          "description": "Date and time when someone pressed 'Stop', ending the round.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "gameSessionId",
-        "letter",
-        "roundNumber"
-      ]
+        "required": ["hostId", "status", "createdAt", "settings", "players", "roundNumber"]
     },
-    "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Category",
-      "type": "object",
-      "description": "Represents a category used in the Global Stop game (e.g., 'Name', 'City', 'Animal').",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the category."
+    "Ranking": {
+        "title": "Ranking",
+        "type": "object",
+        "description": "Represents a player's entry in the global leaderboard.",
+        "properties": {
+            "playerName": { "type": "string" },
+            "photoURL": { "type": "string", "format": "uri" },
+            "totalScore": { "type": "number" },
+            "gamesPlayed": { "type": "number" },
+            "gamesWon": { "type": "number" },
+            "averageScore": { "type": "number" },
+            "bestScore": { "type": "number" },
+            "lastPlayed": { "type": "string", "format": "date-time" },
+            "level": { "type": "string" },
+            "achievements": { "type": "array", "items": { "type": "string" } },
+            "coins": { "type": "number" },
+            "missionsLastReset": { "type": "string" }
         },
-        "name": {
-          "type": "string",
-          "description": "The name of the category (e.g., 'Name')."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the category."
-        }
-      },
-      "required": [
-        "id",
-        "name"
-      ]
+        "required": ["playerName", "totalScore", "gamesPlayed"]
     },
-    "PlayerRoundResponse": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PlayerRoundResponse",
-      "type": "object",
-      "description": "Represents a player's response to a specific category in a round.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the player's response."
+    "GameHistory": {
+        "title": "GameHistory",
+        "type": "object",
+        "description": "Represents a single game result for a player's history.",
+        "properties": {
+            "playerId": { "type": "string" },
+            "score": { "type": "number" },
+            "letter": { "type": "string" },
+            "gameMode": { "type": "string", "enum": ["solo", "private", "multiplayer"] },
+            "won": { "type": "boolean" },
+            "timestamp": { "type": "string", "format": "date-time" }
         },
-        "roundId": {
-          "type": "string",
-          "description": "Reference to Round this response belongs to. (Relationship: Round 1:N PlayerRoundResponse)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User who gave this response. (Relationship: User 1:N PlayerRoundResponse)"
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to Category for this response. (Relationship: Category 1:N PlayerRoundResponse)"
-        },
-        "response": {
-          "type": "string",
-          "description": "The player's response for the category in this round."
-        },
-        "score": {
-          "type": "number",
-          "description": "The score awarded for this response."
-        }
-      },
-      "required": [
-        "id",
-        "roundId",
-        "userId",
-        "categoryId",
-        "response",
-        "score"
-      ]
+        "required": ["playerId", "score", "letter", "gameMode", "won", "timestamp"]
     },
-    "GameSessionPlayer": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "GameSessionPlayer",
-      "type": "object",
-      "description": "Represents a player participating in a specific game session.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the player's participation in the game session."
+    "Notification": {
+        "title": "Notification",
+        "type": "object",
+        "description": "Represents a notification sent to a user.",
+        "properties": {
+            "fromUserId": { "type": "string" },
+            "fromUser": { "type": "string" },
+            "recipientId": { "type": "string" },
+            "roomId": { "type": "string" },
+            "message": { "type": "string" },
+            "type": { "type": "string", "enum": ["room_invite", "chat_mention"] },
+            "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+            "timestamp": { "type": "string", "format": "date-time" }
         },
-        "gameSessionId": {
-          "type": "string",
-          "description": "Reference to GameSession the player is participating in. (Relationship: GameSession 1:N GameSessionPlayer)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User participating in the game session. (Relationship: User 1:N GameSessionPlayer)"
-        },
-        "joinTime": {
-          "type": "string",
-          "description": "Date and time when the player joined the game session.",
-          "format": "date-time"
-        },
-        "finalScore": {
-          "type": "number",
-          "description": "The player's total score for the entire game session."
-        }
-      },
-      "required": [
-        "id",
-        "gameSessionId",
-        "userId",
-        "joinTime"
-      ]
-    },
-    "RoundCategory": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "RoundCategory",
-      "type": "object",
-      "description": "Links a specific category to a round in the game.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for this round-category link."
-        },
-        "roundId": {
-          "type": "string",
-          "description": "Reference to Round to which the category is linked. (Relationship: Round 1:N RoundCategory)"
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to Category being used in the round. (Relationship: Category 1:N RoundCategory)"
-        }
-      },
-      "required": [
-        "id",
-        "roundId",
-        "categoryId"
-      ]
-    },
-    "DictionaryEntry": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DictionaryEntry",
-      "type": "object",
-      "description": "Represents a dictionary entry for a term in a specific language.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the dictionary entry."
-        },
-        "term": {
-          "type": "string",
-          "description": "The term (word or phrase) in the dictionary entry."
-        },
-        "language": {
-          "type": "string",
-          "description": "The language of the term (e.g., 'en', 'es')."
-        },
-        "definition": {
-          "type": "string",
-          "description": "The definition of the term in the specified language."
-        }
-      },
-      "required": [
-        "id",
-        "term",
-        "language",
-        "definition"
-      ]
+        "required": ["fromUserId", "recipientId", "type", "status", "timestamp"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["google.com", "facebook.com", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles.  The 'userId' parameter is the Firebase Authentication UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user, matching the Firebase Auth UID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/gameSessions/{gameSessionId}",
-        "definition": {
-          "entityName": "GameSession",
-          "schema": {
-            "$ref": "#/backend/entities/GameSession"
-          },
-          "description": "Stores game sessions for a specific user. Includes denormalized 'hostUserId' and 'members' map for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (host) who created the game session."
-            },
-            {
-              "name": "gameSessionId",
-              "description": "The unique identifier for the game session."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}",
-        "definition": {
-          "entityName": "Round",
-          "schema": {
-            "$ref": "#/backend/entities/Round"
-          },
-          "description": "Stores rounds for a specific game session. Includes denormalized 'gameSessionId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (host) of the game session."
-            },
-            {
-              "name": "gameSessionId",
-              "description": "The unique identifier for the game session."
-            },
-            {
-              "name": "roundId",
-              "description": "The unique identifier for the round."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/categories/{categoryId}",
-        "definition": {
-          "entityName": "Category",
-          "schema": {
-            "$ref": "#/backend/entities/Category"
-          },
-          "description": "Stores categories used in the game.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "The unique identifier for the category."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}",
-        "definition": {
-          "entityName": "PlayerRoundResponse",
-          "schema": {
-            "$ref": "#/backend/entities/PlayerRoundResponse"
-          },
-          "description": "Stores player responses for a specific round. Includes denormalized 'roundId', 'userId', and 'categoryId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user who gave the response."
-            },
-            {
-              "name": "gameSessionId",
-              "description": "The unique identifier for the game session."
-            },
-            {
-              "name": "roundId",
-              "description": "The unique identifier for the round."
-            },
-            {
-              "name": "playerRoundResponseId",
-              "description": "The unique identifier for the player's round response."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}",
-        "definition": {
-          "entityName": "GameSessionPlayer",
-          "schema": {
-            "$ref": "#/backend/entities/GameSessionPlayer"
-          },
-          "description": "Stores players participating in a specific game session. Includes denormalized 'gameSessionId' and 'userId' for authorization independence.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "gameSessionId",
-              "description": "The unique identifier for the game session."
-            },
-            {
-              "name": "gameSessionPlayerId",
-              "description": "The unique identifier for the player's participation in the game session."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/rounds/{roundId}/roundCategories/{roundCategoryId}",
-        "definition": {
-          "entityName": "RoundCategory",
-          "schema": {
-            "$ref": "#/backend/entities/RoundCategory"
-          },
-          "description": "Links a specific category to a round in the game.  Top level to allow fast lookups of categories within a round.",
-          "params": [
-            {
-              "name": "roundId",
-              "description": "The unique identifier for the round."
-            },
-            {
-              "name": "roundCategoryId",
-              "description": "The unique identifier for this round-category link."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/dictionaryEntries/{dictionaryEntryId}",
-        "definition": {
-          "entityName": "DictionaryEntry",
-          "schema": {
-            "$ref": "#/backend/entities/DictionaryEntry"
-          },
-          "description": "Stores dictionary entries for terms in different languages.  Top level for fast lookups.",
-          "params": [
-            {
-              "name": "dictionaryEntryId",
-              "description": "The unique identifier for the dictionary entry."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to support the Global Stop game with multiplayer, AI opponent, and multilingual features, emphasizing security and scalability. The structure prioritizes Authorization Independence by denormalizing relevant data and uses Structural Segregation to maintain a homogeneous security posture.  Path-based ownership is used where appropriate to simply rules. Collaborative data utilizes a membership map, ensuring clarity of access. Global roles are modeled using existence checks. \n\nUsers are stored in a top-level `users` collection. Game sessions are stored under each user in a `gameSessions` subcollection, facilitating easy retrieval of a user's game history. Rounds are nested under game sessions. Categories and DictionaryEntries are stored as top-level collections for global access.\n\n**Authorization Independence:**\n*   `GameSession`: The `hostUserId` field stores the user ID of the game session host. Security rules can directly use this field without needing to `get()` the user document.  Furthermore, a `members` map is denormalized inside each `GameSession` document containing the role of each player.\n*   `Round`: The `gameSessionId` is stored within each round, removing the need to `get()` the parent `GameSession` document to determine the game session to which the round belongs.\n*   `PlayerRoundResponse`: The `userId`, `roundId`, and `categoryId` are denormalized to facilitate direct access and validation without additional reads.\n*   `GameSessionPlayer`: Includes the `gameSessionId` and `userId`.\n\n**QAPs (Query, Aggregation, and Presentation):**\n*   The segregation of game sessions under users (`/users/{userId}/gameSessions/{gameSessionId}`) allows for efficient queries to retrieve a specific user's game history.\n*   Storing categories and dictionary entries in top-level collections enables easy querying and filtering of these entities for game logic.\n*   The structure supports secure `list` operations by leveraging path-based ownership and the membership map.  Rules can check if a user is the owner or a member of a game session before allowing access to its rounds or responses.\n*   The `RoundCategory` links table allows efficient queries for retrieving all categories in a round.\n\n"
+    "/rooms/{roomId}": {
+        "schema": { "$ref": "#/entities/Room" },
+        "description": "Stores multiplayer game rooms. Only authenticated users part of the game can read/write."
+    },
+    "/rankings/{userId}": {
+        "schema": { "$ref": "#/entities/Ranking" },
+        "description": "Stores a player's global ranking and stats. Users can only update their own document."
+    },
+    "/rankings/{userId}/friends/{friendId}": {
+        "schema": { "$ref": "#/entities/User" },
+        "description": "Subcollection for a user's friends list."
+    },
+    "/rankings/{userId}/gameHistory/{gameId}": {
+        "schema": { "$ref": "#/entities/GameHistory" },
+        "description": "Subcollection for a player's game history."
+    },
+    "/notifications/{notificationId}": {
+        "schema": { "$ref": "#/entities/Notification" },
+        "description": "Stores notifications for users. Only the recipient can read/update their notifications."
+    }
   }
 }

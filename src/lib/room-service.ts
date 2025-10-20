@@ -18,8 +18,6 @@ import {
 } from "firebase/firestore";
 import { initializeFirebase } from '../firebase';
 import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from '../components/game/types/game-types';
-import type { EvaluateRoundOutput } from '../ai/flows/validate-player-word-flow';
-import { evaluateRound } from '../ai/flows/validate-player-word-flow';
 import type { Language } from '../contexts/language-context';
 import { rankingManager } from './ranking';
 import type { ChatMessage } from '../components/chat/chat-message-item';
@@ -27,7 +25,7 @@ import type { ChatMessage } from '../components/chat/chat-message-item';
 export interface Player {
     id: string;
     name: string;
-    avatar: string; // Avatar is now always a string
+    avatar: string;
     isReady: boolean;
     status: 'online' | 'away' | 'offline';
     joinedAt: any;
@@ -50,7 +48,7 @@ export interface Room {
     gameState?: GameState;
     currentLetter?: string | null;
     playerResponses?: PlayerResponses;
-    roundResults?: Record<string, Record<string, { response: string; score: number; isValid: boolean; }>>;
+    roundResults?: RoundResults;
     gameScores?: Record<string, number>;
     roundStartedAt?: any;
     roundNumber: number;
@@ -378,7 +376,7 @@ export const evaluateRoundForRoom = async (roomId: string) => {
     }
     
     // 2. Calculate scores
-    const finalResults: Record<string, Record<string, { response: string; score: number; isValid: boolean }>> = {};
+    const finalResults: RoundResults = {};
     const roundScores: Record<string, number> = {};
     const newGameScores: Record<string, number> = room.gameScores || {};
 

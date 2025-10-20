@@ -1,153 +1,209 @@
 /**
- * @fileoverview Firestore Security Rules for the Global Stop game.
+ * @file Firebase Security Rules for Global Stop Game
+ * @version Prototyping
  *
- * Core Philosophy:
- * This ruleset enforces a user-ownership model for user profiles and a shared-access model based on explicit membership for game sessions.
+ * @Core Philosophy:
+ * This ruleset enforces a user-ownership model for user profiles and a collaborative, role-based model for game sessions.
+ * It prioritizes strong authorization and flexible data shapes for rapid iteration.
  *
- * Data Structure:
- * - Users are stored in `/users/{userId}`.
- * - Game sessions are stored in `/users/{userId}/gameSessions/{gameSessionId}`.
- * - Rounds are stored in `/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}`.
- * - Player responses are stored in `/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}`.
- * - Game session players are stored in `/users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}`.
- * - Categories are stored in `/categories/{categoryId}`.
- * - Round categories are stored in `/rounds/{roundId}/roundCategories/{roundCategoryId}`.
- * - Dictionary entries are stored in `/dictionaryEntries/{dictionaryEntryId}`.
+ * @Data Structure:
+ * - User profiles are stored under `/users/{userId}`, where `{userId}` matches the Firebase Auth UID.
+ * - Game sessions are stored under `/users/{userId}/gameSessions/{gameSessionId}`, reflecting the host user's ID.
+ * - Rounds are nested under game sessions in `/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}`.
+ * - Player responses are stored in `/users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}`
+ * - Game session players are stored in `/users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}`
+ * - Categories are stored in the top-level `/categories/{categoryId}` collection.
+ * - RoundCategories are stored in the top-level `/rounds/{roundId}/roundCategories/{roundCategoryId}` collection.
+ * - Dictionary entries are stored in the top-level `/dictionaryEntries/{dictionaryEntryId}` collection.
  *
- * Key Security Decisions:
- * - Users can only read and update their own profiles.
- * - Game sessions are accessible to members, with the host having implicit ownership.
- * - Categories and dictionary entries are publicly readable.
- * - Data validation is minimal in this prototyping phase.
- *
- * Denormalization for Authorization:
- * - GameSession documents include `hostUserId` to simplify ownership checks.
- * - Round documents include `gameSessionId` to associate them with their parent game session.
- * - PlayerRoundResponse documents include `userId`, `roundId`, and `categoryId` for direct access and validation.
- * - GameSessionPlayer documents includes the `gameSessionId` and `userId`.
+ * @Key Security Decisions:
+ * - **User Listing Disabled:** Listing all users is disallowed.
+ * - **Ambiguous Relationships:** The rules default to strict owner-only access unless explicitly specified.
+ * - **Data Denormalization:** The `hostUserId` field in `GameSession` documents and the `gameSessionId`, `userId`, and `categoryId` fields in `Round` and `PlayerRoundResponse` documents enable authorization without additional reads.
+ * - **Collaborative Game Sessions:** The `members` map inside each `GameSession` document contains the role of each player.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows users to manage their own profile.
+     * @description Enforces owner-only access to user profiles.  Allows self-creation.
      * @path /users/{userId}
-     * @allow (create) If the user is authenticated and the userId matches the authenticated user's ID.
-     * @allow (get, list) If the user is authenticated and the userId matches the authenticated user's ID.
-     * @allow (update) If the user is authenticated and the userId matches the authenticated user's ID and the document exists.
-     * @deny (delete) Always.  User deletion should be handled via Firebase Authentication.
-     * @deny (create) If the userId does not match the authenticated user's ID.
-     * @deny (get, list) If the userId does not match the authenticated user's ID.
-     * @deny (update) If the userId does not match the authenticated user's ID.
-     * @principle Enforces document ownership for user profiles.
+     * @allow (create) User with matching auth UID can create their profile.
+     * @allow (read, update, delete) User with matching auth UID can read/update/delete their profile.
+     * @deny (create) User attempts to create a profile with a mismatched UID.
+     * @deny (read, update, delete) User attempts to read/update/delete another user's profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow get, list: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if false;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isOwner(userId);
+      allow list: if false; // Listing users is not permitted.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows members of a game session to manage game data.
+     * @description Enforces owner-only access to game sessions for a specific user (host).
      * @path /users/{userId}/gameSessions/{gameSessionId}
-     * @allow (create) If the user is authenticated.
-     * @allow (get, list) If the user is authenticated.
-     * @allow (update) If the user is authenticated and the document exists.
-     * @allow (delete) If the user is authenticated and the document exists.
-     * @deny (create) If the user is not authenticated.
-     * @deny (get, list) If the user is not authenticated.
-     * @deny (update) If the user is not authenticated.
-     * @deny (delete) If the user is not authenticated.
-     * @principle Enforces shared access based on membership.
+     * @allow (create) User with matching auth UID can create a game session under their profile. The gameSession.hostUserId must match the userId
+     * @allow (read, update, delete) User with matching auth UID can read/update/delete their game session.
+     * @deny (create) User attempts to create a game session with a mismatched hostUserId.
+     * @deny (read, update, delete) User attempts to read/update/delete another user's game session.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
     match /users/{userId}/gameSessions/{gameSessionId} {
-      allow create: if isSignedIn();
-      allow get, list: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
-
-       /**
-        * @description Allows members of a game session to manage round data.
-        * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}
-        */
-      match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId} {
-        allow create: if isSignedIn();
-        allow get, list: if isSignedIn();
-        allow update: if isSignedIn() && resource != null;
-        allow delete: if isSignedIn() && resource != null;
-
-        /**
-         * @description Allows members of a game session to manage round player responses.
-         * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}
-         */
-        match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId} {
-          allow create: if isSignedIn();
-          allow get, list: if isSignedIn();
-          allow update: if isSignedIn() && resource != null;
-          allow delete: if isSignedIn() && resource != null;
-        }
+      function isSignedIn() {
+        return request.auth != null;
       }
 
-      /**
-       * @description Allows members of a game session to manage game session players.
-       * @path /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}
-       */
-      match /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId} {
-        allow create: if isSignedIn();
-        allow get, list: if isSignedIn();
-        allow update: if isSignedIn() && resource != null;
-        allow delete: if isSignedIn() && resource != null;
+      function isOwner(userId) {
+        return request.auth.uid == userId;
       }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.hostUserId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.hostUserId == resource.data.hostUserId;
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows public read access to game categories. Write access is not allowed in this prototyping phase.
+     * @description Enforces owner-only access to rounds for a specific game session.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}
+     * @allow (create) User (host) can create a round in their game session.
+     * @allow (read, update, delete) User (host) can read/update/delete their game session's rounds.
+     * @deny (create) User attempts to create a round in another user's game session.
+     * @deny (read, update, delete) User attempts to read/update/delete rounds in another user's game session.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to categories, but restricts write access.
      * @path /categories/{categoryId}
-     * @allow (get, list) Always.
-     * @deny (create, update, delete) Always.
-     * @principle Allows public read access to categories.
+     * @allow (get, list) Public read access to categories.
+     * @deny (create, update, delete) No user can create, update, or delete categories.
+     * @principle Allows public read access for shared data while restricting write access to prevent unauthorized modifications.
      */
     match /categories/{categoryId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if false; // Categories are not user-manageable in this prototype.
+    }
+
+    /**
+     * @description Enforces owner-only access to player round responses for a specific round within a game session.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId}
+     * @allow (create) User can create their response.
+     * @allow (read, update, delete) User can manage only their own responses.
+     * @deny (create) User attempts to create response to another user
+     * @deny (read, update, delete) User attempts to read/update/delete responses in another user's game session.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/rounds/{roundId}/playerRoundResponses/{playerRoundResponseId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces owner-only access to game session players for a specific game session.
+     * @path /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId}
+     * @allow (create) User (host) can create a game session player entry.
+     * @allow (read, update, delete) User (host) can read/update/delete game session player entries.
+     * @deny (create) User attempts to create a player entry to another user
+     * @deny (read, update, delete) User attempts to read/update/delete player entries in another user's game session.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data.
+     */
+    match /users/{userId}/gameSessions/{gameSessionId}/gameSessionPlayers/{gameSessionPlayerId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
      /**
-      * @description Links a specific category to a round in the game.  Top level to allow fast lookups of categories within a round.
+      * @description Allows public read access to round categories, but restricts write access.
       * @path /rounds/{roundId}/roundCategories/{roundCategoryId}
+      * @allow (get, list) Public read access to round categories.
+      * @deny (create, update, delete) No user can create, update, or delete round categories.
+      * @principle Allows public read access for shared data while restricting write access to prevent unauthorized modifications.
       */
-     match /rounds/{roundId}/roundCategories/{roundCategoryId} {
-        allow create: if isSignedIn();
-        allow get, list: if isSignedIn();
-        allow update: if isSignedIn() && resource != null;
-        allow delete: if isSignedIn() && resource != null;
-     }
+    match /rounds/{roundId}/roundCategories/{roundCategoryId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // Categories are not user-manageable in this prototype.
+    }
 
     /**
-     * @description Allows public read access to dictionary entries. Write access is not allowed in this prototyping phase.
+     * @description Allows public read access to dictionary entries, but restricts write access.
      * @path /dictionaryEntries/{dictionaryEntryId}
-     * @allow (get, list) Always.
-     * @deny (create, update, delete) Always.
-     * @principle Allows public read access to dictionary entries.
+     * @allow (get, list) Public read access to dictionary entries.
+     * @deny (create, update, delete) No user can create, update, or delete dictionary entries.
+     * @principle Allows public read access for shared data while restricting write access to prevent unauthorized modifications.
      */
     match /dictionaryEntries/{dictionaryEntryId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      allow create, update, delete: if false; // Dictionary entries are not user-manageable in this prototype.
     }
   }
 }
