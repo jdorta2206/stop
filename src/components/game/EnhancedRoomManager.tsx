@@ -8,9 +8,7 @@ import { Input } from '../ui/input';
 import { 
   Users, 
   Share2, 
-  LogOut,
   Play,
-  Copy,
   Crown,
   Check,
   X,
@@ -20,9 +18,6 @@ import {
   ClipboardCopy,
   UserPlus,
   Loader2,
-  AlertTriangle,
-  Lightbulb,
-  Search
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -59,7 +54,6 @@ interface EnhancedRoomManagerProps {
   currentUser: User;
   roomData: Room;
   onLeaveRoom: () => void;
-  onStartGame: () => void;
 }
 
 const WhatsappIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -349,12 +343,11 @@ export default function EnhancedRoomManager({
           </h3>
 
           <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input 
                   placeholder="Buscar amigos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-white/10 border-white/20 pl-10"
+                  className="bg-white/10 border-white/20 pl-4"
               />
           </div>
           <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
@@ -440,5 +433,3 @@ export default function EnhancedRoomManager({
     </div>
   );
 }
-
-    

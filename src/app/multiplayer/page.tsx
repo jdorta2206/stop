@@ -9,7 +9,7 @@ import { AppHeader } from '../../components/layout/header';
 import { AppFooter } from '../../components/layout/footer';
 import EnhancedRoomManager from '../../components/game/EnhancedRoomManager';
 import { useLanguage } from '../../contexts/language-context';
-import { onRoomUpdate, addPlayerToRoom, type Room } from '../../lib/room-service';
+import { onRoomUpdate, addPlayerToRoom, type Room, removePlayerFromRoom } from '../../lib/room-service';
 import { toast } from 'sonner';
 
 function MultiplayerLobbyContent() {
@@ -25,18 +25,21 @@ function MultiplayerLobbyContent() {
     const roomId = searchParams ? searchParams.get('roomId') : null;
 
     const handleLeaveRoom = () => {
+        if(user && roomId) {
+            removePlayerFromRoom(roomId, user.uid);
+        }
         router.push('/');
     };
 
     useEffect(() => {
         if (authLoading) return;
+
         if (!roomId) {
-            handleLeaveRoom();
+            router.push('/');
             return;
         }
 
         if (!user || !user.uid) {
-            // User not logged in, redirect or show message
             toast.error("Debes iniciar sesión para unirte a una sala.");
             router.push('/');
             return;
@@ -61,8 +64,9 @@ function MultiplayerLobbyContent() {
                 });
             } catch (err) {
                 console.error("Error joining or listening to room:", err);
-                setError((err as Error).message);
-                toast.error((err as Error).message, { description: 'Error al unirse' });
+                const errorMessage = (err as Error).message;
+                setError(errorMessage);
+                toast.error(errorMessage, { description: 'Error al unirse' });
                 setIsLoading(false);
                 setTimeout(() => router.push('/'), 3000);
             }
@@ -73,12 +77,7 @@ function MultiplayerLobbyContent() {
         return () => {
             unsubscribe();
         };
-    }, [authLoading, user, router, roomId]);
-
-    const handleStartGame = () => {
-        // This logic is now handled inside EnhancedRoomManager
-        console.log(`Starting game in room ${roomId}`);
-    };
+    }, [authLoading, user?.uid, roomId, router]); // Dependency array simplified
 
     if (isLoading || authLoading) {
         return (
@@ -99,7 +98,6 @@ function MultiplayerLobbyContent() {
                         currentUser={user}
                         roomData={room}
                         onLeaveRoom={handleLeaveRoom}
-                        onStartGame={handleStartGame}
                     />
                 </main>
                 <AppFooter language={language} />
@@ -109,15 +107,16 @@ function MultiplayerLobbyContent() {
 
     // Fallback if room or user is missing after loading
     return (
-        <div className="flex h-screen items-center justify-center bg-background">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-            <p className="ml-4 text-lg">{error || 'Redirigiendo...'}</p>
+        <div className="flex flex-col h-screen items-center justify-center bg-background text-center">
+             <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+             <p className="text-lg mb-2">{error || 'Redirigiendo...'}</p>
+             <p className="text-sm text-muted-foreground">Si el problema persiste, por favor vuelve a la página de inicio.</p>
+             <Button onClick={() => router.push('/')} variant="link" className="mt-4">Volver al Inicio</Button>
         </div>
     );
 }
 
 function MultiplayerLobby() {
-    // Suspense is necessary because useSearchParams is used in the component child.
     return (
       <Suspense fallback={
         <div className="flex h-screen items-center justify-center bg-background">

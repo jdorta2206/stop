@@ -289,12 +289,11 @@ export const startGame = async (roomId: string) => {
 
     await updateDoc(roomDocRef, {
         status: 'playing',
-        gameState: 'SPINNING',
         roundNumber: 1,
         gameScores: initialScores,
     });
     // Start the first round after a short delay
-    setTimeout(() => startNextRound(roomId), 1000);
+    await startNextRound(roomId);
 };
 
 export const startNextRound = async (roomId: string) => {
@@ -317,6 +316,8 @@ export const startNextRound = async (roomId: string) => {
         playerResponses: initialResponses,
         roundResults: null,
         roundStartedAt: serverTimestamp(),
+        roundNumber: (room.roundNumber || 0) + 1,
+        status: 'playing'
     });
 }
 
