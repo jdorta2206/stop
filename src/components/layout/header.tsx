@@ -33,10 +33,9 @@ export function AppHeader() {
     setIsMuted(storedMute);
 
     if (pathname) {
-      const currentRoomId = pathname.includes('/multiplayer') 
-        ? pathname.split('roomId=')[1] 
-        : 'global';
-      setRoomId(currentRoomId);
+      const params = new URLSearchParams(window.location.search);
+      const currentRoomId = params.get('roomId');
+      setRoomId(currentRoomId || 'global');
     }
     
   }, [pathname]);
