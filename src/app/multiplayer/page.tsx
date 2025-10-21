@@ -29,6 +29,7 @@ function MultiplayerLobbyContent() {
     const handleLeaveRoom = useCallback(async () => {
         if (user && roomId) {
             try {
+                // No need to wait for this to finish before navigating away
                 removePlayerFromRoom(roomId, user.uid);
             } catch(err) {
                 console.error("Error al intentar salir de la sala:", err);
@@ -36,6 +37,7 @@ function MultiplayerLobbyContent() {
         }
         router.push('/');
     }, [user, roomId, router]);
+    
 
     useEffect(() => {
         if (authLoading) return;
@@ -54,22 +56,26 @@ function MultiplayerLobbyContent() {
         let unsubscribe: (() => void) | null = null;
         
         const joinAndListen = async (currentUser: User) => {
-            setIsLoading(true);
             try {
+                // First, try to join the room. This will throw if the room is full or doesn't exist.
                 await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador Anónimo', currentUser.photoURL || null);
                 
+                // If join is successful, set up the real-time listener.
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
+                    setIsLoading(true);
                     if (updatedRoom) {
                         setRoom(updatedRoom);
+                        // Check if the current user is still in the room's player list
                         if (updatedRoom.players && !updatedRoom.players[currentUser.uid]) {
-                           setError("Ya no formas parte de esta sala.");
-                           toast.error('Has sido desconectado de la sala.');
+                           setError("Has sido expulsado o has abandonado la sala.");
+                           toast.error('Ya no estás en esta sala.');
                            if (unsubscribe) unsubscribe();
                            router.push('/');
                            return;
                         }
                         setError(null);
                     } else {
+                        // This case handles when the room document is deleted.
                         setError("La sala ha sido eliminada por el anfitrión.");
                         toast.error('La sala ya no existe.');
                         if (unsubscribe) unsubscribe();
@@ -92,24 +98,27 @@ function MultiplayerLobbyContent() {
                 setError(userMessage);
                 toast.error(userMessage);
                 setIsLoading(false);
-                 setTimeout(() => router.push('/'), 3000);
+                setTimeout(() => router.push('/'), 3000);
             }
         };
         
         joinAndListen(user);
 
+        // This is the cleanup function for the useEffect hook.
         return () => {
             if (unsubscribe) {
               unsubscribe();
             }
+            // When the component unmounts (e.g., user navigates away, closes tab),
+            // remove the player from the room.
             if (roomId && user) {
                 removePlayerFromRoom(roomId, user.uid);
             }
         };
-    }, [authLoading, user?.uid, roomId, router]);
+    }, [user, roomId, router, authLoading]); // Dependencies
 
 
-    if (isLoading || authLoading) {
+    if (isLoading || authLoading || !room) {
         return (
             <div className="flex flex-col h-screen items-center justify-center bg-background text-center">
                 <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -129,29 +138,19 @@ function MultiplayerLobbyContent() {
         )
     }
     
-    if (user && room && roomId) {
-        return (
-            <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
-                <AppHeader />
-                <main className="flex-grow container mx-auto p-4 md:p-8 flex items-center justify-center">
-                    <EnhancedRoomManager 
-                        roomId={roomId}
-                        currentUser={user}
-                        roomData={room}
-                        onLeaveRoom={handleLeaveRoom}
-                    />
-                </main>
-                <AppFooter language={language} />
-            </div>
-        );
-    }
-
+    // We can be sure user, room, and roomId are defined here.
     return (
-        <div className="flex flex-col h-screen items-center justify-center bg-background text-center p-4">
-             <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
-             <p className="text-lg mb-2">Finalizando conexión...</p>
-             <p className="text-sm text-muted-foreground">Si el problema persiste, por favor vuelve a la página de inicio.</p>
-             <Button onClick={() => router.push('/')} variant="link" className="mt-4">Volver al Inicio</Button>
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-red-500/20 text-foreground">
+            <AppHeader />
+            <main className="flex-grow container mx-auto p-4 md:p-8 flex items-center justify-center">
+                <EnhancedRoomManager 
+                    roomId={roomId!}
+                    currentUser={user!}
+                    roomData={room}
+                    onLeaveRoom={handleLeaveRoom}
+                />
+            </main>
+            <AppFooter language={language} />
         </div>
     );
 }
@@ -170,3 +169,5 @@ function MultiplayerPage() {
 }
 
 export default MultiplayerPage;
+
+    

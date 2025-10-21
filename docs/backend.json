@@ -26,7 +26,7 @@
             "joinedAt": { "type": "string", "format": "date-time", "description": "Timestamp when the player joined." },
             "isHost": { "type": "boolean", "description": "Indicates if the player is the host of the room." }
         },
-        "required": ["id", "name", "avatar", "isReady", "status", "isHost"]
+        "required": ["id", "name", "isReady", "status", "isHost"]
     },
     "Room": {
         "title": "Room",
@@ -49,7 +49,7 @@
                 "type": "object",
                 "additionalProperties": { "$ref": "#/entities/Player" }
             },
-            "gameState": { "type": "string", "enum": ["IDLE", "SPINNING", "PLAYING", "EVALUATING", "RESULTS"] },
+            "gameState": { "type": "string", "enum": ["waiting", "SPINNING", "PLAYING", "EVALUATING", "RESULTS"] },
             "currentLetter": { "type": "string" },
             "roundNumber": { "type": "number" },
             "roundStartedAt": { "type": "string", "format": "date-time" },
@@ -57,7 +57,7 @@
             "roundResults": { "type": "object" },
             "gameScores": { "type": "object" }
         },
-        "required": ["hostId", "status", "createdAt", "settings", "players", "roundNumber"]
+        "required": ["hostId", "status", "createdAt", "settings", "players", "roundNumber", "gameState"]
     },
     "Ranking": {
         "title": "Ranking",
@@ -118,6 +118,10 @@
         "schema": { "$ref": "#/entities/Room" },
         "description": "Stores multiplayer game rooms. Only authenticated users can read/write."
     },
+     "/rooms/{roomId}/chat/{messageId}": {
+        "schema": { "type": "object" },
+        "description": "Subcollection for chat messages within a room."
+    },
     "/rankings/{userId}": {
         "schema": { "$ref": "#/entities/Ranking" },
         "description": "Stores a player's global ranking and stats. Users can only update their own document."
@@ -136,3 +140,5 @@
     }
   }
 }
+
+    

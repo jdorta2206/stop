@@ -115,6 +115,7 @@ export async function createRoom(input: CreateRoomInput): Promise<CreateRoomOutp
       },
       gameScores: { [creatorId]: 0 },
       roundNumber: 0,
+      gameState: 'waiting',
   };
 
   await setDoc(newRoomDocRef, newRoomData);
@@ -437,3 +438,5 @@ export const onChatUpdate = (roomId: string, callback: (messages: ChatMessage[])
         callback(messages);
     });
 };
+
+    
