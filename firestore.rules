@@ -2,131 +2,182 @@
  * @fileoverview Firestore Security Rules for the Global Stop game.
  *
  * Core Philosophy:
- * This ruleset prioritizes user data protection.  All data access requires authentication.
- * Users can only read and write their own data in most collections (ownership model).
+ * This ruleset prioritizes a secure-by-default approach, restricting access to unauthorized users.
+ * It enforces ownership and role-based access control where applicable.
  *
  * Data Structure:
  * - /rooms/{roomId}: Stores game room data.
- * - /rankings/{userId}: Stores user ranking and profile information.
- * - /rankings/{userId}/friends/{friendId}:  Stores user's friends.
+ * - /rooms/{roomId}/chat/{messageId}: Stores chat messages within rooms.
+ * - /rankings/{userId}: Stores user ranking and stats.
+ * - /rankings/{userId}/friends/{friendId}: Stores user's friend list.
  * - /rankings/{userId}/gameHistory/{gameId}: Stores user's game history.
- * - /notifications/{notificationId}: Stores notifications for individual users.
+ * - /notifications/{notificationId}: Stores user-specific notifications.
  *
  * Key Security Decisions:
- * - Listing of all users is disallowed to protect privacy.
- * - The 'rooms' collection enforces a shared access model, where only members of the room can access the data.
- * - Default security posture for ambiguous relationships is strict owner-only access.
+ * - Unauthenticated access is denied by default for all write operations.
+ * - Read access is restricted to authenticated users unless explicitly allowed.
+ * - Users can only manage their own ranking and game history data.
+ * - Notifications are private and only accessible to the intended recipient.
+ *
+ * Denormalization for Authorization:
+ *   - For simplicity and performance, the rules assume that the `hostId` field in the `/rooms/{roomId}` document
+ *     correctly reflects the room's owner.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the user is signed in.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Authentication is required for all data access.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership for data access.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID and the resource exists.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership and existence for updates and deletes.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rule set for the 'rooms' collection.
+     * @description Rules for the /rooms/{roomId} collection.
      * @path /rooms/{roomId}
-     * @allow (get, create, update, delete) - Authenticated user who is part of a room.
-     * @deny (get, create, update, delete) - Unauthenticated user or user not part of the room.
-     * @principle Enforces shared access within game rooms: only authenticated users can interact with rooms they're part of.
+     * @allow (create) Authenticated user can create a room, hostId must match the user id.
+     * @allow (get, list) Any authenticated user can read room information.
+     * @allow (update, delete) Only the room host can update or delete the room.
+     * @deny (create) Unauthenticated users cannot create rooms.
+     * @deny (update) Non-hosts cannot update the room.
+     * @deny (delete) Non-hosts cannot delete the room.
+     * @principle Enforces room ownership for updates and deletes, allows authenticated reads.
      */
     match /rooms/{roomId} {
-      allow get: if isSignedIn();
-      allow list: if false;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(hostId) {
+        return request.auth.uid == hostId;
+      }
+
+      allow get, list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.hostId == request.auth.uid;
-      allow update: if isSignedIn() && request.resource.data.hostId == resource.data.hostId;
-      allow delete: if isSignedIn() && resource.data.hostId == request.auth.uid && resource != null;
+      allow update: if isSignedIn() && isOwner(resource.data.hostId);
+      allow delete: if isSignedIn() && isOwner(resource.data.hostId);
+    }
+
+     /**
+      * @description Rules for the /rooms/{roomId}/chat/{messageId} subcollection.
+      * @path /rooms/{roomId}/chat/{messageId}
+      * @allow (create) Any authenticated user in the room can create chat messages.
+      * @allow (get, list) Any authenticated user in the room can read chat messages.
+      * @allow (update, delete) No one can update or delete chat messages.
+      * @deny (create) Unauthenticated users cannot create chat messages.
+      * @deny (update) Updates are never allowed.
+      * @deny (delete) Deletes are never allowed.
+      * @principle Enforces authenticated access for reading and creating chat messages within a room.
+      */
+    match /rooms/{roomId}/chat/{messageId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Check if the user is in the room by checking if their UID exists as a key in the `players` map
+      function isInRoom(roomId) {
+        return get(/databases/$(database)/documents/rooms/$(roomId)).data.players[request.auth.uid] != null;
+      }
+
+      allow get, list: if isSignedIn() && isInRoom(roomId);
+      allow create: if isSignedIn() && isInRoom(roomId);
+      allow update, delete: if false;
     }
 
     /**
-     * @description Rule set for the 'rankings' collection.
+     * @description Rules for the /rankings/{userId} collection.
      * @path /rankings/{userId}
-     * @allow (get, create, update, delete) - Authenticated user can only access their own ranking.
-     * @deny (get, create, update, delete) - Access by any other user.
-     * @principle Enforces user-ownership of ranking data.
+     * @allow (get) Any authenticated user can read ranking information.
+     * @allow (create) Only the user themselves can create their ranking entry.
+     * @allow (update, delete) Only the user themselves can update or delete their ranking entry.
+     * @deny (create) Unauthenticated users cannot create ranking entries.
+     * @deny (update) Other users cannot update ranking entries.
+     * @deny (delete) Other users cannot delete ranking entries.
+     * @principle Enforces user ownership for ranking data, allows public reads.
      */
     match /rankings/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.playerName != null;
-      allow update: if isExistingOwner(userId);
-      allow delete: if false;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Rule set for the 'friends' subcollection under 'rankings'.
+     * @description Rules for the /rankings/{userId}/friends/{friendId} subcollection.
      * @path /rankings/{userId}/friends/{friendId}
-     * @allow (get, create, update, delete) - Authenticated user can only manage their own friends list.
-     * @deny (get, create, update, delete) - Access by any other user.
-     * @principle Enforces user-ownership of friends list data.
+     * @allow (get, list) Only the user can read their own friend list.
+     * @allow (create, update, delete) Only the user can manage their own friend list.
+     * @deny (get, list) Other users cannot read the friend list.
+     * @deny (create, update, delete) Other users cannot manage the friend list.
+     * @principle Enforces user ownership for friend lists.
      */
     match /rankings/{userId}/friends/{friendId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow create, update, delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Rule set for the 'gameHistory' subcollection under 'rankings'.
+     * @description Rules for the /rankings/{userId}/gameHistory/{gameId} subcollection.
      * @path /rankings/{userId}/gameHistory/{gameId}
-     * @allow (get, create, update, delete) - Authenticated user can only access their own game history.
-     * @deny (get, create, update, delete) - Access by any other user.
-     * @principle Enforces user-ownership of game history data.
+     * @allow (get, list) Only the user can read their own game history.
+     * @allow (create) Only the user can create their own game history entries.
+     * @allow (update, delete) No one can update or delete game history entries.
+     * @deny (get, list) Other users cannot read the game history.
+     * @deny (update) Updates are never allowed.
+     * @deny (delete) Deletes are never allowed.
+     * @principle Enforces user ownership for game history data, prevents modifications.
      */
     match /rankings/{userId}/gameHistory/{gameId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.playerId == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.playerId == userId;
-      allow delete: if isExistingOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update, delete: if false;
     }
 
     /**
-     * @description Rule set for the 'notifications' collection.
+     * @description Rules for the /notifications/{notificationId} collection.
      * @path /notifications/{notificationId}
-     * @allow (get, create, update, delete) - Only the recipient can read/update their own notifications.
-     * @deny (get, create, update, delete) - Access by any other user.
-     * @principle Enforces recipient-only access to notifications.
+     * @allow (get, update) Only the recipient can read/update their own notifications.
+     * @allow (create) Authenticated user can create notification.
+     * @allow list: if false;
+     * @allow delete: if false;
+     * @deny (get, update) Other users cannot read or update the notification.
+     * @deny (create) Unauthenticated users cannot create notifications.
+     * @deny (delete) Deletes are never allowed.
+     * @principle Enforces recipient-only access for notifications.
      */
     match /notifications/{notificationId} {
-      allow get: if isSignedIn() && request.auth.uid == resource.data.recipientId;
-      allow list: if false;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isRecipient(recipientId) {
+        return request.auth.uid == recipientId;
+      }
+
+
+      allow get, update: if isSignedIn() && isRecipient(resource.data.recipientId);
       allow create: if isSignedIn() && request.resource.data.recipientId == request.auth.uid;
-      allow update: if isSignedIn() && request.auth.uid == resource.data.recipientId && resource != null;
-      allow delete: if false;
+      allow list, delete: if false;
     }
   }
 }

@@ -37,31 +37,23 @@ export default function PlaySoloPage() {
   const { user } = useUser();
 
   const [gameState, setGameState] = useState<GameState>('IDLE');
-  const [currentLetter, setCurrentLetter] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [alphabet, setAlphabet] = useState<string[]>([]);
-  const [playerResponses, setPlayerResponses] = useState<{ [key: string]: string }>({});
-  const [roundResults, setRoundResults] = useState<RoundResults | null>(null);
-  const [playerRoundScore, setPlayerRoundScore] = useState(0);
-  const [aiRoundScore, setAiRoundScore] = useState(0);
-  const [totalPlayerScore, setTotalPlayerScore] = useState(0);
-  const [totalAiScore, setTotalAiScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_DURATION);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const isEvaluatingRef = useRef(false);
 
-  const stateRef = useRef({
-    playerResponses,
-    currentLetter,
-    language,
-    categories,
-    user
+  // Centralized state management using useRef to hold all game-related data
+  const gameDataRef = useRef({
+    currentLetter: null as string | null,
+    categories: [] as string[],
+    alphabet: [] as string[],
+    playerResponses: {} as { [key: string]: string },
+    roundResults: null as RoundResults | null,
+    playerRoundScore: 0,
+    aiRoundScore: 0,
+    totalPlayerScore: 0,
+    totalAiScore: 0,
   });
-
-  useEffect(() => {
-    stateRef.current = { playerResponses, currentLetter, language, categories, user };
-  }, [playerResponses, currentLetter, language, categories, user]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -78,7 +70,7 @@ export default function PlaySoloPage() {
     isEvaluatingRef.current = true;
 
     try {
-      const { currentLetter: letter, playerResponses: responses, categories: currentCategories, language: currentLanguage, user: currentUser } = stateRef.current;
+      const { currentLetter: letter, playerResponses: responses, categories: currentCategories } = gameDataRef.current;
       
       if (!letter) {
         throw new Error("No se seleccionó ninguna letra para la ronda.");
@@ -91,7 +83,7 @@ export default function PlaySoloPage() {
       
       const evaluationOutput: EvaluateRoundOutput = await evaluateRound({
         letter: letter,
-        language: currentLanguage as LanguageCode,
+        language: language as LanguageCode,
         playerResponses: playerPayload,
       });
       
@@ -101,20 +93,20 @@ export default function PlaySoloPage() {
       
       const { results, playerTotalScore, aiTotalScore: calculatedAiScore } = evaluationOutput;
       
-      setPlayerRoundScore(playerTotalScore);
-      setTotalPlayerScore(prev => prev + playerTotalScore);
-      setAiRoundScore(calculatedAiScore);
-      setTotalAiScore(prev => prev + calculatedAiScore);
-      setRoundResults(results as RoundResults);
+      gameDataRef.current.playerRoundScore = playerTotalScore;
+      gameDataRef.current.totalPlayerScore += playerTotalScore;
+      gameDataRef.current.aiRoundScore = calculatedAiScore;
+      gameDataRef.current.totalAiScore += calculatedAiScore;
+      gameDataRef.current.roundResults = results as RoundResults;
       
       setGameState('RESULTS');
 
       // Save result in background, AFTER UI has updated
-      if (currentUser && currentUser.uid) {
+      if (user && user.uid) {
         rankingManager.saveGameResult({
-          playerId: currentUser.uid,
-          playerName: currentUser.displayName || 'Jugador',
-          photoURL: currentUser.photoURL || null,
+          playerId: user.uid,
+          playerName: user.displayName || 'Jugador',
+          photoURL: user.photoURL || null,
           score: playerTotalScore,
           categories: responses,
           letter: letter,
@@ -133,14 +125,14 @@ export default function PlaySoloPage() {
     } finally {
       isEvaluatingRef.current = false;
     }
-  }, [stopTimer, translate]);
+  }, [stopTimer, language, user, translate]);
 
 
   const startNewRound = useCallback(() => {
     setGameState('SPINNING');
-    setPlayerResponses({});
-    setRoundResults(null);
-    setCurrentLetter(null);
+    gameDataRef.current.playerResponses = {};
+    gameDataRef.current.roundResults = null;
+    gameDataRef.current.currentLetter = null;
     setTimeLeft(ROUND_DURATION);
     isEvaluatingRef.current = false;
   }, []);
@@ -167,8 +159,8 @@ export default function PlaySoloPage() {
 
 
   useEffect(() => {
-    setCategories(CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es);
-    setAlphabet(ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es);
+    gameDataRef.current.categories = CATEGORIES_BY_LANG[language] || CATEGORIES_BY_LANG.es;
+    gameDataRef.current.alphabet = ALPHABET_BY_LANG[language] || ALPHABET_BY_LANG.es;
   }, [language]);
   
   useEffect(() => {
@@ -176,16 +168,17 @@ export default function PlaySoloPage() {
   }, [startNewRound]);
   
   const handleSpinComplete = (letter: string) => {
-    setCurrentLetter(letter);
+    gameDataRef.current.currentLetter = letter;
     setGameState('PLAYING');
     setTimeLeft(ROUND_DURATION);
   };
   
   const handleInputChange = (category: string, value: string) => {
-    setPlayerResponses(prev => ({ ...prev, [category]: value }));
+    gameDataRef.current.playerResponses[category] = value;
   };
 
   const getRoundWinner = () => {
+    const { playerRoundScore, aiRoundScore } = gameDataRef.current;
     if (playerRoundScore > aiRoundScore) {
       return user?.displayName || 'Jugador';
     }
@@ -199,6 +192,8 @@ export default function PlaySoloPage() {
   }
 
   const renderContent = () => {
+    const { currentLetter, categories, playerResponses, alphabet, roundResults, playerRoundScore, aiRoundScore, totalPlayerScore, totalAiScore } = gameDataRef.current;
+
     switch (gameState) {
       case 'SPINNING':
         return (
