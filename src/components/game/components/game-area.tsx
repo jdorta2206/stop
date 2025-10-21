@@ -33,9 +33,11 @@ export function GameArea({
   }
 
   const progressValue = roundDuration > 0 ? (timeLeft / roundDuration) * 100 : 0;
+  const progressColor = progressValue < 20 ? 'bg-red-500' : progressValue < 50 ? 'bg-yellow-500' : 'bg-green-500';
+
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto animate-fade-in">
         <Card className="w-full mx-auto shadow-xl rounded-2xl bg-white/10 text-white border-white/20 backdrop-blur-md">
             <CardHeader className="text-center bg-black/20 rounded-t-2xl py-4">
                 <CardDescription className="text-2xl text-white/80">{translateUi('game.letterLabel')} </CardDescription>
@@ -72,7 +74,7 @@ export function GameArea({
                         {timeLeft}s
                     </span>
                 </div>
-                <Progress value={Math.max(0, progressValue)} className="h-2 bg-white/20 [&>*]:bg-white" />
+                 <Progress value={Math.max(0, progressValue)} className="h-3 bg-white/20" indicatorClassName={progressColor} />
             </div>
             <Button onClick={onStop} size="lg" className="mt-4 w-full max-w-xs text-xl py-6 rounded-full shadow-lg bg-red-600 hover:bg-red-700 text-white font-bold tracking-widest">
                 STOP

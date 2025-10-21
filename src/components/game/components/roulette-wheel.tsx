@@ -110,7 +110,7 @@ export function RouletteWheel({ onSpinComplete, alphabet, language, className }:
   }, [alphabet, onSpinComplete]);
 
   return (
-    <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card/50 backdrop-blur-sm border-white/20 text-white rounded-2xl", className)}>
+    <Card className={cn("w-full max-w-md mx-auto text-center shadow-xl bg-card/50 backdrop-blur-sm border-white/20 text-white rounded-2xl animate-fade-in", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-3xl font-bold">
           {translate('title')}
