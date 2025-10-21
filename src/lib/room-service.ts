@@ -21,6 +21,7 @@ import type { GameState, PlayerResponses, RoundResults, PlayerResponseSet } from
 import type { Language } from '../contexts/language-context';
 import { rankingManager } from './ranking';
 import type { ChatMessage } from '../components/chat/chat-message-item';
+import { localEvaluateRound } from '../ai/flows/validate-player-word-flow'; // Importar la lógica de evaluación
 
 export interface Player {
     id: string;
@@ -342,54 +343,64 @@ export const evaluateRoundForRoom = async (roomId: string) => {
         }
         const room = roomSnap.data() as Room;
 
-        if (!room.currentLetter || !room.players || !room.playerResponses) {
-             transaction.update(roomDocRef, { gameState: 'RESULTS', roundResults: {}, gameScores: room.gameScores || {} });
+        const { currentLetter, players, playerResponses, settings, gameScores } = room;
+
+        if (!currentLetter || !players || !playerResponses) {
+             transaction.update(roomDocRef, { gameState: 'RESULTS', roundResults: {}, gameScores: gameScores || {} });
              return;
         }
 
-        const allPlayerIds = Object.keys(room.players);
+        const allPlayerIds = Object.keys(players);
         const allWordsByCategory: Record<string, string[]> = {};
         
-        // Populate all valid words submitted by all players
-        for (const playerId of allPlayerIds) {
-            const playerAnswers = room.playerResponses[playerId] || {};
-            for (const category in playerAnswers) {
-                const word = playerAnswers[category]?.trim().toLowerCase();
-                if (word && word.startsWith(room.currentLetter.toLowerCase())) {
-                    if (!allWordsByCategory[category]) {
-                        allWordsByCategory[category] = [];
-                    }
-                    allWordsByCategory[category].push(word);
+        const categories = CATEGORIES_BY_LANG[settings.language] || CATEGORIES_BY_LANG.es;
+
+        // 1. Gather all valid words for each category
+        for (const category of categories) {
+            allWordsByCategory[category] = [];
+            for (const playerId of allPlayerIds) {
+                const playerWord = playerResponses[playerId]?.[category]?.trim().toLowerCase();
+                const evaluationResult = await localEvaluateRound({
+                    letter: currentLetter,
+                    language: settings.language,
+                    playerResponses: [{ category: category, word: playerWord }]
+                });
+
+                const categoryResult = evaluationResult.results[category];
+                if (categoryResult?.player.isValid) {
+                     allWordsByCategory[category].push(playerWord!);
                 }
             }
         }
         
         const finalResults: RoundResults = {};
-        const newGameScores = { ...(room.gameScores || {}) };
+        const newGameScores = { ...(gameScores || {}) };
 
-        // Calculate scores for each player
+        // 2. Calculate scores for each player
         for (const playerId of allPlayerIds) {
             finalResults[playerId] = {};
             let roundScore = 0;
-            const playerAnswers = room.playerResponses[playerId] || {};
-            
-            // Define categories based on one of the player's responses or a default set
-            const categories = Object.keys(room.settings.language ? CATEGORIES_BY_LANG[room.settings.language] : CATEGORIES_BY_LANG['es']).map(c => c.toLowerCase());
+            const playerAnswers = playerResponses[playerId] || {};
 
-
-            for (const category of Object.keys(playerAnswers)) {
+            for (const category of categories) {
                 const word = playerAnswers[category]?.trim().toLowerCase() || '';
                 let score = 0;
                 let isValid = false;
 
-                if (word && word.startsWith(room.currentLetter.toLowerCase())) {
-                     // Very basic validation for now, just checking existence
-                     const wordOccurrences = allWordsByCategory[category]?.filter(w => w === word).length || 0;
-                     if(wordOccurrences > 0) {
-                        isValid = true;
-                        score = (wordOccurrences === 1) ? 10 : 5; // 10 if unique, 5 if repeated
-                     }
+                const evaluationResult = await localEvaluateRound({
+                    letter: currentLetter,
+                    language: settings.language,
+                    playerResponses: [{ category: category, word: word }]
+                });
+
+                const categoryResult = evaluationResult.results[category];
+
+                if (categoryResult?.player.isValid) {
+                     isValid = true;
+                     const wordOccurrences = allWordsByCategory[category].filter(w => w === word).length;
+                     score = (wordOccurrences === 1) ? 10 : 5; // 10 if unique, 5 if repeated
                 }
+
                 finalResults[playerId][category] = { response: playerAnswers[category] || '', score, isValid };
                 roundScore += score;
             }

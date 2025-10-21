@@ -42,18 +42,9 @@ const EvaluateRoundOutputSchema = z.object({
 export type EvaluateRoundInput = z.infer<typeof EvaluateRoundInputSchema>;
 export type EvaluateRoundOutput = z.infer<typeof EvaluateRoundOutputSchema>;
 
-/**
- * Simula la evaluación de la ronda localmente sin llamar a una IA.
- * Esta es una solución de contingencia debido a los bloqueos de la API.
- */
-async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
-  const results: z.infer<typeof AIOutputSchema> = {};
-  let playerTotalScore = 0;
-  let aiTotalScore = 0;
-  const letterLower = input.letter.toLowerCase();
-
-  // Diccionario de la IA (NORMALIZADO A MINÚSCULAS)
-  const aiDictionary: Record<string, string[]> = {
+// Diccionario de la IA (NORMALIZADO A MINÚSCULAS)
+const aiDictionary: Record<string, Record<string, string[]>> = {
+  es: {
     nombre: ["ana", "andrés", "antonio", "amanda", "alberto", "adriana", "beatriz", "benito", "bárbara", "bruno", "belén", "carlos", "cecilia", "césar", "clara", "cristina", "david", "dolores", "diana", "daniel", "diego", "elena", "esteban", "eva", "eduardo", "emma", "fabián", "fatima", "fernando", "felipe", "florencia", "gabriel", "gloria", "gonzalo", "graciela", "guillermo", "hugo", "helena", "héctor", "hilda", "horacio", "ignacio", "irene", "isabel", "iván", "inés", "javier", "jimena", "juan", "julia", "jorge", "karla", "kevin", "karina", "kike", "katia", "luis", "laura", "lucía", "leonardo", "leticia", "manuel", "maría", "marta", "miguel", "mónica", "natalia", "nicolás", "noelia", "nuria", "norma", "óscar", "olivia", "omar", "olga", "osvaldo", "pablo", "paula", "pedro", "patricia", "pilar", "quintín", "juana", "roberto", "raquel", "rosa", "ricardo", "rita", "santiago", "sofía", "susana", "sergio", "silvia", "tomás", "teresa", "tatiana", "teodoro", "trinidad", "ursula", "unai", "ulises", "valentina", "victor", "vanesa", "vicente", "verónica", "walter", "wendy", "wanda", "wilson", "wilfredo", "xavier", "ximena", "xenon", "yolanda", "yasmin", "yago", "yanina", "isidro", "zoe", "zacarías", "zulema", "zenón"],
     lugar: ["alemania", "argentina", "atenas", "alicante", "albacete", "brasil", "bogotá", "barcelona", "bilbao", "berlín", "canadá", "china", "copenhague", "córdoba", "caracas", "dinamarca", "dublín", "dinant", "ecuador", "españa", "estocolmo", "edimburgo", "egipto", "francia", "finlandia", "florencia", "fiyi", "filipinas", "grecia", "guatemala", "ginebra", "granada", "guadalajara", "holanda", "honduras", "helsinki", "hungría", "hamburgo", "italia", "irlanda", "islandia", "indonesia", "india", "japón", "jamaica", "jerusalén", "jaén", "jordania", "kenia", "kuwait", "kiev", "kioto", "kazajistán", "libia", "lisboa", "londres", "lima", "luxemburgo", "méxico", "madrid", "moscú", "málaga", "marrakech", "noruega", "nairobi", "nueva york", "nicosia", "nepal", "oslo", "ottawa", "omán", "oporto", "oxford", "parís", "perú", "praga", "panamá", "palermo", "qatar", "quito", "quebec", "rumanía", "roma", "rusia", "rio de janeiro", "rotterdam", "suecia", "suiza", "santiago", "sevilla", "singapur", "tokio", "turquía", "toronto", "toledo", "tailandia", "uruguay", "ucrania", "utrecht", "venecia", "vietnam", "varsovia", "valencia", "viena", "washington", "wellington", "xalapa", "yemen", "yakarta", "zagreb", "zimbabue", "zaragoza", "zurich"],
     animal: ["araña", "águila", "avispa", "avestruz", "alce", "búho", "ballena", "buitre", "bisonte", "burro", "caballo", "canguro", "cocodrilo", "cucaracha", "camello", "delfín", "dromedario", "dragón de komodo", "diablo de tasmania", "elefante", "erizo", "escorpión", "estrella de mar", "escarabajo", "foca", "flamenco", "faisán", "gato", "gacela", "gorila", "gusano", "gallina", "halcón", "hiena", "hipopótamo", "hormiga", "hurón", "iguana", "impala", "insecto palo", "jaguar", "jabalí", "jirafa", "jilguero", "koala", "krill", "kiwi", "león", "loro", "lobo", "libélula", "leopardo", "mapache", "mariposa", "medusa", "murciélago", "mantis", "nutria", "ñu", "ñandú", "orangután", "oso", "orca", "oveja", "ostra", "perro", "pingüino", "pantera", "pato", "perezoso", "quetzal", "quirquincho", "rana", "ratón", "rinoceronte", "reno", "ruiseñor", "serpiente", "sapo", "salamandra", "salmón", "saltamontes", "tiburón", "tigre", "tortuga", "topo", "tucán", "urraca", "urogallo", "vaca", "vicuña", "víbora", "vampiro", "wallaby", "wombat", "xoloitzcuintle", "yak", "yegua", "zorro", "zopilote", "cebra", "ciervo"],
@@ -61,13 +52,30 @@ async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRo
     color: ["azul", "amarillo", "añil", "amatista", "ámbar", "blanco", "beige", "burdeos", "bronce", "cian", "carmesí", "castaño", "caoba", "crema", "dorado", "esmeralda", "escarlata", "fucsia", "grana", "gris", "grafito", "hueso", "índigo", "jade", "kaki", "lavanda", "lila", "marrón", "magenta", "marfil", "malva", "naranja", "negro", "nácar", "ocre", "oro", "púrpura", "plata", "perla", "pistacho", "rojo", "rosa", "salmón", "sepia", "turquesa", "terracota", "trigo", "ultramar", "verde", "violeta", "vino", "wengue", "xantico", "zafiro"],
     fruta: ["arándano", "albaricoque", "aceituna", "ananá", "avellana", "banana", "cereza", "ciruela", "coco", "chirimoya", "dátil", "durazno", "damasco", "frambuesa", "fresa", "frutilla", "granada", "guayaba", "grosella", "higo", "higo chumbo", "kiwi", "kumquat", "kinoto", "limón", "lima", "lichi", "mandarina", "manzana", "melón", "mango", "maracuyá", "mora", "naranja", "nectarina", "níspero", "nuez", "papaya", "pera", "piña", "plátano", "pomelo", "paraguaya", "quinoto", "sandía", "tamarindo", "toronja", "tuna", "uva"],
     marca: ["adidas", "audi", "apple", "amazon", "ariel", "bic", "bosch", "bayer", "barbie", "boeing", "casio", "chanel", "cocacola", "colgate", "canon", "dior", "dell", "disney", "danone", "durex", "ebay", "elle", "esso", "fila", "ford", "ferrari", "facebook", "fedex", "gucci", "google", "gillette", "general electric", "hp", "honda", "heineken", "hollywood", "ibm", "ikea", "intel", "instagram", "jaguar", "jeep", "john deere", "kodak", "kia", "kellogg's", "kfc", "lego", "levi's", "lg", "l'oréal", "lamborghini", "microsoft", "mercedes", "motorola", "mcdonald's", "marvel", "nike", "nintendo", "nestlé", "netflix", "nasa", "omega", "oracle", "oral-b", "pepsi", "prada", "puma", "porsche", "playstation", "quick", "rolex", "ray-ban", "reebok", "red bull", "samsung", "sony", "sega", "shell", "starbucks", "toyota", "tesla", "tissot", "tiktok", "twitter", "uber", "umbro", "unilever", "under armour", "visa", "volkswagen", "versace", "vodafone", "walmart", "wikipedia", "whatsapp", "xbox", "xiaomi", "xerox", "yahoo", "youtube", "yamaha", "zara", "zoom", "zalando"],
-  };
+  },
+  en: { /* Diccionarios en inglés */ },
+  fr: { /* Diccionarios en francés */ },
+  pt: { /* Diccionarios en portugués */ }
+};
+
+
+/**
+ * Simula la evaluación de la ronda localmente sin llamar a una IA.
+ * Esta es una solución de contingencia debido a los bloqueos de la API.
+ */
+export async function localEvaluateRound(input: EvaluateRoundInput): Promise<EvaluateRoundOutput> {
+  const results: z.infer<typeof AIOutputSchema> = {};
+  let playerTotalScore = 0;
+  let aiTotalScore = 0;
+  const letterLower = input.letter.toLowerCase();
+
+  const langDictionary = aiDictionary[input.language] || aiDictionary.es;
 
   for (const playerResponse of input.playerResponses) {
     const categoryLower = playerResponse.category.toLowerCase();
     const playerWord = playerResponse.word || '';
     const playerWordLower = playerWord.toLowerCase().trim();
-    const categoryDictionary = aiDictionary[categoryLower] || [];
+    const categoryDictionary = langDictionary[categoryLower] || [];
     
     // Lógica mejorada para la IA
     let aiWord = '';
