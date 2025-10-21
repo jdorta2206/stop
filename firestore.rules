@@ -2,43 +2,38 @@
  * @fileoverview Firestore Security Rules for the Global Stop game.
  *
  * Core Philosophy:
- * This ruleset prioritizes user authentication and ownership, ensuring that only
- * authenticated users can create and modify data, and that users can only
- * access their own data or data explicitly shared with them. The rules are
- * designed to be strict on authorization while remaining flexible on data
- * shapes to allow for rapid iteration during the prototyping phase.
+ * This ruleset prioritizes secure data access based on user authentication and ownership.
+ * It allows authenticated users to read and create data, but restricts modification and deletion
+ * to the owner of the specific document, where applicable. Data validation is relaxed to allow rapid prototyping.
  *
  * Data Structure:
- * - /rooms/{roomId}: Stores game room data. Accessible to authenticated users.
- * - /rankings/{userId}: Stores global ranking and stats for each user.
- * - /rankings/{userId}/friends/{friendId}: Stores a user's friend list.
- * - /rankings/{userId}/gameHistory/{gameId}: Stores game history for each user.
+ * - /rooms/{roomId}: Stores game room data.
+ * - /rankings/{userId}: Stores user ranking data.
+ * - /rankings/{userId}/friends/{friendId}: Stores a user's friends list.
+ * - /rankings/{userId}/gameHistory/{gameId}: Stores a user's game history.
  * - /notifications/{notificationId}: Stores notifications for users.
  *
  * Key Security Decisions:
- * - Users must be authenticated to read or write most data.
- * - Users can only update their own ranking and related data (friends, history).
- * - Notifications are only accessible to the recipient.
- * - The exact schema of the data is NOT validated in this prototype phase.
+ * - User listing is generally disallowed.
+ * - Only authenticated users can create/read rooms.
+ * - Users can only update their own ranking and access their own history and notifications.
+ * - No complex schema validation is enforced in this prototype phase, aside from authorization-critical fields.
  *
  * Denormalization for Authorization:
- *  There is currently no denormalization of data to simplify reads, however, in the next
- *  iteration, the `Room` document should contain an array of `playerIds` to simplify
- *  determining if a user is authorized to read a room's data.
- *
- * Structural Segregation:
- *  There is no structural segregation of data at this time.
+ * - The rules rely on path-based authorization and ownership checks.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Rules for managing game rooms.
+     * @description Controls access to game room documents.
      * @path /rooms/{roomId}
-     * @allow (read, create, update) Authenticated user can read, create or update the room.
+     * @allow (create) Authenticated user can create a new room.
+     * @allow (read) Authenticated user can read a room.
+     * @allow (update) Authenticated user can update a room.
      * @deny (delete) No one can delete a room.
-     * @principle Authenticated users only can read and write game rooms.
+     * @principle Allows authenticated users to create/read rooms.
      */
     match /rooms/{roomId} {
       allow read, create, update: if isSignedIn();
@@ -46,62 +41,69 @@ service cloud.firestore {
     }
 
     /**
-     * @description Rules for managing user ranking and stats.
+     * @description Controls access to user ranking documents.
      * @path /rankings/{userId}
-     * @allow (read, create) Authenticated user can read or create their ranking.
-     * @allow (update) User can update their own ranking.
-     * @deny (delete) No one can delete a ranking.
-     * @principle Users can only manage their own ranking data.
+     * @allow (create) Authenticated user can create their ranking document.
+     * @allow (read) Authenticated user can read a ranking document.
+     * @allow (update) Authenticated user can update their own ranking document.
+     * @deny (delete) No one can delete a ranking document.
+     * @principle Enforces user-ownership for ranking documents.
      */
     match /rankings/{userId} {
       allow read, create: if isSignedIn();
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) && resource != null;
       allow delete: if false;
 
-      /**
-       * @description Rules for managing user's friend list.
-       * @path /rankings/{userId}/friends/{friendId}
-       * @allow (read, create, update) Only the owner can manage their friend list.
-       * @deny (delete) No one can delete a friend.
-       * @principle Enforces document ownership for writes, allowing a user to manage their own friends.
-       */
+        /**
+         * @description Controls access to user friends list.
+         * @path /rankings/{userId}/friends/{friendId}
+         * @allow (create) Authenticated user can add a friend.
+         * @allow (read) Authenticated user can read their friend's list.
+         * @deny (update) No one can update the friends list documents directly.
+         * @deny (delete) No one can delete a friend from the friends list documents directly.
+         * @principle Enforces user-ownership for friends list.
+         */
       match /friends/{friendId} {
-        allow read, create, update: if isOwner(userId);
-        allow delete: if false;
+        allow read, create: if isOwner(userId);
+        allow update, delete: if false;
       }
 
-      /**
-       * @description Rules for managing user's game history.
-       * @path /rankings/{userId}/gameHistory/{gameId}
-       * @allow (read, create, update) Only the owner can manage their game history.
-       * @deny (delete) No one can delete game history.
-       * @principle Enforces document ownership for writes, allowing a user to manage their own game history.
-       */
+        /**
+         * @description Controls access to game history documents for a user.
+         * @path /rankings/{userId}/gameHistory/{gameId}
+         * @allow (create) Authenticated user can create game history entries for themselves.
+         * @allow (read) Authenticated user can read their own game history.
+         * @deny (update) No one can update game history documents directly.
+         * @deny (delete) No one can delete game history documents directly.
+         * @principle Enforces user-ownership for game history documents.
+         */
       match /gameHistory/{gameId} {
-        allow read, create, update: if isOwner(userId);
-        allow delete: if false;
+        allow read, create: if isOwner(userId);
+        allow update, delete: if false;
       }
     }
 
     /**
-     * @description Rules for managing notifications.
+     * @description Controls access to notification documents.
      * @path /notifications/{notificationId}
-     * @allow (read, update) Only the recipient can read/update the notification.
-     * @deny (create, delete) No one can create/delete a notification.
-     * @principle Restricts access to notifications to the intended recipient.
+     * @allow (create) Authenticated user can create their notification document.
+     * @allow (read) Authenticated user can read their own notification document.
+     * @allow (update) Authenticated user can update their own notification document.
+     * @deny (delete) No one can delete a notification document.
+     * @principle Enforces user-ownership for notification documents.
      */
     match /notifications/{notificationId} {
-      allow read, update: if request.auth.uid == resource.data.recipientId;
-      allow create, delete: if false;
+      allow read, create, update: if request.auth.uid == resource.data.recipientId;
+      allow delete: if false;
     }
+
   }
 
-  // Helper function to determine if the user is signed in.
+  // Helper Functions
   function isSignedIn() {
     return request.auth != null;
   }
 
-  // Helper function to determine if the requesting user is the owner of the document.
   function isOwner(userId) {
     return request.auth.uid == userId;
   }

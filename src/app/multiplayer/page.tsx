@@ -29,7 +29,6 @@ function MultiplayerLobbyContent() {
     const handleLeaveRoom = useCallback(async () => {
         if (user && roomId) {
             try {
-                // No es necesario esperar, la acción se dispara y el usuario puede navegar.
                 removePlayerFromRoom(roomId, user.uid);
             } catch(err) {
                 console.error("Error al intentar salir de la sala:", err);
@@ -57,28 +56,24 @@ function MultiplayerLobbyContent() {
         const joinAndListen = async (currentUser: User) => {
             setIsLoading(true);
             try {
-                // Primero intenta agregar al jugador. Si esto falla, el `catch` lo manejará.
                 await addPlayerToRoom(roomId, currentUser.uid, currentUser.displayName || 'Jugador Anónimo', currentUser.photoURL || null);
                 
-                // Si addPlayerToRoom tiene éxito, comienza a escuchar los cambios en tiempo real.
                 unsubscribe = onRoomUpdate(roomId, (updatedRoom) => {
                     if (updatedRoom) {
                         setRoom(updatedRoom);
-                         // Si el jugador actual ya no está en la lista de jugadores, significa que fue expulsado o la sala se reinició
                         if (updatedRoom.players && !updatedRoom.players[currentUser.uid]) {
                            setError("Ya no formas parte de esta sala.");
                            toast.error('Has sido desconectado de la sala.');
                            if (unsubscribe) unsubscribe();
-                           router.push('/'); // Redirige al inicio
+                           router.push('/');
                            return;
                         }
                         setError(null);
                     } else {
-                        // Si la sala se vuelve null, significa que fue eliminada.
                         setError("La sala ha sido eliminada por el anfitrión.");
                         toast.error('La sala ya no existe.');
                         if (unsubscribe) unsubscribe();
-                        router.push('/'); // Redirige al inicio
+                        router.push('/');
                     }
                     setIsLoading(false);
                 });
@@ -96,20 +91,17 @@ function MultiplayerLobbyContent() {
                 
                 setError(userMessage);
                 toast.error(userMessage);
-                setIsLoading(false); // Detener la carga para mostrar el error
-                 // Redirigir al usuario después de un retraso para que pueda ver el toast
-                setTimeout(() => router.push('/'), 3000);
+                setIsLoading(false);
+                 setTimeout(() => router.push('/'), 3000);
             }
         };
         
         joinAndListen(user);
 
-        // Función de limpieza del efecto
         return () => {
             if (unsubscribe) {
               unsubscribe();
             }
-            // Cuando el usuario se va (cierra pestaña, navega fuera), intenta eliminarlo de la sala
             if (roomId && user) {
                 removePlayerFromRoom(roomId, user.uid);
             }
@@ -154,7 +146,6 @@ function MultiplayerLobbyContent() {
         );
     }
 
-    // Fallback si la sala o el usuario no están disponibles después de la carga
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-background text-center p-4">
              <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
